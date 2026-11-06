@@ -1,53 +1,31 @@
 import { TokenUSDC } from '@web3icons/react'
-import { Card, Row } from './Card'
+import { Badge, Card, Dl, Row } from './Card'
 import { EXAMPLE, exampleAmounts } from '../example'
 
 const amounts = exampleAmounts(EXAMPLE)
 
 export function ExampleCard() {
   return (
-    <Card
-      title="Guarantee model"
-      aside={
-        <span className="rounded-full bg-[var(--surface-muted)] px-2.5 py-1 text-[11px] font-medium text-[var(--muted)]">
-          Synthetic demo
+    <Card title="How the guarantee works" aside={<Badge>Synthetic demo</Badge>}>
+      <p className="mc-p">{EXAMPLE.scenario}</p>
+      <p className="mc-mt-3" style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 8, margin: '12px 0 0' }}>
+        <span className="display" style={{ fontSize: 40, fontWeight: 600, lineHeight: 1 }}>
+          {amounts.totalLocked}
         </span>
-      }
-    >
-      <p className="text-sm text-[var(--muted)] text-pretty">{EXAMPLE.scenario}</p>
-
-      <div className="mt-4 flex items-end gap-2">
-        <span className="display text-5xl font-semibold tabular-nums text-[var(--ink)]">{amounts.totalLocked}</span>
-        <span className="mb-1.5 flex items-center gap-1.5 text-sm font-medium text-[var(--ink-2)]">
-          <TokenUSDC variant="branded" size={18} /> USDC
+        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontWeight: 600 }}>
+          <TokenUSDC variant="branded" size={18} /> USDC held when the cohort is full
         </span>
-      </div>
-      <p className="mt-1 text-sm text-[var(--muted)]">Held by the contract once the cohort is full</p>
-
-      <dl className="mt-5 rounded-2xl bg-[var(--surface-strong)] p-4">
+      </p>
+      <Dl>
         <Row label="Provider bond">{amounts.bond} USDC</Row>
-        <Row label={`Escrow per beneficiary (${amounts.perEscrow} x ${amounts.cohort})`}>{amounts.totalEscrow} USDC</Row>
-        <Row label="Fixed compensation per beneficiary">{amounts.perCompensation} USDC</Row>
+        <Row label="Escrow from a full cohort">
+          {amounts.perEscrow} x {amounts.cohort} = {amounts.totalEscrow} USDC
+        </Row>
+        <Row label="Fixed compensation on failure">{amounts.perCompensation} USDC each</Row>
         <Row label="Cohort bound">{amounts.cohort} beneficiaries</Row>
-      </dl>
-
-      <ul className="mt-4 grid grid-cols-3 gap-2">
-        {EXAMPLE.beneficiaries.map((b, i) => (
-          <li
-            key={b.label}
-            className="rounded-2xl border border-[var(--border)] bg-[var(--surface-strong)] px-3 py-3 text-center"
-          >
-            <div className="display text-lg font-semibold text-[var(--ink)]">{i + 1}</div>
-            <div className="text-[11px] text-[var(--muted)]">Beneficiary</div>
-          </li>
-        ))}
-      </ul>
-
-      <p className="mt-4 text-xs text-[var(--subtle)] text-pretty">
-        {EXAMPLE.providerLabel} is the provider. Each {EXAMPLE.beneficiaryNoun.toLowerCase()} is a beneficiary.
-        The bond always covers the full cohort, so every beneficiary can be compensated. This phase handles failure
-        only: if the provider admits failure, each beneficiary gets their escrow back plus the compensation. There
-        is no success or release path yet.
+      </Dl>
+      <p className="mc-hint">
+        On failure each beneficiary gets their escrow back plus the compensation, from the provider&apos;s bond. On success the demo operator proposes it, a review window lets beneficiaries dispute, and after it ends the escrow goes to the provider and the provider withdraws the bond. Testnet only; synthetic.
       </p>
     </Card>
   )

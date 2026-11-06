@@ -6,7 +6,7 @@ import { TxStatus } from './TxStatus'
 
 type Approval = ReturnType<typeof useUsdcApproval>
 
-/** True only when the balance and allowance were actually read and both cover `required`. */
+/** True only when the balance and allowance were actually read and both cover the amount. */
 export const approvalReady = (approval: Approval): boolean =>
   approval.readState === 'ready' && approval.hasAllowance === true && approval.hasBalance === true
 
@@ -18,7 +18,7 @@ interface Props {
   valid?: boolean
 }
 
-/** Step 1 of every funding flow: approve exactly `required` USDC, with honest loading/error states. */
+/** Step 1 of every funding flow: approve exactly the required USDC, with honest loading/error states. */
 export function ApprovalStep({ approval, contract, required, valid = true }: Props) {
   if (required === undefined) {
     return (
@@ -38,8 +38,8 @@ export function ApprovalStep({ approval, contract, required, valid = true }: Pro
   }
   if (approval.readState === 'error') {
     return (
-      <div>
-        <p className="mb-2 text-sm text-[var(--danger)]">Could not read your USDC balance or allowance.</p>
+      <div className="mc-actions">
+        <p className="mc-bad">Could not read your USDC balance or allowance. Nothing can be approved until this works.</p>
         <button type="button" className={ghostButton} onClick={approval.refetch}>
           Retry
         </button>
@@ -52,9 +52,8 @@ export function ApprovalStep({ approval, contract, required, valid = true }: Pro
   return (
     <>
       {lacksBalance && (
-        <p className="mb-2 text-sm text-[var(--danger)]">
-          You need {amount} USDC but hold {approval.balance !== undefined ? formatUsdc(approval.balance) : '0'}. Add testnet USDC
-          to this wallet first.
+        <p className="mc-bad">
+          You need {amount} USDC but hold {approval.balance !== undefined ? formatUsdc(approval.balance) : '0'}. Add testnet USDC to this wallet first.
         </p>
       )}
       <button
@@ -65,7 +64,7 @@ export function ApprovalStep({ approval, contract, required, valid = true }: Pro
       >
         {needsApproval ? `1. Approve exactly ${amount} USDC` : `1. ${amount} USDC approved`}
       </button>
-      <TxStatus phase={approval.tx.phase} hash={approval.tx.hash} message={approval.tx.message} successText="Approval confirmed." />
+      <TxStatus tx={approval.tx} successText="Approval confirmed onchain." />
     </>
   )
 }

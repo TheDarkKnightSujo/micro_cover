@@ -1,22 +1,7 @@
-import { ExternalLink } from 'lucide-react'
 import { useAccount, useSwitchChain } from 'wagmi'
-import { Card, Row } from './Card'
-import { MICROCOVER_ADDRESS, TARGET_CHAIN, TARGET_CHAIN_ID, USDC_ADDRESS, addressUrl } from '../contract'
-
-const short = (address: string) => `${address.slice(0, 6)}...${address.slice(-4)}`
-
-function AddressLink({ address }: { address: string }) {
-  return (
-    <a
-      href={addressUrl(address)}
-      target="_blank"
-      rel="noopener noreferrer"
-      className="mono inline-flex items-center gap-1 text-[13px] text-[var(--accent-hover)] hover:underline"
-    >
-      {short(address)} <ExternalLink size={12} aria-hidden />
-    </a>
-  )
-}
+import { AddressValue, Card, Dl, Row } from './Card'
+import { primaryButton } from './ChainGate'
+import { MICROCOVER_ADDRESS, TARGET_CHAIN, TARGET_CHAIN_ID, USDC_ADDRESS } from '../contract'
 
 export function NetworkCard() {
   const { isConnected, chainId } = useAccount()
@@ -25,31 +10,24 @@ export function NetworkCard() {
 
   return (
     <Card title="Network">
-      <dl>
+      <Dl>
         <Row label="Chain">
-          {TARGET_CHAIN.name} ({TARGET_CHAIN_ID})
+          {TARGET_CHAIN.name} (chain id {TARGET_CHAIN_ID})
         </Row>
         <Row label="USDC (official)">
-          <AddressLink address={USDC_ADDRESS} />
+          <AddressValue address={USDC_ADDRESS} label="USDC address" />
         </Row>
-        <Row label="MicroCover">
-          {MICROCOVER_ADDRESS ? (
-            <AddressLink address={MICROCOVER_ADDRESS} />
-          ) : (
-            <span className="text-[var(--subtle)]">Not deployed yet</span>
-          )}
+        <Row label="MicroCover contract">
+          {MICROCOVER_ADDRESS ? <AddressValue address={MICROCOVER_ADDRESS} label="contract address" /> : <span className="mc-muted">Not configured</span>}
         </Row>
-      </dl>
-
+      </Dl>
       {wrongChain && (
-        <button
-          type="button"
-          onClick={() => switchChain({ chainId: TARGET_CHAIN_ID })}
-          disabled={isPending}
-          className="mt-4 min-h-11 w-full rounded-2xl bg-[var(--accent)] px-4 text-sm font-semibold text-white transition hover:bg-[var(--accent-hover)] disabled:opacity-60"
-        >
-          {isPending ? 'Confirm in wallet...' : `Switch to ${TARGET_CHAIN.name}`}
-        </button>
+        <div className="mc-mt-3">
+          <p className="mc-p">Your wallet is on another network. Switch to {TARGET_CHAIN.name} to continue.</p>
+          <button type="button" className={`${primaryButton} mc-mt-2`} onClick={() => switchChain({ chainId: TARGET_CHAIN_ID })} disabled={isPending}>
+            {isPending ? 'Confirm the switch in your wallet...' : `Switch to ${TARGET_CHAIN.name}`}
+          </button>
+        </div>
       )}
     </Card>
   )

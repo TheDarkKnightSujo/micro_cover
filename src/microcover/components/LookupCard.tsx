@@ -1,161 +1,205 @@
 import type { Address } from 'viem'
 import { formatUsdc } from '@/onchain-money'
-import { OUTCOME, STATUS, STATUS_LABEL } from '../contract'
+import { OUTCOME, OUTCOME_LABEL, STATUS, STATUS_LABEL } from '../contract'
+import { fmtTime } from '../format'
+import { isOperator, isProvider, nextStep } from '../lifecycle'
+import type { ChainTime } from '../useChainTime'
 import type { GuaranteeRead, GuaranteeView } from '../useGuarantee'
-import { Card, Row } from './Card'
+import { useShareLink } from '../useShareLink'
+import { AddressValue, Badge, Callout, Card, CopyButton, Dl, Row } from './Card'
 import { ghostButton } from './ChainGate'
 
-const when = (seconds: bigint) => new Date(Number(seconds) * 1000).toLocaleString()
-const short = (address: string) => `${address.slice(0, 6)}...${address.slice(-4)}`
-
 interface Props {
-  /** Undefined until the contract address is published; no read is attempted then. */
-  live: boolean
   idInput: string
   onIdChange: (value: string) => void
   /** Highest existing guarantee id, when known. */
   latestId: bigint | undefined
-  read: GuaranteeRead | undefined
+  read: GuaranteeRead
   account: Address | undefined
+  operator: Address
+  chain: ChainTime
 }
 
-function badgeClass(status: number): string {
-  if (status === STATUS.CLOSED) return 'bg-[var(--surface-muted)] text-[var(--muted)]'
-  if (status === STATUS.FAILED) return 'bg-[#fbe9ee] text-[var(--danger)]'
-  return 'bg-[#e6f4ec] text-[var(--success)]'
+const statusTone = (status: number): 'ok' | 'warn' | 'danger' | 'neutral' =>
+  status === STATUS.OPEN || status === STATUS.SUCCEEDED ? 'ok' : status === STATUS.FAILED || status === STATUS.UNCERTAIN ? 'danger' : status === STATUS.SUCCESS_PENDING ? 'warn' : 'neutral'
+
+function Roles({ g, account, operator }: { g: GuaranteeView; account: Address | undefined; operator: Address }) {
+  const ctx = { account, operator }
+  const roles: string[] = []
+  if (isProvider(g, ctx)) roles.push('You are the provider')
+  if (isOperator(ctx)) roles.push('You are the demo operator')
+  if (g.isMember) roles.push('You are an enrolled beneficiary')
+  if (account === undefined) return <p className="mc-hint">Connect a wallet to see your role on this guarantee.</p>
+  if (roles.length === 0) return <p className="mc-hint">You are viewing this guarantee as an outside observer.</p>
+  return (
+    <div className="mc-badges" aria-label="Your roles">
+      {roles.map((r) => (
+        <Badge key={r} tone="ok">
+          {r}
+        </Badge>
+      ))}
+    </div>
+  )
 }
 
-function Terms({ g, account }: { g: GuaranteeView; account: Address | undefined }) {
-  const role =
-    account && g.provider.toLowerCase() === account.toLowerCase()
-      ? 'You are the provider'
-      : g.isMember
-        ? 'You are a beneficiary'
-        : undefined
+function Details({ g, account, operator, chain }: { g: GuaranteeView; account: Address | undefined; operator: Address; chain: ChainTime }) {
+  const success = g.outcome === OUTCOME.SUCCESS
+  const failure = g.outcome === OUTCOME.FAILURE
+  const each = g.escrowAmount + g.compensation
+  const myIndex = account ? g.beneficiaries.findIndex((b) => b.address.toLowerCase() === account.toLowerCase()) : -1
   return (
     <>
-      <div className="flex flex-wrap items-center gap-2">
-        <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${badgeClass(g.status)}`}>
-          {STATUS_LABEL[g.status] ?? 'Unknown'}
-        </span>
-        <span className="rounded-full bg-[var(--surface-muted)] px-2.5 py-1 text-xs font-medium text-[var(--muted)]">
-          Verdict: {g.outcome === OUTCOME.FAILURE ? 'failure admitted' : 'none yet'}
-        </span>
-        {role && <span className="text-xs text-[var(--subtle)]">{role}</span>}
+      <div className="mc-badges">
+        <Badge tone={statusTone(g.status)}>Status: {STATUS_LABEL[g.status] ?? 'Unknown'}</Badge>
+        <Badge tone={success ? 'ok' : failure ? 'danger' : 'neutral'}>Outcome: {OUTCOME_LABEL[g.outcome] ?? 'Unknown'}</Badge>
       </div>
+      <div className="mc-mt-2">
+        <Roles g={g} account={account} operator={operator} />
+      </div>
+      {chain.now !== undefined && (
+        <div className="mc-mt-3">
+          <Callout>
+            <strong>What happens next.</strong> {nextStep(g, { now: chain.now, account, operator })}
+          </Callout>
+        </div>
+      )}
 
-      <dl className="mt-4 rounded-2xl bg-[var(--surface-strong)] p-4">
+      <h3 className="mc-sub-h">People</h3>
+      <Dl>
         <Row label="Provider">
-          <span className="mono text-[13px]">{short(g.provider)}</span>
+          <AddressValue address={g.provider} label="provider address" />
         </Row>
-        <Row label="Cohort">
+        <Row label="Demo operator">
+          <AddressValue address={g.demoOperator} label="demo operator address" />
+        </Row>
+        <Row label="Enrolled / maximum">
           {g.cohortSize} / {g.maxCohort}
         </Row>
-        <Row label="Compensation each">{formatUsdc(g.compensation)} USDC</Row>
-        <Row label="Escrow each">{formatUsdc(g.escrowAmount)} USDC</Row>
-        <Row label="Join deadline">{when(g.joinDeadline)}</Row>
-        <Row label="Open to join">{g.joinable ? `Yes, ${g.openSlots} slot${g.openSlots === 1 ? '' : 's'}` : 'No'}</Row>
-      </dl>
+      </Dl>
 
-      <h3 className="mt-5 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">Funds held</h3>
-      <dl className="mt-2 rounded-2xl bg-[var(--surface-strong)] p-4">
+      <h3 className="mc-sub-h">Funds held for this guarantee</h3>
+      <Dl>
         <Row label="Bond held">{formatUsdc(g.bondHeld)} USDC</Row>
-        <Row label="Of which reserved for beneficiaries">{formatUsdc(g.reservedCompensation)} USDC</Row>
-        <Row label="Escrow held">{formatUsdc(g.escrowHeld)} USDC</Row>
-        <Row label="Still owed to beneficiaries">{formatUsdc(g.remainingOwed)} USDC</Row>
-        <Row label="Remaining bond provider can withdraw">{formatUsdc(g.withdrawableBond)} USDC</Row>
-      </dl>
+        <Row label="Reserved for beneficiaries (part of the bond)">{formatUsdc(g.reservedCompensation)} USDC</Row>
+        <Row label="Beneficiary escrow held">{formatUsdc(g.escrowHeld)} USDC</Row>
+      </Dl>
 
-      <h3 className="mt-5 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">
-        Payout progress: {g.paidCount} of {g.cohortSize} paid
-      </h3>
+      {failure && (
+        <>
+          <h3 className="mc-sub-h">Failure payout progress</h3>
+          <Dl>
+            <Row label="Beneficiaries paid">
+              {g.paidCount} of {g.cohortSize}
+            </Row>
+            <Row label="Still owed to beneficiaries">{formatUsdc(g.remainingOwed)} USDC</Row>
+            <Row label="Unused bond the provider can withdraw">{formatUsdc(g.withdrawableBond)} USDC</Row>
+          </Dl>
+        </>
+      )}
+      {success && (
+        <>
+          <h3 className="mc-sub-h">Success release progress</h3>
+          <Dl>
+            <Row label="Compensation reservation released">{formatUsdc(g.releasedSuccessReservation)} USDC</Row>
+            <Row label="Escrow released to provider">{g.successEscrowReleased ? `Yes, ${formatUsdc(g.releasedSuccessEscrow)} USDC` : 'Not yet'}</Row>
+            <Row label="Bond withdrawn by provider">{g.status === STATUS.CLOSED ? `Yes, ${formatUsdc(g.withdrawnBond)} USDC` : 'Not yet'}</Row>
+          </Dl>
+          <p className="mc-hint">No beneficiary is paid when a guarantee succeeds.</p>
+        </>
+      )}
+
+      <h3 className="mc-sub-h">{success ? 'Enrolled beneficiaries (no payout on success)' : 'Enrolled beneficiaries'}</h3>
       {g.beneficiaries.length === 0 ? (
-        <p className="mt-2 text-sm text-[var(--muted)]">No beneficiaries enrolled.</p>
+        <p className="mc-p mc-muted mc-mt-2">No beneficiaries enrolled.</p>
       ) : (
-        <ul className="mt-2 divide-y divide-[var(--border)] rounded-2xl bg-[var(--surface-strong)] px-4">
+        <ul className="mc-list">
           {g.beneficiaries.map((b, i) => (
-            <li key={b.address} className="flex items-center justify-between gap-3 py-2.5 text-sm">
-              <span className="min-w-0 truncate">
-                <span className="text-[var(--subtle)]">{i + 1}.</span> <span className="mono text-[13px]">{short(b.address)}</span>
+            <li key={b.address}>
+              <span className="mc-mono">
+                {i + 1}. {b.address}
+                {i === myIndex ? ' (you)' : ''}
               </span>
-              <span className="shrink-0 tabular-nums text-[var(--ink-2)]">
-                {formatUsdc(g.escrowAmount + g.compensation)} USDC{' '}
-                <span className={b.paid ? 'text-[var(--success)]' : 'text-[var(--subtle)]'}>{b.paid ? 'paid' : 'pending'}</span>
+              <span>
+                {success ? 'No payout' : failure ? `${formatUsdc(each)} USDC: ${b.paid ? 'paid' : 'pending'}` : `${formatUsdc(each)} USDC if failure is admitted`}
               </span>
             </li>
           ))}
         </ul>
       )}
-      <p className="mt-2 text-xs text-[var(--subtle)] text-pretty">
-        Each payout returns the beneficiary&apos;s escrow plus the fixed compensation, in enrollment order.
-      </p>
+      {myIndex >= 0 && failure && !g.beneficiaries[myIndex]?.paid && (
+        <p className="mc-hint">Your payout is pending. Anyone can run settlement; you do not need to claim.</p>
+      )}
+      {chain.now !== undefined && <p className="mc-hint">Chain time {fmtTime(chain.now)}</p>}
     </>
   )
 }
 
-export function LookupCard({ live, idInput, onIdChange, latestId, read, account }: Props) {
+export function LookupCard({ idInput, onIdChange, latestId, read, account, operator, chain }: Props) {
   const parsed = /^\d{1,18}$/.test(idInput) ? BigInt(idInput) : undefined
+  const id = parsed !== undefined && parsed > 0n ? parsed : undefined
+  const shareLink = useShareLink(read.state === 'ready' ? id : undefined)
 
   return (
-    <Card title="Guarantee">
-      {!live ? (
-        <p className="text-sm text-[var(--muted)] text-pretty">
-          MicroCover is not live on Arc Testnet yet. Once it is, guarantees you create or look up appear here with
-          their status, funds held and payout progress, read straight from the chain.
-        </p>
-      ) : (
-        <>
-          <label className="block text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]" htmlFor="guarantee-id">
-            Guarantee id
-          </label>
-          <div className="mt-1.5 flex gap-2">
-            <input
-              id="guarantee-id"
-              inputMode="numeric"
-              placeholder={latestId && latestId > 0n ? latestId.toString() : '1'}
-              value={idInput}
-              onChange={(e) => onIdChange(e.target.value.trim())}
-              className="min-h-11 min-w-0 flex-1 rounded-2xl border border-[var(--border)] bg-[var(--surface-strong)] px-4 text-base tabular-nums text-[var(--ink)] outline-none focus:border-[var(--focus)] focus:ring-2 focus:ring-[var(--focus)]/40"
-            />
-            <button
-              type="button"
-              className={`${ghostButton} !w-auto shrink-0`}
-              disabled={!latestId || latestId < 1n}
-              onClick={() => latestId && onIdChange(latestId.toString())}
-            >
-              Latest
+    <Card title="Guarantee: public detail and your status">
+      <label className="mc-label" htmlFor="guarantee-id">
+        Guarantee id
+      </label>
+      <div className="mc-actions mc-mt-1">
+        <input
+          id="guarantee-id"
+          className="mc-input"
+          inputMode="numeric"
+          autoComplete="off"
+          placeholder={latestId && latestId > 0n ? `Latest is ${latestId.toString()}` : 'For example 1'}
+          value={idInput}
+          onChange={(e) => onIdChange(e.target.value.trim())}
+        />
+        <button type="button" className={ghostButton} disabled={!latestId || latestId < 1n} onClick={() => latestId && onIdChange(latestId.toString())}>
+          Load the latest guarantee
+        </button>
+      </div>
+      <p className="mc-hint">
+        {latestId === undefined ? 'Reading the contract...' : `${latestId.toString()} guarantee${latestId === 1n ? '' : 's'} created so far.`}
+      </p>
+
+      {shareLink && (
+        <div className="mc-mt-3">
+          <Dl>
+            <Row label="Shareable link">
+              <span className="mc-addr">
+                <span className="mc-mono mc-addr-text">{shareLink}</span>
+                <span className="mc-addr-actions">
+                  <CopyButton value={shareLink} label="share link" />
+                </span>
+              </span>
+            </Row>
+          </Dl>
+          <p className="mc-hint">Anyone who opens this link sees the same public detail, read from the chain. It contains only the guarantee id.</p>
+        </div>
+      )}
+
+      <div className="mc-mt-4" aria-live="polite">
+        {idInput === '' ? (
+          <p className="mc-p mc-muted">Enter a guarantee id, or create one below.</p>
+        ) : id === undefined ? (
+          <p className="mc-bad">Enter a whole number of 1 or more.</p>
+        ) : read.state === 'ready' && read.data ? (
+          <Details g={read.data} account={account} operator={operator} chain={chain} />
+        ) : read.state === 'unknown' ? (
+          <Callout>No guarantee exists with this id on this contract.</Callout>
+        ) : read.state === 'unavailable' ? (
+          <div className="mc-actions" role="alert">
+            <Callout tone="warn">
+              Could not read the {read.failed.join(', ')} from the network. This does not mean the guarantee is missing or that you are unpaid. Every action stays disabled until all reads succeed.
+            </Callout>
+            <button type="button" className={ghostButton} onClick={read.refetch}>
+              Retry
             </button>
           </div>
-          <p className="mt-1 text-xs text-[var(--subtle)]">
-            {latestId === undefined
-              ? 'Reading the contract...'
-              : `${latestId.toString()} guarantee${latestId === 1n ? '' : 's'} created so far`}
-          </p>
-
-          <div className="mt-4">
-            {idInput === '' ? (
-              <p className="text-sm text-[var(--muted)]">Enter a guarantee id, or create one above.</p>
-            ) : parsed === undefined || parsed === 0n ? (
-              <p className="text-sm text-[var(--danger)]">Enter a whole number of 1 or more.</p>
-            ) : read?.state === 'ready' && read.data ? (
-              <Terms g={read.data} account={account} />
-            ) : read?.state === 'unknown' ? (
-              <p className="text-sm text-[var(--muted)]">No guarantee with this id yet.</p>
-            ) : read?.state === 'unavailable' ? (
-              <div>
-                <p className="text-sm text-[var(--danger)]">
-                  Could not read the {read.failed.join(', ')}. Nothing is shown until every read succeeds, so no action is offered.
-                </p>
-                <button type="button" className={`${ghostButton} mt-3`} onClick={read.refetch}>
-                  Retry
-                </button>
-              </div>
-            ) : (
-              <p className="text-sm text-[var(--muted)]">Loading...</p>
-            )}
-          </div>
-        </>
-      )}
+        ) : (
+          <p className="mc-p mc-muted">Loading from the chain...</p>
+        )}
+      </div>
     </Card>
   )
 }

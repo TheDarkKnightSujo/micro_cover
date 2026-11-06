@@ -1,4 +1,4 @@
-import { BaseError, ContractFunctionRevertedError, type Address } from 'viem'
+import { BaseError, ContractFunctionRevertedError, type Address, type Hex } from 'viem'
 import { useReadContract, useReadContracts } from 'wagmi'
 import { TARGET_CHAIN_ID, microCoverAbi } from './contract'
 
@@ -16,6 +16,21 @@ export interface GuaranteeView {
   cohortSize: number
   joinDeadline: bigint
   settlementTime: bigint
+  termsHash: Hex
+  /** getLifecycle(): timing and success-release progress. All times are chain seconds. */
+  claimEndsAt: bigint
+  successProposedAt: bigint
+  successReadyAt: bigint
+  successFinalizedAt: bigint
+  uncertainAt: bigint
+  uncertainBy: Address
+  successEscrowReleased: boolean
+  releasedSuccessReservation: bigint
+  releasedSuccessEscrow: bigint
+  withdrawnBond: bigint
+  demoOperator: Address
+  reviewWindow: bigint
+  failureAdmittedAt: bigint
   status: number
   outcome: number
   paidCount: number
@@ -70,6 +85,7 @@ export function useGuarantee(contract: Address, id: bigint | undefined, account:
     contracts: [
       { ...base, functionName: 'getGuarantee', args },
       { ...base, functionName: 'getState', args },
+      { ...base, functionName: 'getLifecycle', args },
       { ...base, functionName: 'getBeneficiaries', args },
       { ...base, functionName: 'isJoinable', args },
       { ...base, functionName: 'MAX_SETTLEMENT_BATCH' },
@@ -83,7 +99,7 @@ export function useGuarantee(contract: Address, id: bigint | undefined, account:
     query: { enabled: enabled && account !== undefined, refetchInterval: REFRESH_MS },
   })
 
-  const [terms, state, beneficiaries, joinable, maxBatch] = main.data ?? []
+  const [terms, state, lifecycle, beneficiaries, joinable, maxBatch] = main.data ?? []
   const addresses = beneficiaries?.status === 'success' ? beneficiaries.result : []
 
   const paid = useReadContracts({
@@ -119,6 +135,7 @@ export function useGuarantee(contract: Address, id: bigint | undefined, account:
   const failed: string[] = []
   if (main.isError || terms?.status === 'failure') failed.push('guarantee terms')
   if (state?.status === 'failure') failed.push('guarantee state')
+  if (lifecycle?.status === 'failure') failed.push('lifecycle timing')
   if (beneficiaries?.status === 'failure') failed.push('beneficiary list')
   if (joinable?.status === 'failure') failed.push('enrollment status')
   if (maxBatch?.status === 'failure') failed.push('settlement batch limit')
@@ -133,6 +150,7 @@ export function useGuarantee(contract: Address, id: bigint | undefined, account:
   if (
     terms?.status !== 'success' ||
     state?.status !== 'success' ||
+    lifecycle?.status !== 'success' ||
     beneficiaries?.status !== 'success' ||
     joinable?.status !== 'success' ||
     maxBatch?.status !== 'success' ||
@@ -143,6 +161,7 @@ export function useGuarantee(contract: Address, id: bigint | undefined, account:
 
   const t = terms.result
   const s = state.result
+  const l = lifecycle.result
   const flags = paidFlags.map((flag) => flag.status === 'success' && flag.result)
   return {
     state: 'ready',
@@ -158,6 +177,20 @@ export function useGuarantee(contract: Address, id: bigint | undefined, account:
       cohortSize: t.cohortSize,
       joinDeadline: t.joinDeadline,
       settlementTime: t.settlementTime,
+      termsHash: t.termsHash,
+      claimEndsAt: l.claimEndsAt,
+      successProposedAt: l.successProposedAt,
+      successReadyAt: l.successReadyAt,
+      successFinalizedAt: l.successFinalizedAt,
+      uncertainAt: l.uncertainAt,
+      uncertainBy: l.uncertainBy,
+      successEscrowReleased: l.successEscrowReleased,
+      releasedSuccessReservation: l.releasedSuccessReservation,
+      releasedSuccessEscrow: l.releasedSuccessEscrow,
+      withdrawnBond: l.withdrawnBond,
+      demoOperator: l.demoOperator,
+      reviewWindow: l.reviewWindow,
+      failureAdmittedAt: s.failureAdmittedAt,
       status: s.status,
       outcome: s.outcome,
       paidCount: s.paidCount,

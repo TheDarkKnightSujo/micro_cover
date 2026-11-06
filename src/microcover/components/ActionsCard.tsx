@@ -1,225 +1,183 @@
-import { useState } from 'react'
 import type { Address } from 'viem'
 import { formatUsdc } from '@/onchain-money'
-import { STATUS, TARGET_CHAIN_ID, microCoverAbi } from '../contract'
+import { TARGET_CHAIN_ID, microCoverAbi } from '../contract'
+import { canAdmitFailure, canDispute, canFinalize, canMarkUncertain, canPropose, canReleaseEscrow, canSettle, canWithdraw, type Ctx } from '../lifecycle'
+import type { ChainTime } from '../useChainTime'
 import type { GuaranteeRead, GuaranteeView } from '../useGuarantee'
-import { useTxFlow } from '../useTxFlow'
 import { Card } from './Card'
-import { ChainGate, ghostButton, primaryButton } from './ChainGate'
 import { EnrollSection } from './EnrollSection'
-import { TxStatus } from './TxStatus'
-
-const short = (address: string) => `${address.slice(0, 6)}...${address.slice(-4)}`
-const isSame = (a: string | undefined, b: string) => a !== undefined && a.toLowerCase() === b.toLowerCase()
-
-interface SectionProps {
-  contract: Address
-  id: bigint
-  g: GuaranteeView
-  read: GuaranteeRead
-  account: Address | undefined
-}
-
-function AdmitSection({ contract, id, g, read, account }: SectionProps) {
-  const [armed, setArmed] = useState(false)
-  const tx = useTxFlow(() => {
-    setArmed(false)
-    read.refetch()
-  })
-  const provider = isSame(account, g.provider)
-  const owed = (g.escrowAmount + g.compensation) * BigInt(g.cohortSize)
-
-  return (
-    <section>
-      <h3 className="text-sm font-semibold text-[var(--ink)]">Provider: admit failure</h3>
-      <p className="mt-1 text-sm text-[var(--muted)] text-pretty">
-        Closes enrollment immediately and starts payouts. It can only be done once and cannot be undone.
-      </p>
-      <div className="mt-3">
-        {g.status !== STATUS.OPEN ? (
-          <p className="text-sm text-[var(--subtle)]">Failure has already been admitted for this guarantee.</p>
-        ) : !provider ? (
-          <p className="text-sm text-[var(--subtle)]">Only the provider ({short(g.provider)}) can admit failure.</p>
-        ) : (
-          <ChainGate>
-            {armed && (
-              <p className="mb-3 text-sm text-[var(--ink-2)] text-pretty">
-                {g.cohortSize === 0
-                  ? 'No one is enrolled, so nothing is paid out and you can then withdraw the whole bond.'
-                  : `${g.cohortSize} beneficiar${g.cohortSize === 1 ? 'y' : 'ies'} will be paid ${formatUsdc(owed)} USDC in total (their escrow plus compensation).`}
-              </p>
-            )}
-            <div className="flex gap-2">
-              {armed && (
-                <button type="button" className={`${ghostButton} !w-auto`} disabled={tx.busy} onClick={() => setArmed(false)}>
-                  Cancel
-                </button>
-              )}
-              <button
-                type="button"
-                className={primaryButton}
-                disabled={tx.busy}
-                onClick={() =>
-                  armed
-                    ? tx.writeContract({ address: contract, abi: microCoverAbi, functionName: 'admitFailure', args: [id], chainId: TARGET_CHAIN_ID })
-                    : setArmed(true)
-                }
-              >
-                {tx.phase === 'wallet' ? 'Confirm in wallet...' : tx.phase === 'confirming' ? 'Admitting...' : armed ? 'Confirm: admit failure' : 'Admit failure'}
-              </button>
-            </div>
-            <TxStatus phase={tx.phase} hash={tx.hash} message={tx.message} successText="Failure admitted. Enrollment is closed." />
-          </ChainGate>
-        )}
-      </div>
-    </section>
-  )
-}
-
-function SettleSection({ contract, id, g, read }: SectionProps) {
-  const tx = useTxFlow(() => read.refetch())
-  const remaining = g.cohortSize - g.paidCount
-  const batch = Math.min(g.maxBatch, remaining)
-  const next = g.beneficiaries.slice(g.paidCount, g.paidCount + batch)
-  const each = g.escrowAmount + g.compensation
-
-  return (
-    <section>
-      <h3 className="text-sm font-semibold text-[var(--ink)]">Settle payouts</h3>
-      <p className="mt-1 text-sm text-[var(--muted)] text-pretty">
-        Anyone can continue settlement. Recipients and amounts come only from enrollment and the guarantee terms;
-        each call pays at most {g.maxBatch} beneficiaries.
-      </p>
-      <div className="mt-3">
-        {g.status === STATUS.OPEN ? (
-          <p className="text-sm text-[var(--subtle)]">Available after the provider admits failure.</p>
-        ) : remaining === 0 ? (
-          <p className="text-sm text-[var(--subtle)]">Every enrolled beneficiary has been paid.</p>
-        ) : (
-          <ChainGate>
-            <ul className="mb-3 divide-y divide-[var(--border)] rounded-2xl bg-[var(--surface-strong)] px-4">
-              {next.map((b, i) => (
-                <li key={b.address} className="flex items-center justify-between gap-3 py-2 text-sm">
-                  <span>
-                    <span className="text-[var(--subtle)]">{g.paidCount + i + 1}.</span> <span className="mono text-[13px]">{short(b.address)}</span>
-                  </span>
-                  <span className="tabular-nums">{formatUsdc(each)} USDC</span>
-                </li>
-              ))}
-            </ul>
-            <button
-              type="button"
-              className={primaryButton}
-              disabled={tx.busy}
-              onClick={() =>
-                tx.writeContract({
-                  address: contract,
-                  abi: microCoverAbi,
-                  functionName: 'settleFailure',
-                  args: [id, batch],
-                  chainId: TARGET_CHAIN_ID,
-                })
-              }
-            >
-              {tx.phase === 'wallet'
-                ? 'Confirm in wallet...'
-                : tx.phase === 'confirming'
-                  ? 'Paying...'
-                  : `Pay next ${batch} of ${remaining} remaining`}
-            </button>
-            <TxStatus phase={tx.phase} hash={tx.hash} message={tx.message} successText="Payouts confirmed." />
-          </ChainGate>
-        )}
-      </div>
-    </section>
-  )
-}
-
-function WithdrawSection({ contract, id, g, read, account }: SectionProps) {
-  const tx = useTxFlow(() => read.refetch())
-  const provider = isSame(account, g.provider)
-  const remaining = g.cohortSize - g.paidCount
-
-  return (
-    <section>
-      <h3 className="text-sm font-semibold text-[var(--ink)]">Provider: withdraw remaining bond</h3>
-      <p className="mt-1 text-sm text-[var(--muted)] text-pretty">
-        After failure is admitted and every enrolled beneficiary is paid, any unused bond returns to the provider.
-        It is never available while the guarantee is open.
-      </p>
-      <div className="mt-3">
-        {g.status === STATUS.OPEN ? (
-          <p className="text-sm text-[var(--subtle)]">Not available while the guarantee is open.</p>
-        ) : g.status === STATUS.CLOSED ? (
-          <p className="text-sm text-[var(--subtle)]">Closed: no bond remains for this guarantee.</p>
-        ) : remaining > 0 ? (
-          <p className="text-sm text-[var(--subtle)]">
-            {remaining} beneficiar{remaining === 1 ? 'y is' : 'ies are'} still unpaid. Settle them first.
-          </p>
-        ) : !provider ? (
-          <p className="text-sm text-[var(--subtle)]">
-            {formatUsdc(g.withdrawableBond)} USDC can be withdrawn by the provider ({short(g.provider)}).
-          </p>
-        ) : (
-          <ChainGate>
-            <button
-              type="button"
-              className={primaryButton}
-              disabled={tx.busy || g.withdrawableBond === 0n}
-              onClick={() =>
-                tx.writeContract({
-                  address: contract,
-                  abi: microCoverAbi,
-                  functionName: 'withdrawRemainingBond',
-                  args: [id],
-                  chainId: TARGET_CHAIN_ID,
-                })
-              }
-            >
-              {tx.phase === 'wallet'
-                ? 'Confirm in wallet...'
-                : tx.phase === 'confirming'
-                  ? 'Withdrawing...'
-                  : `Withdraw ${formatUsdc(g.withdrawableBond)} USDC`}
-            </button>
-            <TxStatus phase={tx.phase} hash={tx.hash} message={tx.message} successText="Remaining bond withdrawn. The guarantee is closed." />
-          </ChainGate>
-        )}
-      </div>
-    </section>
-  )
-}
+import { GuardedAction } from './GuardedAction'
 
 interface Props {
   contract: Address
   id: bigint | undefined
   read: GuaranteeRead
   account: Address | undefined
+  operator: Address
+  chain: ChainTime
+  freshNow: () => Promise<bigint>
 }
 
-export function ActionsCard({ contract, id, read, account }: Props) {
+function Actions({ contract, id, g, read, account, operator, chain, freshNow }: Props & { id: bigint; g: GuaranteeView }) {
+  const ctxFor = (now: bigint): Ctx => ({ now, account, operator })
+  const done = () => {
+    read.refetch()
+    chain.refetch()
+  }
+  const common = { chain, freshNow, guaranteeId: id, onConfirmed: done }
+  const remaining = g.cohortSize - g.paidCount
+  const batch = Math.min(g.maxBatch, remaining)
+  const next = g.beneficiaries.slice(g.paidCount, g.paidCount + batch)
+  const each = g.escrowAmount + g.compensation
+
+  return (
+    <div className="mc-sections">
+      <EnrollSection contract={contract} id={id} g={g} read={read} account={account} operator={operator} chain={chain} freshNow={freshNow} />
+
+      <GuardedAction
+        {...common}
+        title="Request review (dispute)"
+        role="Enrolled beneficiary"
+        description="A dispute asks for review. It is not proof of failure, it does not choose any payout, and no funds move. It freezes the guarantee, and in this phase only the provider can resolve it (by admitting failure). There is no way back to success."
+        warning="This freezes the guarantee for everyone and cannot be undone. If the provider never responds, funds stay locked."
+        eligible={(now) => canDispute(g, ctxFor(now))}
+        label="Raise dispute"
+        workingLabel="Submitting dispute..."
+        successText="Dispute recorded onchain. The guarantee is now uncertain and frozen."
+        receiptLabel="Raise dispute"
+        send={(write) => write({ address: contract, abi: microCoverAbi, functionName: 'raiseDispute', args: [id], chainId: TARGET_CHAIN_ID })}
+      />
+
+      <GuardedAction
+        {...common}
+        title="Admit failure"
+        role="Provider only"
+        description="You, the provider, admit the guarantee failed. Enrollment closes and every enrolled beneficiary is paid their escrow plus compensation. You may do this until success is actually finalized."
+        warning="Admitting failure is final: it can never be undone and success becomes impossible."
+        eligible={(now) => canAdmitFailure(g, ctxFor(now))}
+        label="Admit failure"
+        workingLabel="Admitting failure..."
+        successText="Failure admitted onchain. Enrollment is closed and payouts can start."
+        receiptLabel="Admit failure"
+        send={(write) => write({ address: contract, abi: microCoverAbi, functionName: 'admitFailure', args: [id], chainId: TARGET_CHAIN_ID })}
+      />
+
+      <GuardedAction
+        {...common}
+        title="Propose success"
+        role="Demo operator only"
+        description="The immutable demo operator proposes that the guarantee succeeded. This starts a review window; it is not final, moves no money and can be disputed or overridden by the provider's failure admission."
+        eligible={(now) => canPropose(g, ctxFor(now))}
+        label="Propose success"
+        workingLabel="Proposing success..."
+        successText="Success proposed onchain. The review window has started."
+        receiptLabel="Propose success"
+        send={(write) => write({ address: contract, abi: microCoverAbi, functionName: 'proposeSuccess', args: [id], chainId: TARGET_CHAIN_ID })}
+      />
+
+      <GuardedAction
+        {...common}
+        title="Mark uncertain"
+        role="Demo operator only"
+        description="The demo operator freezes an open guarantee, or one with success in review. This is a trusted blocking power: it moves no money and, in this phase, only the provider's failure admission can resolve it."
+        warning="This freezes the guarantee and cannot be undone. Funds stay locked until the provider admits failure."
+        eligible={() => canMarkUncertain(g, ctxFor(0n))}
+        label="Mark uncertain"
+        workingLabel="Marking uncertain..."
+        successText="Marked uncertain onchain. The guarantee is frozen."
+        receiptLabel="Mark uncertain"
+        send={(write) => write({ address: contract, abi: microCoverAbi, functionName: 'markUncertain', args: [id], chainId: TARGET_CHAIN_ID })}
+      />
+
+      <GuardedAction
+        {...common}
+        title="Finalize success"
+        role="Anyone, after the review window"
+        description="After the review window ends, anyone can finalize success. It becomes the permanent outcome, so failure can no longer be admitted. No tokens move yet."
+        warning="Finalizing success is irreversible. Beneficiaries will not be paid and the provider can no longer admit failure."
+        eligible={(now) => canFinalize(g, ctxFor(now))}
+        label="Finalize success"
+        workingLabel="Finalizing success..."
+        successText="Success finalized onchain."
+        receiptLabel="Finalize success"
+        send={(write) => write({ address: contract, abi: microCoverAbi, functionName: 'finalizeSuccess', args: [id], chainId: TARGET_CHAIN_ID })}
+      />
+
+      <GuardedAction
+        {...common}
+        title="Release success escrow"
+        role="Anyone, after success is finalized"
+        description={`Sends all beneficiary escrow held for this guarantee (${formatUsdc(g.escrowHeld)} USDC) to the provider. The amount and recipient are fixed by the contract.`}
+        eligible={() => canReleaseEscrow(g)}
+        label="Release escrow to provider"
+        workingLabel="Releasing escrow..."
+        successText="Escrow released to the provider onchain."
+        receiptLabel="Release success escrow"
+        send={(write) => write({ address: contract, abi: microCoverAbi, functionName: 'releaseSuccessEscrow', args: [id], chainId: TARGET_CHAIN_ID })}
+      />
+
+      <GuardedAction
+        {...common}
+        title="Settle failure payouts"
+        role="Anyone, after failure is admitted"
+        description={`Pays the next enrolled beneficiaries their escrow plus compensation, in enrollment order, at most ${g.maxBatch} per transaction. Recipients and amounts come only from enrollment and the guarantee terms.`}
+        eligible={() => canSettle(g)}
+        preview={
+          <ul className="mc-list" aria-label="Next payouts">
+            {next.map((b, i) => (
+              <li key={b.address}>
+                <span className="mc-mono">
+                  {g.paidCount + i + 1}. {b.address}
+                </span>
+                <span>{formatUsdc(each)} USDC</span>
+              </li>
+            ))}
+          </ul>
+        }
+        label={`Pay next ${batch} of ${remaining}`}
+        workingLabel="Paying beneficiaries..."
+        successText="Payouts confirmed onchain."
+        receiptLabel="Settle failure payouts"
+        send={(write) => write({ address: contract, abi: microCoverAbi, functionName: 'settleFailure', args: [id, batch], chainId: TARGET_CHAIN_ID })}
+      />
+
+      <GuardedAction
+        {...common}
+        title="Withdraw remaining bond"
+        role="Provider only"
+        description={`Returns this guarantee's remaining bond (${formatUsdc(g.bondHeld)} USDC held now) to you. After failure it is only the unused part, once every beneficiary is paid. After success it is the whole bond, once the escrow has been released. Never available while the guarantee is open, in review or frozen.`}
+        eligible={() => canWithdraw(g, ctxFor(0n))}
+        label="Withdraw remaining bond"
+        workingLabel="Withdrawing bond..."
+        successText="Bond withdrawn onchain. The guarantee is closed."
+        receiptLabel="Withdraw remaining bond"
+        send={(write) => write({ address: contract, abi: microCoverAbi, functionName: 'withdrawRemainingBond', args: [id], chainId: TARGET_CHAIN_ID })}
+      />
+    </div>
+  )
+}
+
+export function ActionsCard(props: Props) {
+  const { id, read, account, contract } = props
   const g = read.data
   return (
-    <Card title="Actions">
+    <Card title="Actions for your role">
       {id === undefined ? (
-        <p className="text-sm text-[var(--muted)]">Select an existing guarantee above to see what you can do with it.</p>
+        <p className="mc-p mc-muted">Select an existing guarantee above to see what you can do with it.</p>
       ) : read.state === 'unavailable' ? (
-        <p className="text-sm text-[var(--muted)]">Actions are disabled until the guarantee can be read. Use Retry above.</p>
+        <p className="mc-p mc-muted">Actions are disabled because the guarantee could not be read. Use Retry above.</p>
       ) : read.state === 'unknown' ? (
-        <p className="text-sm text-[var(--muted)]">No guarantee with this id yet.</p>
+        <p className="mc-p mc-muted">No guarantee exists with this id.</p>
       ) : !g || g.forId !== id || g.forAccount !== account ? (
-        <p className="text-sm text-[var(--muted)]">Loading...</p>
+        <p className="mc-p mc-muted">Loading from the chain...</p>
       ) : (
         // Remount per contract + guarantee + wallet so armed confirmations and transaction
         // results can never carry over to a different selection or account.
-        <div
-          key={`${contract}:${id.toString()}:${account ?? 'none'}`}
-          className="flex flex-col gap-6 divide-y divide-[var(--border)] [&>section:not(:first-child)]:pt-6"
-        >
-          <EnrollSection contract={contract} id={id} g={g} read={read} account={account} />
-          <AdmitSection contract={contract} id={id} g={g} read={read} account={account} />
-          <SettleSection contract={contract} id={id} g={g} read={read} account={account} />
-          <WithdrawSection contract={contract} id={id} g={g} read={read} account={account} />
+        <div key={`${contract}:${id.toString()}:${account ?? 'none'}`}>
+          <p className="mc-hint" style={{ marginTop: 0, marginBottom: 12 }}>
+            Every action is checked by the contract. A disabled or hidden button is a convenience, not permission.
+          </p>
+          <Actions {...props} id={id} g={g} />
         </div>
       )}
     </Card>

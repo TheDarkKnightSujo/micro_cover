@@ -1,8 +1,5 @@
 import type { ReactNode } from 'react'
 
-const inputClass =
-  'mt-1.5 min-h-11 w-full rounded-2xl border border-[var(--border)] bg-[var(--surface-strong)] px-4 text-base tabular-nums text-[var(--ink)] outline-none focus:border-[var(--focus)] focus:ring-2 focus:ring-[var(--focus)]/40 disabled:opacity-60'
-
 interface Props {
   id: string
   label: string
@@ -15,32 +12,36 @@ interface Props {
 }
 
 export function Field({ id, label, value, onChange, hint, error, disabled, suffix }: Props) {
+  const describedBy = error ? `${id}-error` : hint ? `${id}-hint` : undefined
   return (
     <div>
-      <label className="block text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]" htmlFor={id}>
+      <label className="mc-label" htmlFor={id}>
         {label}
       </label>
-      <div className="relative">
+      <div className="mc-input-wrap">
         <input
           id={id}
+          className="mc-input"
           inputMode="decimal"
           autoComplete="off"
           value={value}
           disabled={disabled}
           onChange={(e) => onChange(e.target.value.trim())}
           aria-invalid={Boolean(error)}
-          className={inputClass}
+          aria-describedby={describedBy}
         />
-        {suffix && (
-          <span className="pointer-events-none absolute right-4 top-1/2 mt-[3px] -translate-y-1/2 text-sm text-[var(--muted)]">
-            {suffix}
-          </span>
-        )}
+        {suffix && <span className="mc-input-suffix">{suffix}</span>}
       </div>
       {error ? (
-        <p className="mt-1 text-xs text-[var(--danger)]">{error}</p>
+        <p className="mc-error" id={`${id}-error`}>
+          {error}
+        </p>
       ) : (
-        hint && <p className="mt-1 text-xs text-[var(--subtle)]">{hint}</p>
+        hint && (
+          <p className="mc-hint" id={`${id}-hint`}>
+            {hint}
+          </p>
+        )
       )}
     </div>
   )

@@ -1,23 +1,21 @@
 import { ConnectKitButton } from 'connectkit'
-import { ExampleCard } from './microcover/components/ExampleCard'
-import { NetworkCard } from './microcover/components/NetworkCard'
 import { Workspace } from './microcover/components/Workspace'
+import './microcover/microcover.css'
 
 export default function App() {
   return (
-    <div className="min-h-dvh bg-[image:var(--bg-gradient)] text-[var(--ink)]">
-      <main className="mx-auto flex w-full max-w-xl flex-col gap-4 px-4 pb-24 pt-8">
-        <header className="flex items-center justify-between gap-3">
-          <div>
-            <h1 className="display text-3xl font-semibold text-balance">MicroCover</h1>
-            <p className="text-sm text-[var(--muted)]">Programmable guarantees in USDC. Testnet demo.</p>
-          </div>
-          <ConnectKitButton label="Connect" />
-        </header>
-
-        <ExampleCard />
-        <Workspace />
-        <NetworkCard />
+    <div style={{ minHeight: '100dvh', backgroundImage: 'var(--bg-gradient)' }}>
+      <main className="mc-root">
+        <div className="mc-stack">
+          <header className="mc-header">
+            <div>
+              <h1 className="mc-title">MicroCover</h1>
+              <p className="mc-subtitle">Programmable guarantees in USDC. Synthetic testnet demo on Arc Testnet.</p>
+            </div>
+            <ConnectKitButton label="Connect" />
+          </header>
+          <Workspace />
+        </div>
       </main>
     </div>
   )

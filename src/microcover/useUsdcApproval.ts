@@ -30,8 +30,11 @@ export function useUsdcApproval(required: bigint | undefined) {
     query: { enabled: Boolean(owner && spender), refetchInterval: 5_000 },
   })
 
-  const tx = useTxFlow(() => {
-    void reads.refetch()
+  const tx = useTxFlow({
+    label: 'Approve USDC',
+    onConfirmed: () => {
+      void reads.refetch()
+    },
   })
 
   const balance = reads.data?.[0]?.status === 'success' ? reads.data[0].result : undefined
