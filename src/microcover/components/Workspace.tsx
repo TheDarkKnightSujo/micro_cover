@@ -15,6 +15,7 @@ import { LookupCard } from './LookupCard'
 import { NetworkCard } from './NetworkCard'
 import { TermsCard } from './TermsCard'
 import { EvidenceCard } from './EvidenceCard'
+import { ArkivHistoryCard } from './ArkivHistoryCard'
 
 function parseId(input: string): bigint | undefined {
   if (!/^\d{1,18}$/.test(input)) return undefined
@@ -68,6 +69,7 @@ function ReadyWorkspace({ contract, cap, chain }: ReadyProps) {
       {g&&id!==undefined&&<EvidenceCard key={`${contract}:${id}:${account??'none'}`} contract={contract} id={id} g={g} read={read} account={account} operator={cap.operator} chain={chain} freshNow={freshNow}/>}
       <ActionsCard contract={contract} id={id} read={read} account={account} operator={cap.operator} chain={chain} freshNow={freshNow} />
       <HistoryCard id={id} g={g} chain={chain} />
+      {g&&id!==undefined&&<ArkivHistoryCard key={`${contract}:${id}`} contract={contract} id={id} g={g}/>}
       <CreateCard
         key={`${contract}:${account ?? 'none'}`}
         cap={cap}
