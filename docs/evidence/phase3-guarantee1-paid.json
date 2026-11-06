@@ -1,0 +1,72 @@
+{
+  "chainId": 5042002,
+  "address": "0xdcd11bb347f063b5a876c8816f5a02b8ea0f11e0",
+  "guaranteeId": 1,
+  "transactionHash": "0x3582d143159f7248982130705be098062f4902f7b60d819e6c867e5f1a602a0c",
+  "receiptStatus": "success",
+  "receiptBlock": "71041884",
+  "receiptBlockHash": "0xb6239915f420ea469915522adffb6bb81f19690e0b7b0763a8c9ab2298199444",
+  "pinnedBlock": "71042009",
+  "pinnedBlockHash": "0x69d1f41e600e5c1ab81213df07ddf72d68e7261065f97356fa677058ca730c59",
+  "call": {
+    "functionName": "settleFailure",
+    "args": [
+      "1",
+      1
+    ]
+  },
+  "beneficiaryPaidEvent": {
+    "id": "1",
+    "beneficiary": "0x26DD598639E917F32D256B0cAd0408a842af0218",
+    "escrowReturned": "2000000",
+    "compensationPaid": "5000000"
+  },
+  "transfers": [
+    {
+      "from": "0xDcD11bb347F063B5a876C8816F5a02b8eA0F11E0",
+      "to": "0x26DD598639E917F32D256B0cAd0408a842af0218",
+      "value": "7000000"
+    }
+  ],
+  "state": {
+    "status": 1,
+    "outcome": 1,
+    "enrolled": 1,
+    "paidCount": 1,
+    "openSlots": 0,
+    "failureAdmittedAt": "0",
+    "bondHeld": "10000000",
+    "reservedCompensation": "0",
+    "escrowHeld": "0",
+    "paidCompensation": "5000000",
+    "paidEscrow": "2000000",
+    "withdrawableBond": "10000000",
+    "remainingOwed": "0"
+  },
+  "evidence": {
+    "evidenceBound": true,
+    "policyHash": "0x390c151a55ce5c1e9861f5781528a38864fdc389edaee853de2fdb6f4d8e9d3d",
+    "cohortId": "0x1e376c945b31daa9f971311ed13159f4646275169090d72278957336bc1993cc",
+    "createdAt": "1793972891",
+    "uncertaintyTimeout": "120",
+    "uncertaintyStarted": false,
+    "uncertainSince": "0",
+    "uncertainReadyAt": "0",
+    "refundedCount": 0,
+    "refundedEscrow": "0",
+    "releasedUnresolvedReservation": "0",
+    "latestEvidenceRoot": "0x4a0b9812ea0dbb00fe6a2387d0fde5232f7ccb90be2b026c535ea72bef5421ce",
+    "anchorNonce": "1",
+    "nextAnchorNonce": "2",
+    "verdictNonce": "1",
+    "nextVerdictNonce": "2",
+    "failureOrigin": 2,
+    "lastReportOutcome": 1,
+    "lastReportEvaluatedAt": "1793974610",
+    "lastReportValidUntil": "1793974670"
+  },
+  "isPaid": true,
+  "actualContractTokenBalance": "10000000",
+  "duplicateSettlementRejected": "NothingToSettle",
+  "providerOperatorSeparate": false
+}

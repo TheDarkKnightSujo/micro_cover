@@ -16,6 +16,9 @@ abstract contract MicroCoverBase is Test {
     address internal bob = makeAddr("bob");
     address internal carol = makeAddr("carol");
     address internal dave = makeAddr("dave");
+    address internal operator = makeAddr("demoOperator");
+    uint64 internal constant WINDOW = 120;
+    uint64 internal constant UNCERTAINTY = 30 days;
 
     uint128 internal constant COMP = 100e6;
     uint128 internal constant ESCROW = 10e6;
@@ -28,7 +31,7 @@ abstract contract MicroCoverBase is Test {
 
     function setUp() public virtual {
         usdc = new MockUSDC();
-        cover = new MicroCover(IERC20(address(usdc)));
+        cover = new MicroCover(IERC20(address(usdc)), operator, WINDOW, UNCERTAINTY);
         joinDeadline = uint64(block.timestamp + 1 days);
         settlementTime = uint64(block.timestamp + 7 days);
 
@@ -65,7 +68,132 @@ contract MicroCoverTest is MicroCoverBase {
 
     function test_Constructor_RevertsOnZeroAddress() public {
         vm.expectRevert(MicroCover.ZeroUsdcAddress.selector);
-        new MicroCover(IERC20(address(0)));
+        new MicroCover(IERC20(address(0)), operator, WINDOW, UNCERTAINTY);
+    }
+
+    function test_Constructor_StoresUsdcOperatorAndWindowImmutables() public view {
+        assertEq(address(cover.usdc()), address(usdc));
+        assertEq(cover.demoOperator(), operator);
+        assertEq(cover.reviewWindow(), WINDOW);
+        assertEq(cover.uncertaintyTimeout(), UNCERTAINTY);
+        assertEq(cover.protocolVersion(), 3);
+        assertEq(cover.MAX_SETTLEMENT_BATCH(), 20);
+        assertEq(cover.EVIDENCE_FRESHNESS(), 60);
+    }
+
+    /// The two durations are distinct constructor fields, read back separately and never aliased.
+    function test_Constructor_ReviewWindowAndUncertaintyTimeoutAreSeparate() public {
+        assertTrue(WINDOW != UNCERTAINTY, "fixture durations must differ");
+        assertTrue(cover.reviewWindow() != cover.uncertaintyTimeout());
+        assertEq(cover.reviewWindow(), 120);
+        assertEq(cover.uncertaintyTimeout(), 30 days);
+        MicroCover swapped = new MicroCover(IERC20(address(usdc)), operator, 7, 9);
+        assertEq(swapped.reviewWindow(), 7);
+        assertEq(swapped.uncertaintyTimeout(), 9);
+    }
+
+    function test_Constructor_RevertsOnZeroUncertaintyTimeout() public {
+        vm.expectRevert(MicroCover.ZeroUncertaintyTimeout.selector);
+        new MicroCover(IERC20(address(usdc)), operator, WINDOW, 0);
+    }
+
+    function test_Constructor_ValidationOrderIsUsdcOperatorWindowThenUncertainty() public {
+        vm.expectRevert(MicroCover.ZeroUsdcAddress.selector);
+        new MicroCover(IERC20(address(0)), address(0), 0, 0);
+        vm.expectRevert(MicroCover.ZeroOperatorAddress.selector);
+        new MicroCover(IERC20(address(usdc)), address(0), 0, 0);
+        vm.expectRevert(MicroCover.ZeroReviewWindow.selector);
+        new MicroCover(IERC20(address(usdc)), operator, 0, 0);
+        vm.expectRevert(MicroCover.ZeroUncertaintyTimeout.selector);
+        new MicroCover(IERC20(address(usdc)), operator, 1, 0);
+    }
+
+    function test_EnumNumericValuesPhase3() public pure {
+        assertEq(uint8(MicroCover.Status.OPEN), 0);
+        assertEq(uint8(MicroCover.Status.FAILED), 1);
+        assertEq(uint8(MicroCover.Status.CLOSED), 2);
+        assertEq(uint8(MicroCover.Status.SUCCESS_PENDING), 3);
+        assertEq(uint8(MicroCover.Status.SUCCEEDED), 4);
+        assertEq(uint8(MicroCover.Status.UNCERTAIN), 5);
+        assertEq(uint8(MicroCover.Status.REFUNDING), 6);
+        assertEq(uint8(MicroCover.Outcome.NONE), 0);
+        assertEq(uint8(MicroCover.Outcome.FAILURE), 1);
+        assertEq(uint8(MicroCover.Outcome.SUCCESS), 2);
+        assertEq(uint8(MicroCover.Outcome.UNRESOLVED_REFUNDED), 3);
+        assertEq(uint8(MicroCover.FailureOrigin.NONE), 0);
+        assertEq(uint8(MicroCover.FailureOrigin.PROVIDER), 1);
+        assertEq(uint8(MicroCover.FailureOrigin.EVIDENCE), 2);
+    }
+
+    function test_Constructor_RevertsOnZeroOperator() public {
+        vm.expectRevert(MicroCover.ZeroOperatorAddress.selector);
+        new MicroCover(IERC20(address(usdc)), address(0), WINDOW, UNCERTAINTY);
+    }
+
+    function test_Constructor_RevertsOnZeroReviewWindow() public {
+        vm.expectRevert(MicroCover.ZeroReviewWindow.selector);
+        new MicroCover(IERC20(address(usdc)), operator, 0, UNCERTAINTY);
+    }
+
+    function test_Constructor_ZeroUsdcCheckedBeforeOthers() public {
+        vm.expectRevert(MicroCover.ZeroUsdcAddress.selector);
+        new MicroCover(IERC20(address(0)), address(0), 0, 0);
+        vm.expectRevert(MicroCover.ZeroOperatorAddress.selector);
+        new MicroCover(IERC20(address(usdc)), address(0), 0, 0);
+    }
+
+    function test_Constructor_AcceptsExtremeWindowAndAnyOperatorAddress() public {
+        MicroCover c = new MicroCover(IERC20(address(usdc)), address(this), type(uint64).max, type(uint64).max);
+        assertEq(c.reviewWindow(), type(uint64).max);
+        assertEq(c.uncertaintyTimeout(), type(uint64).max);
+        assertEq(c.demoOperator(), address(this));
+        assertEq(c.nextGuaranteeId(), 1);
+    }
+
+    function test_NoOwnerOrSetterOrRoleSurfaceExists() public {
+        string[22] memory sigs = [
+            "owner()",
+            "pendingOwner()",
+            "transferOwnership(address)",
+            "renounceOwnership()",
+            "acceptOwnership()",
+            "setOperator(address)",
+            "setDemoOperator(address)",
+            "setReviewWindow(uint64)",
+            "setUncertaintyTimeout(uint64)",
+            "setEvidencePolicy(uint256,bytes32,bytes32)",
+            "setPolicyHash(uint256,bytes32)",
+            "setCohortId(uint256,bytes32)",
+            "setUsdc(address)",
+            "pause()",
+            "unpause()",
+            "upgradeTo(address)",
+            "upgradeToAndCall(address,bytes)",
+            "grantRole(bytes32,address)",
+            "hasRole(bytes32,address)",
+            "sweep(address,uint256)",
+            "rescueTokens(address,uint256)",
+            "withdraw(uint256)"
+        ];
+        for (uint256 i; i < sigs.length; i++) {
+            (bool ok,) = address(cover).call(abi.encodeWithSignature(sigs[i], address(this), uint256(1)));
+            assertFalse(ok, sigs[i]);
+        }
+        // No fallback/receive either: bare calls and ETH transfers revert.
+        (bool okEmpty,) = address(cover).call("");
+        assertFalse(okEmpty, "no receive");
+        (bool okData,) = address(cover).call(hex"deadbeef");
+        assertFalse(okData, "no fallback");
+    }
+
+    function test_ImmutablesCannotBeChangedByAnyoneIncludingOperator() public {
+        vm.startPrank(operator);
+        (bool ok,) = address(cover).call(abi.encodeWithSignature("setDemoOperator(address)", alice));
+        assertFalse(ok);
+        vm.stopPrank();
+        assertEq(cover.demoOperator(), operator);
+        assertEq(cover.reviewWindow(), WINDOW);
+        assertEq(cover.uncertaintyTimeout(), UNCERTAINTY);
     }
 
     // ---------------- createGuarantee happy path ----------------
@@ -359,7 +487,7 @@ contract MicroCoverFeeTokenTest is Test {
 
     function setUp() public {
         fee = new FeeOnTransferUSDC();
-        cover = new MicroCover(IERC20(address(fee)));
+        cover = new MicroCover(IERC20(address(fee)), makeAddr("demoOperator"), 120, 30 days); // same constants as MicroCoverBase
         fee.mint(provider, 1_000e6);
         fee.mint(alice, 1_000e6);
         vm.prank(provider);
@@ -380,7 +508,7 @@ contract MicroCoverFeeTokenTest is Test {
         // A fee-on-all-transfers token cannot even create a guarantee, so use a token
         // that charges the fee only on transfers sent by alice to exercise the join path.
         FeeFromAliceUSDC t = new FeeFromAliceUSDC(alice);
-        MicroCover c2 = new MicroCover(IERC20(address(t)));
+        MicroCover c2 = new MicroCover(IERC20(address(t)), makeAddr("demoOperator"), 120, 30 days); // same constants as MicroCoverBase
         t.mint(provider, 1_000e6);
         t.mint(alice, 1_000e6);
         vm.prank(provider);

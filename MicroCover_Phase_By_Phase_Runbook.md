@@ -177,11 +177,13 @@ steps for us; report checkpoint evidence and proposed small commit groups.
 
 ### Checkpoint 1
 
-- [ ] Bond, three enrollments and payouts are real testnet transactions.
-- [ ] Refund comes from buyer escrow; compensation comes from provider bond.
-- [ ] Unauthorized caller, excess capacity and repeat payout cases fail.
-- [ ] Tests check cross-guarantee isolation, zero/invalid parameters and arithmetic.
-- [ ] No unexplained operator button can send arbitrary money.
+- [x] Bond, three enrollments and payouts are real testnet transactions.
+- [x] Refund comes from buyer escrow; compensation comes from provider bond.
+- [x] Unauthorized caller, excess capacity and repeat payout cases fail.
+- [x] Tests check cross-guarantee isolation, zero/invalid parameters and arithmetic.
+- [x] No unexplained operator button can send arbitrary money.
+
+PASSED 6 November 2026. Human signed reference and partial-cohort test flows; agent independently verified receipts, transfers and final zero balances. Negative cases used decoded read-only eth_call against deployed state, not signed failed transactions. The different active guarantee's reserved bond was protected in OPEN and FAILED states; its payout and unused-bond return are complete. See docs/phase1-checkpoint.md and docs/evidence/phase1-final.json. Phase 0 judge-sharing remains unresolved; this does not start Phase 2 or authorize publication.
 
 **Commits:** `feat: create bonded guarantees`; `feat: enroll beneficiaries into escrow`; `feat: settle provider-admitted failure`; `test: cover capacity and payout authorization`.
 
@@ -229,15 +231,18 @@ Do not modify contracts or add future integrations. Run build and browser checks
 
 ### Checkpoint 2
 
-- [ ] Both failure and success are usable from the UI.
-- [ ] Policy and funds are visible before purchase.
-- [ ] Success finality and unlock timing are enforced by contracts.
-- [ ] Operator powers are labeled; UI visibility is not the only access control.
-- [ ] Fresh browser session loads actual chain data.
+- [x] Both failure and success are usable from the UI.
+- [x] Policy and funds are visible before purchase.
+- [x] Success finality and unlock timing are enforced by contracts.
+- [x] Operator powers are labeled; UI visibility is not the only access control.
+- [x] Fresh browser session loads actual chain data.
 
 **Commits:** `feat: finalize successful guarantees safely`; `feat: connect provider and beneficiary screens`; `fix: handle wallet and transaction errors`.
 
 **Handoff:** record ABI/config/commit after contract review; Antigravity starts from that state and changes only its assigned UI files.
+
+
+Phase 2 PASSED 6 November 2026. Existing Studio lifecycle/UI source reconciled; 210 tests, check/build and 77 ABI entries pass. Fresh deployment and both financial flows verified; wallet cancellation, actual wrong-network blocking and no-wallet Edge InPrivate chain read recorded. Evidence/checkpoint: docs/phase2-checkpoint.md and docs/evidence/phase2-final.json. UI was actually implemented in Studio because no Antigravity tool was available. No Phase3 authorization, commit/push or public update is implied.
 
 ## Phase 3 — Make evidence produce a reproducible verdict
 
@@ -249,6 +254,8 @@ Do not modify contracts or add future integrations. Run build and browser checks
 - Choose the approved source groups and evidence window. For the first working adapter, use two or more clearly labeled synthetic event-status feeds, not a claim of real independent news coverage.
 - Fix evidence freshness, minimum source coverage, weight and threshold. State that fixtures test the pipeline, not real-world oracle decentralization.
 - Keep provider admission from Phase 1 available; it does not require invented evidence.
+- Freeze and disclose a separate `uncertaintyTimeout` duration before purchase; its numeric value remains a human choice before implementation. Start it on the first onchain entry into `UNCERTAIN`, without resets/extensions from repeated claims, retries or submissions. Do not silently reuse the success-review window.
+- Update PS item 10 / D10 and interfaces for the unresolved fallback: full escrow refunds, zero compensation, bond return only after all refunds, and distinct `UNRESOLVED_REFUNDED` closure. A delivered service may be refunded if evidence remains inconclusive; disclose that tradeoff.
 
 ### Codex prompt
 
@@ -268,9 +275,24 @@ Collect on a documented interval starting at activation/enrollment, before a
 claim. Use an idempotent cursor/store so restarting does not duplicate entries.
 Append evidence; never overwrite history. Anchor a root through the restricted
 contract path. Buyer claim starts evaluation but cannot dictate payout.
-Return UNCERTAIN on unavailable/insufficient evidence and preserve locked funds.
-Create failure/success/uncertain/tamper/replay fixtures and tests. Expose safe API
-responses for the existing UI. Do not add CRE/Arkiv/AI yet.
+Return UNCERTAIN on unavailable/insufficient evidence. Distinguish an offchain
+evaluation result from an onchain dispute; a temporary outage must not silently
+create an irreversible dispute. Preserve funds during the uncertainty period.
+
+Implement the agreed PS item 10 / D10 timeout in this phase. Freeze its separate
+duration before purchase; record the first onchain uncertain timestamp and a
+non-resetting deadline. Once eligible and still unresolved, anyone may trigger
+unresolved finalization. Refund full escrow in bounded batches, pay no
+compensation, reserve every unpaid refund and allow bond return only after all
+refunds finish. Record UNRESOLVED_REFUNDED separately from success/failure.
+Do not override established failure/finalized success, pay twice, or let retries
+extend the deadline. Define and test resolution-versus-timeout boundary/race
+behavior and immutable terminal outcomes. Preserve Phase 2 deployment evidence;
+prepare any required new deployment steps rather than changing it in place.
+
+Create failure/success/uncertain/tamper/replay/timeout fixtures and tests. Expose
+safe API responses and timeout/refund progress for the existing UI. Do not add
+CRE/Arkiv/AI yet.
 ```
 
 ### You do manually
@@ -278,9 +300,11 @@ responses for the existing UI. Do not add CRE/Arkiv/AI yet.
 1. Start collection before submitting a claim. Verify entries arrive with separate source/receipt timestamps.
 2. Run cancellation fixture and check the computed score and root; trigger authorized settlement only from the documented evaluator/operator route.
 3. Run success fixture on a separate guarantee.
-4. Shut down one feed or make its result stale. The outcome must remain uncertain when coverage is inadequate, and funds stay locked.
+4. Shut down one feed or make its result stale. Evaluation remains uncertain when coverage is inadequate; funds stay locked during the uncertainty period. Do not equate a temporary feed outage with an automatically opened onchain dispute.
 5. Change a stored payload or replay a signed entry for another guarantee. Integrity/domain checks must detect/reject it.
 6. Open evidence view and compare its root with the Arc anchor transaction.
+7. On a separate unresolved test guarantee, verify early timeout finalization fails; wait for the frozen uncertainty deadline, then trigger finalization from a non-privileged account. Verify full escrow refunds, zero compensation and bond return only after all refunds settle. Record `UNRESOLVED_REFUNDED` and transaction evidence. Use the declared testnet duration; do not pretend to advance chain time.
+8. Verify repeated claims do not reset the deadline, partial refund batches preserve liabilities, repeat payments fail, and established failure/finalized success cannot take this fallback. Record boundary/race tests; do not modify historical Phase 2 guarantees.
 
 ### Checkpoint 3
 
@@ -289,6 +313,9 @@ responses for the existing UI. Do not add CRE/Arkiv/AI yet.
 - [ ] Cancelled, successful and uncertain examples behave differently for explicit reasons.
 - [ ] Missing collection is not proof of event failure.
 - [ ] Privacy, replay checks and onchain fingerprint work.
+- [ ] Separate uncertainty duration is fixed before purchase; first-entry timing is non-resetting and late-dispute behavior is tested.
+- [ ] Permissionless eligible timeout finalization refunds full escrow, pays no compensation and returns bond only after bounded refunds complete.
+- [ ] `UNRESOLVED_REFUNDED` is distinct in state/history; partial batches, double-payment, early-withdrawal, terminal-state exclusions and resolution/timeout races are tested.
 
 **Commits:** `feat: collect scoped evidence receipts`; `feat: evaluate promise outcomes deterministically`; `feat: anchor evidence commitments`; `test: reject stale and tampered evidence`.
 

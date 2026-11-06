@@ -1,0 +1,52 @@
+{
+  "observedBlock": "0x43b44e7",
+  "address": "0xff679b65c1d09e8d49fb18bb656f4509b33af9a0",
+  "method": "read-only RPC; no signing/broadcast",
+  "paidFlags": [
+    {
+      "beneficiary": "0x26DD598639E917F32D256B0cAd0408a842af0218",
+      "isPaid": true
+    },
+    {
+      "beneficiary": "0x0967c9e2561e6965d874AA05F638A571Cdc22e9e",
+      "isPaid": true
+    },
+    {
+      "beneficiary": "0x2d436EBe81bd9067Fa6739d527Eaa75dfB876c50",
+      "isPaid": true
+    }
+  ],
+  "contractUsdcBalance": "0",
+  "payoutTx": "0xf0d954ec68f143fb3e02e3c29039c1677d86c71d96aa09599bed77da878d5a81",
+  "threeExactSevenUsdcTransfers": true,
+  "probes": [
+    {
+      "label": "repeat payout rejected",
+      "block": "0x43b44e7",
+      "error": "NothingToSettle",
+      "expected": "NothingToSettle",
+      "passed": true
+    },
+    {
+      "label": "closed bond withdrawal rejected",
+      "block": "0x43b44e7",
+      "error": "NothingToWithdraw",
+      "expected": "NothingToWithdraw",
+      "passed": true
+    },
+    {
+      "label": "repeat admission rejected",
+      "block": "0x43b44e7",
+      "error": "AlreadyAdmitted",
+      "expected": "AlreadyAdmitted",
+      "passed": true
+    },
+    {
+      "label": "historical FAILED unpaid withdrawal rejected (same guarantee)",
+      "block": "0x43b4448",
+      "error": "LiabilitiesUnpaid",
+      "expected": "LiabilitiesUnpaid",
+      "passed": true
+    }
+  ]
+}

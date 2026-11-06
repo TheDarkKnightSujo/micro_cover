@@ -1,0 +1,154 @@
+{
+  "address": "0xa1e621497040d845fe4dc952dc524b88231ade16",
+  "id": 2,
+  "observedBlock": "0x43b8a49",
+  "chainTimestamp": "1793959036",
+  "reads": {
+    "getGuarantee": {
+      "provider": "0x1d39fc0e5293AB949D63217fFB375357ADf3933f",
+      "compensation": "100000",
+      "escrowAmount": "100000",
+      "maxCohort": 2,
+      "cohortSize": 1,
+      "joinDeadline": "1793959287",
+      "settlementTime": "1793959287",
+      "termsHash": "0xec9dd851bb14d1b6e86acb7ce293c0f127e89c81f2222860c3a0858a2ef58522"
+    },
+    "getState": {
+      "status": 1,
+      "outcome": 1,
+      "enrolled": 1,
+      "paidCount": 0,
+      "openSlots": 0,
+      "failureAdmittedAt": "1793959004",
+      "bondHeld": "200000",
+      "reservedCompensation": "100000",
+      "escrowHeld": "100000",
+      "paidCompensation": "0",
+      "paidEscrow": "0",
+      "withdrawableBond": "0",
+      "remainingOwed": "200000"
+    },
+    "getLifecycle": {
+      "status": 1,
+      "outcome": 1,
+      "joinDeadline": "1793959287",
+      "settlementTime": "1793959287",
+      "claimEndsAt": "1793959407",
+      "successProposedAt": "0",
+      "successReadyAt": "0",
+      "successFinalizedAt": "0",
+      "uncertainAt": "0",
+      "uncertainBy": "0x0000000000000000000000000000000000000000",
+      "successEscrowReleased": false,
+      "releasedSuccessReservation": "0",
+      "releasedSuccessEscrow": "0",
+      "withdrawnBond": "0",
+      "demoOperator": "0x1d39fc0e5293AB949D63217fFB375357ADf3933f",
+      "reviewWindow": "120"
+    },
+    "getBeneficiaries": [
+      "0x26DD598639E917F32D256B0cAd0408a842af0218"
+    ]
+  },
+  "creations": [
+    {
+      "hash": "0x49aa0d1c6c439876915e3af51a35ee3bc52684fc304d1defeaea4ff4d062d358",
+      "status": "0x1",
+      "event": {
+        "id": "2",
+        "provider": "0x1d39fc0e5293AB949D63217fFB375357ADf3933f",
+        "compensation": "100000",
+        "escrowAmount": "100000",
+        "maxCohort": 2,
+        "joinDeadline": "1793959287",
+        "settlementTime": "1793959287",
+        "termsHash": "0xec9dd851bb14d1b6e86acb7ce293c0f127e89c81f2222860c3a0858a2ef58522",
+        "bond": "200000"
+      },
+      "tokenTransferLogs": [
+        {
+          "address": "0x3600000000000000000000000000000000000000",
+          "topics": [
+            "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef",
+            "0x0000000000000000000000001d39fc0e5293ab949d63217ffb375357adf3933f",
+            "0x000000000000000000000000a1e621497040d845fe4dc952dc524b88231ade16"
+          ],
+          "data": "0x0000000000000000000000000000000000000000000000000000000000030d40",
+          "blockHash": "0x91b42f1f262433f20fea6c3b318df6849c1b2d0215dfadf6f15e48764eacebf5",
+          "blockNumber": "0x43b87a4",
+          "blockTimestamp": "0x6aeda325",
+          "transactionHash": "0x49aa0d1c6c439876915e3af51a35ee3bc52684fc304d1defeaea4ff4d062d358",
+          "transactionIndex": "0x7",
+          "logIndex": "0x18",
+          "removed": false
+        }
+      ]
+    }
+  ],
+  "events": [
+    {
+      "name": "CohortJoined",
+      "hash": "0x0feb9cc78c5129756dd7f281c04b3931855ffb864d074343b9061df3e7f90fc2",
+      "status": "0x1",
+      "args": {
+        "id": "2",
+        "beneficiary": "0x26DD598639E917F32D256B0cAd0408a842af0218",
+        "cohortSize": 1
+      },
+      "transfers": [
+        {
+          "from": "0x26dd598639e917f32d256b0cad0408a842af0218",
+          "to": "0xa1e621497040d845fe4dc952dc524b88231ade16",
+          "amount": "100000"
+        }
+      ]
+    },
+    {
+      "name": "FailureAdmitted",
+      "hash": "0x5197c0968e15d337a12e1f07fb70b5559a8a86b7023537a1b36b04ddc403050b",
+      "status": "0x1",
+      "args": {
+        "id": "2",
+        "provider": "0x1d39fc0e5293AB949D63217fFB375357ADf3933f",
+        "enrolled": 1,
+        "totalOwed": "200000"
+      },
+      "transfers": []
+    }
+  ],
+  "readOnlyRejections": [
+    {
+      "function": "proposeSuccess",
+      "error": "InvalidStatus",
+      "args": [
+        "2",
+        1
+      ]
+    },
+    {
+      "function": "finalizeSuccess",
+      "error": "InvalidStatus",
+      "args": [
+        "2",
+        1
+      ]
+    },
+    {
+      "function": "releaseSuccessEscrow",
+      "error": "InvalidStatus",
+      "args": [
+        "2",
+        1
+      ]
+    },
+    {
+      "function": "withdrawRemainingBond",
+      "error": "LiabilitiesUnpaid",
+      "args": [
+        "2",
+        1
+      ]
+    }
+  ]
+}

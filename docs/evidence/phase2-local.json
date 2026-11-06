@@ -1,0 +1,87 @@
+{
+  "phase": 2,
+  "status": "IN_PROGRESS",
+  "date": "2026-11-06",
+  "scope": "Private local verification; no Phase 2 deployment or human wallet checkpoint",
+  "studioApp": "c47658be-4463-462f-89b8-a0a418962a3d",
+  "startingPrivateCommit": "4f6c75047fc523e0e4f306a57878869a8e938788",
+  "contractSha256": "eeda231d455f2eb4568e495ae27007a191706be04d05360ec412178c8962522e",
+  "checks": [
+    {
+      "command": "wsl bash -lc 'cd /mnt/c/GitHub/MicroCover-Private && ~/.foundry/bin/forge test'",
+      "exitCode": 0,
+      "passed": 210,
+      "failed": 0,
+      "skipped": 0,
+      "suites": 31
+    },
+    {
+      "command": "wsl bash -lc 'cd /mnt/c/GitHub/MicroCover-Private && ~/.foundry/bin/forge build --sizes'",
+      "exitCode": 0,
+      "runtimeBytes": 14841,
+      "initBytes": 15351,
+      "warnings": "Foundry lint warnings retained"
+    },
+    {
+      "command": "bun run check",
+      "exitCode": 0,
+      "includes": [
+        "lint",
+        "tsc --noEmit"
+      ]
+    },
+    {
+      "command": "bunx vite build",
+      "exitCode": 0,
+      "warnings": [
+        "Wallet dependency PURE annotations",
+        "Chunks above 500 kB"
+      ]
+    },
+    {
+      "command": "bun \"$env:TEMP\\microcover-phase1-abi.ts\"",
+      "exitCode": 0,
+      "uiAbiEntries": 77,
+      "mismatches": 0
+    },
+    {
+      "command": "arc-studio pull --app c47658be-4463-462f-89b8-a0a418962a3d --paths \"contracts/MicroCover.sol\" \"contracts/test/*.sol\" \"src/microcover/**\" \"src/App.tsx\" \"package.json\" \"bun.lock\" --dry-run",
+      "exitCode": 0,
+      "sourceChanges": 0
+    },
+    {
+      "command": "git diff --check",
+      "result": "Initial extra EOF blank line in LookupCard.tsx corrected; rerun passed"
+    }
+  ],
+  "browser": {
+    "productionPreview": "No configured address; no funding buttons; compensation change recalculates bond/total",
+    "mobileViewport": {
+      "width": 390,
+      "height": 844,
+      "documentScrollWidth": 375
+    },
+    "historicalPhase1Address": "Unsupported / Phase 2 deployment required; no funding/action buttons",
+    "observedConsoleErrors": 0,
+    "connectedWalletTested": false,
+    "viewportReset": true
+  },
+  "limitations": [
+    "No fresh Phase 2 deployment/address/transactions",
+    "Fresh-profile live guarantee, wallet rejection and wrong-network observations pending",
+    "Trusted immutable demo operator; no CRE or independent evidence",
+    "Disputes can lock funds until provider admits failure",
+    "Studio judge sharing unresolved"
+  ],
+  "intermediateFailures": [
+    "Reviewer probe arithmetic expectation corrected; four probes rerun passed",
+    "Four draft provider balance expectations corrected; 78 unit/fuzz tests then passed",
+    "Guided reachability driver extended after missing pending-to-failure; target and full suite rerun passed",
+    "Broad artifact-inclusive dry run failed; no artifacts imported; source-only parity passed"
+  ],
+  "git": {
+    "phase2Committed": false,
+    "phase2Pushed": false,
+    "publicCheckoutChanged": false
+  }
+}

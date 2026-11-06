@@ -25,6 +25,9 @@ abstract contract Phase1Base is Test {
     address internal carol = makeAddr("carol");
     address internal dave = makeAddr("dave");
     address internal stranger = makeAddr("stranger");
+    address internal operator = makeAddr("demoOperator");
+    uint64 internal constant WINDOW = 120;
+    uint64 internal constant UNCERTAINTY = 30 days;
 
     uint128 internal constant COMP = 5e6;
     uint128 internal constant ESC = 2e6;
@@ -40,9 +43,18 @@ abstract contract Phase1Base is Test {
         return new MockUSDC();
     }
 
+    /// Fixture durations; Phase 3 suites override these to exercise other unequal/equal configurations.
+    function _window() internal view virtual returns (uint64) {
+        return WINDOW;
+    }
+
+    function _uncertainty() internal view virtual returns (uint64) {
+        return UNCERTAINTY;
+    }
+
     function setUp() public virtual {
         usdc = _deployToken();
-        cover = new MicroCover(IERC20(address(usdc)));
+        cover = new MicroCover(IERC20(address(usdc)), operator, _window(), _uncertainty());
         joinDeadline = uint64(block.timestamp + 1 days);
         settlementTime = uint64(block.timestamp + 7 days);
         _fundProvider(provider);

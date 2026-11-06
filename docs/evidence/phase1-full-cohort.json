@@ -1,0 +1,126 @@
+{
+  "address": "0xff679b65c1d09e8d49fb18bb656f4509b33af9a0",
+  "observedBlock": "0x43b42fa",
+  "nextGuaranteeId": "2",
+  "getGuarantee": {
+    "provider": "0x1d39fc0e5293AB949D63217fFB375357ADf3933f",
+    "compensation": "5000000",
+    "escrowAmount": "2000000",
+    "maxCohort": 3,
+    "cohortSize": 3,
+    "joinDeadline": "1793963336",
+    "settlementTime": "1794049736",
+    "termsHash": "0xcc51a7dc1dae86fe70242ff6108d7d2fc8d265623d5697851d5b0fa78cdaccad"
+  },
+  "getState": {
+    "status": 0,
+    "outcome": 0,
+    "enrolled": 3,
+    "paidCount": 0,
+    "openSlots": 0,
+    "failureAdmittedAt": "0",
+    "bondHeld": "15000000",
+    "reservedCompensation": "15000000",
+    "escrowHeld": "6000000",
+    "paidCompensation": "0",
+    "paidEscrow": "0",
+    "withdrawableBond": "0",
+    "remainingOwed": "21000000"
+  },
+  "getBeneficiaries": [
+    "0x26DD598639E917F32D256B0cAd0408a842af0218",
+    "0x0967c9e2561e6965d874AA05F638A571Cdc22e9e",
+    "0x2d436EBe81bd9067Fa6739d527Eaa75dfB876c50"
+  ],
+  "events": [
+    {
+      "event": "GuaranteeCreated",
+      "args": {
+        "id": "1",
+        "provider": "0x1d39fc0e5293AB949D63217fFB375357ADf3933f",
+        "compensation": "5000000",
+        "escrowAmount": "2000000",
+        "maxCohort": 3,
+        "joinDeadline": "1793963336",
+        "settlementTime": "1794049736",
+        "termsHash": "0xcc51a7dc1dae86fe70242ff6108d7d2fc8d265623d5697851d5b0fa78cdaccad",
+        "bond": "15000000"
+      },
+      "transactionHash": "0xfd79f245a8dec282a1430fa3df7e89e6b200e182d13b5610cdcfe069bbf9a276",
+      "blockNumber": "70991178"
+    },
+    {
+      "event": "CohortJoined",
+      "args": {
+        "id": "1",
+        "beneficiary": "0x26DD598639E917F32D256B0cAd0408a842af0218",
+        "cohortSize": 1
+      },
+      "transactionHash": "0x629b2e5d6a885877802992f27a9e2ab283216556dff8c1aba40e1f721a17c044",
+      "blockNumber": "70991834"
+    },
+    {
+      "event": "CohortJoined",
+      "args": {
+        "id": "1",
+        "beneficiary": "0x0967c9e2561e6965d874AA05F638A571Cdc22e9e",
+        "cohortSize": 2
+      },
+      "transactionHash": "0x97381cb67c29768127a842687af8b0b9bcdd1c7fc2fe82e6600dd65e3d200afe",
+      "blockNumber": "70992414"
+    },
+    {
+      "event": "CohortJoined",
+      "args": {
+        "id": "1",
+        "beneficiary": "0x2d436EBe81bd9067Fa6739d527Eaa75dfB876c50",
+        "cohortSize": 3
+      },
+      "transactionHash": "0x41c91cb1c9f25b06d66902a228aa3899807a27036ac58e7e2b87b27fd869b3d6",
+      "blockNumber": "70992590"
+    }
+  ],
+  "creationReceiptStatus": "0x1",
+  "usdcTransfers": [
+    {
+      "from": "0x1d39fc0e5293AB949D63217fFB375357ADf3933f",
+      "to": "0xFF679b65C1d09E8D49fb18bb656f4509B33aF9a0",
+      "value": "15000000"
+    }
+  ],
+  "enrollmentReceipts": [
+    {
+      "transactionHash": "0x629b2e5d6a885877802992f27a9e2ab283216556dff8c1aba40e1f721a17c044",
+      "status": "0x1",
+      "usdcTransfers": [
+        {
+          "from": "0x26DD598639E917F32D256B0cAd0408a842af0218",
+          "to": "0xFF679b65C1d09E8D49fb18bb656f4509B33aF9a0",
+          "value": "2000000"
+        }
+      ]
+    },
+    {
+      "transactionHash": "0x97381cb67c29768127a842687af8b0b9bcdd1c7fc2fe82e6600dd65e3d200afe",
+      "status": "0x1",
+      "usdcTransfers": [
+        {
+          "from": "0x0967c9e2561e6965d874AA05F638A571Cdc22e9e",
+          "to": "0xFF679b65C1d09E8D49fb18bb656f4509B33aF9a0",
+          "value": "2000000"
+        }
+      ]
+    },
+    {
+      "transactionHash": "0x41c91cb1c9f25b06d66902a228aa3899807a27036ac58e7e2b87b27fd869b3d6",
+      "status": "0x1",
+      "usdcTransfers": [
+        {
+          "from": "0x2d436EBe81bd9067Fa6739d527Eaa75dfB876c50",
+          "to": "0xFF679b65C1d09E8D49fb18bb656f4509B33aF9a0",
+          "value": "2000000"
+        }
+      ]
+    }
+  ]
+}

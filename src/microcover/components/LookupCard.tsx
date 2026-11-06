@@ -1,95 +1,205 @@
-import { useState } from 'react'
 import type { Address } from 'viem'
-import { useReadContract, useReadContracts } from 'wagmi'
 import { formatUsdc } from '@/onchain-money'
-import { Card, Row } from './Card'
-import { MICROCOVER_ADDRESS, TARGET_CHAIN_ID, microCoverAbi } from '../contract'
+import { OUTCOME, OUTCOME_LABEL, STATUS, STATUS_LABEL } from '../contract'
+import { fmtTime } from '../format'
+import { isOperator, isProvider, nextStep } from '../lifecycle'
+import type { ChainTime } from '../useChainTime'
+import type { GuaranteeRead, GuaranteeView } from '../useGuarantee'
+import { useShareLink } from '../useShareLink'
+import { AddressValue, Badge, Callout, Card, CopyButton, Dl, Row } from './Card'
+import { ghostButton } from './ChainGate'
 
-const when = (seconds: bigint | number) => new Date(Number(seconds) * 1000).toLocaleString()
+interface Props {
+  idInput: string
+  onIdChange: (value: string) => void
+  /** Highest existing guarantee id, when known. */
+  latestId: bigint | undefined
+  read: GuaranteeRead
+  account: Address | undefined
+  operator: Address
+  chain: ChainTime
+}
 
-function Reader({ address }: { address: Address }) {
-  const [input, setInput] = useState('1')
-  const id = /^\d{1,18}$/.test(input) ? BigInt(input) : undefined
+const statusTone = (status: number): 'ok' | 'warn' | 'danger' | 'neutral' =>
+  status === STATUS.OPEN || status === STATUS.SUCCEEDED ? 'ok' : status === STATUS.FAILED || status === STATUS.UNCERTAIN ? 'danger' : status === STATUS.SUCCESS_PENDING ? 'warn' : 'neutral'
 
-  const next = useReadContract({
-    address,
-    abi: microCoverAbi,
-    functionName: 'nextGuaranteeId',
-    chainId: TARGET_CHAIN_ID,
-  })
+function Roles({ g, account, operator }: { g: GuaranteeView; account: Address | undefined; operator: Address }) {
+  const ctx = { account, operator }
+  const roles: string[] = []
+  if (isProvider(g, ctx)) roles.push('You are the provider')
+  if (isOperator(ctx)) roles.push('You are the demo operator')
+  if (g.isMember) roles.push('You are an enrolled beneficiary')
+  if (account === undefined) return <p className="mc-hint">Connect a wallet to see your role on this guarantee.</p>
+  if (roles.length === 0) return <p className="mc-hint">You are viewing this guarantee as an outside observer.</p>
+  return (
+    <div className="mc-badges" aria-label="Your roles">
+      {roles.map((r) => (
+        <Badge key={r} tone="ok">
+          {r}
+        </Badge>
+      ))}
+    </div>
+  )
+}
 
-  const base = { address, abi: microCoverAbi, chainId: TARGET_CHAIN_ID } as const
-  const guarantee = useReadContracts({
-    contracts: [
-      { ...base, functionName: 'getGuarantee', args: [id ?? 0n] },
-      { ...base, functionName: 'bondOf', args: [id ?? 0n] },
-      { ...base, functionName: 'escrowedOf', args: [id ?? 0n] },
-      { ...base, functionName: 'isJoinable', args: [id ?? 0n] },
-    ],
-    query: { enabled: id !== undefined },
-  })
-
-  const [terms, bond, escrowed, joinable] = guarantee.data ?? []
-  const created = next.data === undefined ? undefined : next.data - 1n
-
+function Details({ g, account, operator, chain }: { g: GuaranteeView; account: Address | undefined; operator: Address; chain: ChainTime }) {
+  const success = g.outcome === OUTCOME.SUCCESS
+  const failure = g.outcome === OUTCOME.FAILURE
+  const each = g.escrowAmount + g.compensation
+  const myIndex = account ? g.beneficiaries.findIndex((b) => b.address.toLowerCase() === account.toLowerCase()) : -1
   return (
     <>
-      <p className="text-sm text-[var(--muted)]">
-        {created === undefined ? 'Reading the contract...' : `${created.toString()} guarantee${created === 1n ? '' : 's'} created`}
-      </p>
-
-      <label className="mt-4 block text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]" htmlFor="guarantee-id">
-        Guarantee id
-      </label>
-      <input
-        id="guarantee-id"
-        inputMode="numeric"
-        value={input}
-        onChange={(e) => setInput(e.target.value.trim())}
-        className="mt-1.5 min-h-11 w-full rounded-2xl border border-[var(--border)] bg-[var(--surface-strong)] px-4 text-base tabular-nums text-[var(--ink)] outline-none focus:border-[var(--focus)] focus:ring-2 focus:ring-[var(--focus)]/40"
-      />
-
-      <div className="mt-4">
-        {id === undefined ? (
-          <p className="text-sm text-[var(--danger)]">Enter a whole number.</p>
-        ) : guarantee.isLoading ? (
-          <p className="text-sm text-[var(--muted)]">Loading...</p>
-        ) : terms?.status === 'success' ? (
-          <dl className="rounded-2xl bg-[var(--surface-strong)] p-4">
-            <Row label="Provider">
-              <span className="mono text-[13px]">{`${terms.result.provider.slice(0, 6)}...${terms.result.provider.slice(-4)}`}</span>
-            </Row>
-            <Row label="Cohort">
-              {terms.result.cohortSize} / {terms.result.maxCohort}
-            </Row>
-            <Row label="Compensation each">{formatUsdc(terms.result.compensation)} USDC</Row>
-            <Row label="Escrow each">{formatUsdc(terms.result.escrowAmount)} USDC</Row>
-            <Row label="Bond held">{bond?.status === 'success' ? `${formatUsdc(bond.result)} USDC` : '-'}</Row>
-            <Row label="Escrow held">{escrowed?.status === 'success' ? `${formatUsdc(escrowed.result)} USDC` : '-'}</Row>
-            <Row label="Join deadline">{when(terms.result.joinDeadline)}</Row>
-            <Row label="Settlement time">{when(terms.result.settlementTime)}</Row>
-            <Row label="Open to join">{joinable?.status === 'success' ? (joinable.result ? 'Yes' : 'No') : '-'}</Row>
-          </dl>
-        ) : (
-          <p className="text-sm text-[var(--muted)]">No guarantee with this id yet.</p>
-        )}
+      <div className="mc-badges">
+        <Badge tone={statusTone(g.status)}>Status: {STATUS_LABEL[g.status] ?? 'Unknown'}</Badge>
+        <Badge tone={success ? 'ok' : failure ? 'danger' : 'neutral'}>Outcome: {OUTCOME_LABEL[g.outcome] ?? 'Unknown'}</Badge>
       </div>
+      <div className="mc-mt-2">
+        <Roles g={g} account={account} operator={operator} />
+      </div>
+      {chain.now !== undefined && (
+        <div className="mc-mt-3">
+          <Callout>
+            <strong>What happens next.</strong> {nextStep(g, { now: chain.now, account, operator })}
+          </Callout>
+        </div>
+      )}
+
+      <h3 className="mc-sub-h">People</h3>
+      <Dl>
+        <Row label="Provider">
+          <AddressValue address={g.provider} label="provider address" />
+        </Row>
+        <Row label="Demo operator">
+          <AddressValue address={g.demoOperator} label="demo operator address" />
+        </Row>
+        <Row label="Enrolled / maximum">
+          {g.cohortSize} / {g.maxCohort}
+        </Row>
+      </Dl>
+
+      <h3 className="mc-sub-h">Funds held for this guarantee</h3>
+      <Dl>
+        <Row label="Bond held">{formatUsdc(g.bondHeld)} USDC</Row>
+        <Row label="Reserved for beneficiaries (part of the bond)">{formatUsdc(g.reservedCompensation)} USDC</Row>
+        <Row label="Beneficiary escrow held">{formatUsdc(g.escrowHeld)} USDC</Row>
+      </Dl>
+
+      {failure && (
+        <>
+          <h3 className="mc-sub-h">Failure payout progress</h3>
+          <Dl>
+            <Row label="Beneficiaries paid">
+              {g.paidCount} of {g.cohortSize}
+            </Row>
+            <Row label="Still owed to beneficiaries">{formatUsdc(g.remainingOwed)} USDC</Row>
+            <Row label="Unused bond the provider can withdraw">{formatUsdc(g.withdrawableBond)} USDC</Row>
+          </Dl>
+        </>
+      )}
+      {success && (
+        <>
+          <h3 className="mc-sub-h">Success release progress</h3>
+          <Dl>
+            <Row label="Compensation reservation released">{formatUsdc(g.releasedSuccessReservation)} USDC</Row>
+            <Row label="Escrow released to provider">{g.successEscrowReleased ? `Yes, ${formatUsdc(g.releasedSuccessEscrow)} USDC` : 'Not yet'}</Row>
+            <Row label="Bond withdrawn by provider">{g.status === STATUS.CLOSED ? `Yes, ${formatUsdc(g.withdrawnBond)} USDC` : 'Not yet'}</Row>
+          </Dl>
+          <p className="mc-hint">No beneficiary is paid when a guarantee succeeds.</p>
+        </>
+      )}
+
+      <h3 className="mc-sub-h">{success ? 'Enrolled beneficiaries (no payout on success)' : 'Enrolled beneficiaries'}</h3>
+      {g.beneficiaries.length === 0 ? (
+        <p className="mc-p mc-muted mc-mt-2">No beneficiaries enrolled.</p>
+      ) : (
+        <ul className="mc-list">
+          {g.beneficiaries.map((b, i) => (
+            <li key={b.address}>
+              <span className="mc-mono">
+                {i + 1}. {b.address}
+                {i === myIndex ? ' (you)' : ''}
+              </span>
+              <span>
+                {g.outcome===OUTCOME.UNRESOLVED_REFUNDED?`${formatUsdc(g.escrowAmount)} USDC escrow refund: ${i<g.refundedCount?'settled':'pending'}; no compensation`:success ? 'No payout' : failure ? `${formatUsdc(each)} USDC: ${b.paid ? 'paid' : 'pending'}` : `${formatUsdc(each)} USDC if failure is established`}
+              </span>
+            </li>
+          ))}
+        </ul>
+      )}
+      {myIndex >= 0 && failure && !g.beneficiaries[myIndex]?.paid && (
+        <p className="mc-hint">Your payout is pending. Anyone can run settlement; you do not need to claim.</p>
+      )}
+      {chain.now !== undefined && <p className="mc-hint">Chain time {fmtTime(chain.now)}</p>}
     </>
   )
 }
 
-export function LookupCard() {
+export function LookupCard({ idInput, onIdChange, latestId, read, account, operator, chain }: Props) {
+  const parsed = /^\d{1,18}$/.test(idInput) ? BigInt(idInput) : undefined
+  const id = parsed !== undefined && parsed > 0n ? parsed : undefined
+  const shareLink = useShareLink(read.state === 'ready' ? id : undefined)
+
   return (
-    <Card title="Onchain guarantee">
-      {MICROCOVER_ADDRESS ? (
-        <Reader address={MICROCOVER_ADDRESS} />
-      ) : (
-        <p className="text-sm text-[var(--muted)] text-pretty">
-          Deploy MicroCover to Arc Testnet, then add its address to <span className="mono text-[13px]">.env</span> as{' '}
-          <span className="mono text-[13px]">VITE_MICROCOVER_ADDRESS</span> and restart the dev server. Live guarantees
-          appear here, read directly from the chain.
-        </p>
+    <Card title="Guarantee: public detail and your status">
+      <label className="mc-label" htmlFor="guarantee-id">
+        Guarantee id
+      </label>
+      <div className="mc-actions mc-mt-1">
+        <input
+          id="guarantee-id"
+          className="mc-input"
+          inputMode="numeric"
+          autoComplete="off"
+          placeholder={latestId && latestId > 0n ? `Latest is ${latestId.toString()}` : 'For example 1'}
+          value={idInput}
+          onChange={(e) => onIdChange(e.target.value.trim())}
+        />
+        <button type="button" className={ghostButton} disabled={!latestId || latestId < 1n} onClick={() => latestId && onIdChange(latestId.toString())}>
+          Load the latest guarantee
+        </button>
+      </div>
+      <p className="mc-hint">
+        {latestId === undefined ? 'Reading the contract...' : `${latestId.toString()} guarantee${latestId === 1n ? '' : 's'} created so far.`}
+      </p>
+
+      {shareLink && (
+        <div className="mc-mt-3">
+          <Dl>
+            <Row label="Shareable link">
+              <span className="mc-addr">
+                <span className="mc-mono mc-addr-text">{shareLink}</span>
+                <span className="mc-addr-actions">
+                  <CopyButton value={shareLink} label="share link" />
+                </span>
+              </span>
+            </Row>
+          </Dl>
+          <p className="mc-hint">Anyone who opens this link sees the same public detail, read from the chain. It contains only the guarantee id.</p>
+        </div>
       )}
+
+      <div className="mc-mt-4" aria-live="polite">
+        {idInput === '' ? (
+          <p className="mc-p mc-muted">Enter a guarantee id, or create one below.</p>
+        ) : id === undefined ? (
+          <p className="mc-bad">Enter a whole number of 1 or more.</p>
+        ) : read.state === 'ready' && read.data ? (
+          <Details g={read.data} account={account} operator={operator} chain={chain} />
+        ) : read.state === 'unknown' ? (
+          <Callout>No guarantee exists with this id on this contract.</Callout>
+        ) : read.state === 'unavailable' ? (
+          <div className="mc-actions" role="alert">
+            <Callout tone="warn">
+              Could not read the {read.failed.join(', ')} from the network. This does not mean the guarantee is missing or that you are unpaid. Every action stays disabled until all reads succeed.
+            </Callout>
+            <button type="button" className={ghostButton} onClick={read.refetch}>
+              Retry
+            </button>
+          </div>
+        ) : (
+          <p className="mc-p mc-muted">Loading from the chain...</p>
+        )}
+      </div>
     </Card>
   )
 }
