@@ -10,7 +10,7 @@ export function ExampleCard() {
       title="Guarantee model"
       aside={
         <span className="rounded-full bg-[var(--surface-muted)] px-2.5 py-1 text-[11px] font-medium text-[var(--muted)]">
-          Illustrative
+          Synthetic demo
         </span>
       }
     >
@@ -45,7 +45,9 @@ export function ExampleCard() {
 
       <p className="mt-4 text-xs text-[var(--subtle)] text-pretty">
         {EXAMPLE.providerLabel} is the provider. Each {EXAMPLE.beneficiaryNoun.toLowerCase()} is a beneficiary.
-        The bond always covers the full cohort, so every beneficiary can be compensated.
+        The bond always covers the full cohort, so every beneficiary can be compensated. This phase handles failure
+        only: if the provider admits failure, each beneficiary gets their escrow back plus the compensation. There
+        is no success or release path yet.
       </p>
     </Card>
   )
