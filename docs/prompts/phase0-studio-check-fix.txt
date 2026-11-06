@@ -1,0 +1,8 @@
+Phase 0 toolchain reconciliation only for this existing MicroCover Studio project. Do not deploy, sign transactions, add product features, or change contracts/MicroCover.sol or src/microcover/.
+
+The exported project is being checked on Windows with Bun 1.3.14. These actual local commands failed:
+- bun run check: its bash scripts/check.sh cannot find bash in Bun's Windows script environment.
+- bun run lint: Bun's Windows shell rejects the POSIX arithmetic in the package.json lint script.
+- bun run typecheck: scripts/compass-deploy.ts imports @circlefin/compass-chains, which is absent from package.json and returns npm 404 publicly.
+
+Fix the generated check/tooling files narrowly so lint and typecheck remain meaningful and work from the exported project on Windows. Do not hide the missing deployment dependency by excluding the affected script from checks. If its real public replacement or safe local implementation cannot be verified, report that blocker and leave deployment behavior unchanged. Preserve the Bun/Foundry toolchain. Run the actual check, contract build and test commands you can run in Studio, and report exact outcomes. Do not describe this as deployed or externally audited.

@@ -1,0 +1,111 @@
+# Verified setup and commands
+
+The Studio export was copied into this checkout on 6 November 2026. Bun 1.3.14 was installed on Windows and Foundry 1.7.1 in WSL to run local checks. Commands and outcomes below distinguish successful checks from generated-script failures. No transaction was signed.
+
+## Repository and environment inventory
+
+- Actual private local path: `C:\GitHub\MicroCover-Private`
+- Private GitHub: https://github.com/TheDarkKnightSujo/MicroCover-Private
+- Public GitHub: https://github.com/TheDarkKnightSujo/MicroCover
+- Studio project URL: `https://studio.arc.io/app/c47658be-4463-462f-89b8-a0a418962a3d` (human supplied); sharing/access not tested
+- Studio source-sync route: official [Arc Studio CLI package documentation](https://www.npmjs.com/package/@circle-fin/arc-studio-cli) describes `--app <appId>`, `--file` round trips and diff-aware `pull`; project-specific authentication and round trip not yet tested
+- Operating system/shell: Windows / PowerShell
+- Framework/language/runtime versions: Studio-generated React/Vite/TypeScript app; Node v24.16.0 present
+- Package manager/lockfile: Studio-generated Bun 1.3.14 and `bun.lock`; Bun 1.3.14 installed locally
+- Contract toolchain: Studio-generated Foundry v1.7.1, Solidity 0.8.28; Forge 1.7.1 installed in WSL
+- Git: local `main` contains human root foundation commit `91b692fd0a6192fc0ab031e6befa4389ae336faf`; `origin/main` absent locally and planning documents untracked; no push recorded
+- CRE CLI: 1.39.0 installed at `%LOCALAPPDATA%\Programs\cre\cre.exe`; human login and agent `whoami` succeeded
+- Arc Studio CLI: `@circle-fin/arc-studio-cli` 1.2.2 installed globally; human login completed, app ID matched and read-only dry run passed
+
+## Command matrix
+
+| Task | Working directory | Exact command | Actual result/date |
+|---|---|---|---|
+| Install | Repository root | `bun install --frozen-lockfile` | Passed, 838 packages installed, 6 November 2026 |
+| Start app | Repository root | `bun run dev --host 127.0.0.1` | Passed; Vite ready at `http://127.0.0.1:5173/`, HTTP 200; server stopped |
+| Start evidence collector | Pending | Pending | Not run |
+| Contract checks | WSL `/mnt/c/GitHub/MicroCover-Private` | `~/.foundry/bin/forge build`; `~/.foundry/bin/forge test` | Passed; compile successful, 33/33 tests passed (6 November 2026) |
+| App production build | Repository root | `bunx vite build` | Passed with third-party annotation and chunk-size warnings; 6 November 2026 |
+| Generated check script | Repository root | `bun run check` | Initially failed on Windows; Studio-reconciled scripts pulled and rerun successfully, exit 0 |
+| App source lint | Repository root | `bunx oxlint --type-aware src` | Passed, exit 0 |
+| Generated lint script | Repository root | `bun run lint` | Initially failed on Windows; corrected script ran within passing `bun run check` |
+| Generated typecheck | Repository root | `bun run typecheck` | Initially failed on unavailable `@circlefin/compass-chains`; corrected script ran within passing `bun run check` |
+| Evidence integrity checks | Pending | Pending | Not run |
+| CRE CLI smoke simulation | Temporary project outside repo | `cre workflow simulate smoke --target staging-settings --trigger-index 0 --non-interactive` | Passed after Windows Bun executable PATH fix; Hello World only, no Arc reporting |
+| Arkiv smoke write/query | Arkiv Hub + public Rabdi RPC | Human Hub create; `arkiv_getEntity` and `arkiv_query` below | Passed for the labelled Phase 0 sample entity; no MicroCover integration |
+
+## Phase 0 checks actually run — 6 November 2026
+
+| Command | Result |
+|---|---|
+| `git status --short --branch` | `main` has no commits; planning documents untracked. |
+| `git log -5 --oneline --decorate` | Failed: current branch has no commits. This is expected for the unborn branch, not a successful history check. |
+| `git remote -v` | `origin` points to the private MicroCover GitHub URL; remote reachability was not tested. |
+| `rg --files --hidden -g '!**/.git/**'` | Only planning/docs/Arkiv template files and local review graph state; no app, contract, package manifest, lockfile, or Studio output. |
+| `foreach ($name in @('node','npm','pnpm','bun','forge','cre')) { Get-Command $name -ErrorAction SilentlyContinue }` (with presence/absence printed) | Node, npm, pnpm present; Bun, Forge, CRE absent. Versions were not queried. |
+| `$body = @{ jsonrpc = '2.0'; id = 1; method = 'eth_chainId'; params = @() } \| ConvertTo-Json -Compress; Invoke-RestMethod -Uri 'https://rpc.testnet.arc.io' -Method Post -ContentType 'application/json' -Body $body -TimeoutSec 15` | Success, `result: 0x4cef52` = 5042002. Read-only RPC connectivity only. |
+
+Official references checked on 6 November 2026: [Arc network setup](https://docs.arc.io/arc/references/connect-to-arc) gives Testnet RPC and chain ID 5042002; [Arc contract addresses](https://docs.arc.io/arc/references/contract-addresses) lists the optional ERC-20 USDC interface at `0x3600000000000000000000000000000000000000` with 6 decimals. Native gas uses 18-decimal precision; do not mix the two. No token contract call was made. [Chainlink CRE](https://docs.chain.link/changelog/cre-expands-testnet-support) lists Arc Testnet for simulation, not proof of deployed workflow support. [Arkiv first entity](https://docs.arkiv.network/start-here/first-entity/) currently targets Rabdi and requires a funded test account and access key for write/query. No Arkiv write was attempted.
+
+## Studio export and CLI checks — 6 November 2026
+
+| Command / action | Actual result |
+|---|---|
+| Copy selected source, app, tests, scripts, manifests and vendored `lib/forge-std` from `C:\GitHub\MicroCover-Studio-Export` | Completed. Excluded `.env`, generated `contracts/out`/`contracts/cache` and Studio's separate `AGENTS.md`. |
+| `Get-FileHash` on seven representative source/config paths in export and private checkout | All seven SHA-256 hashes matched. This is a spot check, not a full tree comparison. |
+| `Test-Path -LiteralPath '.env'` | False in private checkout. |
+| `git check-ignore -v .env .env.example .arc-studio/session.json contracts/out/example.json` | `.env`, CLI state and Foundry output ignored; `.env.example` explicitly allowed. |
+| `npm install -g @circle-fin/arc-studio-cli` | Exit 0; 45 packages added. |
+| `arc-studio --version` | `1.2.2`. |
+| `arc-studio pull --help`; `arc-studio run --help`; `arc-studio agent-guide` | Exit 0; confirm `--app <appId>`, `--dry-run`, `--diff`, `--file`, and `pull` support. |
+| `arc-studio whoami` | Failed: not authenticated; requires human `arc-studio login`. No app-specific CLI read or round trip attempted. |
+
+After human login, `arc-studio whoami` succeeded. `arc-studio apps --json` returned exactly one app matching `c47658be-4463-462f-89b8-a0a418962a3d`. `arc-studio ls --app c47658be-4463-462f-89b8-a0a418962a3d --paths 'contracts/MicroCover.sol' 'contracts/test/**' 'src/microcover/**' 'package.json' 'bun.lock'` listed the expected files. `arc-studio pull --app c47658be-4463-462f-89b8-a0a418962a3d --out C:\GitHub\MicroCover-Private --paths 'contracts/MicroCover.sol' 'contracts/test/**' 'src/microcover/**' 'package.json' 'bun.lock' --dry-run` reported every selected file unchanged (`=`), zero files to write. This verifies read/snapshot parity for selected paths, not an external-edit round trip back into Studio or judge sharing.
+
+Local setup/check details: `npm install -g bun@1.3.14` succeeded; `bun --version` returned `1.3.14`. Official `foundryup` installed Forge 1.7.1 in WSL with Sigstore/binary verification. `wsl bash -lc 'cd /mnt/c/GitHub/MicroCover-Private && ~/.foundry/bin/forge build'` passed with timestamp and test-cast lint warnings. The matching `forge test` command passed 33 tests across three suites, including 256-run fuzz cases and two 128,000-call invariant runs. `bun run dev --host 127.0.0.1` reached Vite ready; `Invoke-WebRequest -Uri 'http://127.0.0.1:5173/' -TimeoutSec 10` returned HTTP 200 with the app root. This is an HTTP smoke check, not a browser or wallet check. `bunx vite build` passed despite dependency annotation and large-chunk warnings.
+
+Troubleshooting: `bun run check` initially failed because its Bash script is not portable to this Windows Bun environment. `bun run lint` initially failed because POSIX arithmetic was not parsed by Bun's Windows shell. `bun run typecheck` initially failed on `@circlefin/compass-chains`, referenced by the Studio deployment script but absent from `package.json`; `npm view @circlefin/compass-chains version` returned 404. Studio changed the scripts to use Bun/Node process runners and an Arc Testnet-only local chain definition. The changes were reviewed, pulled into the private checkout and `bun run check` reran successfully. This resolves the check command, not deployment. `compass-deploy.ts` still loads other Studio-internal packages at runtime and contains `/home/user/app` paths, so its local deploy path is unverified outside Studio. No deployment was attempted.
+
+Studio source-sync evidence: `arc-studio run --app c47658be-4463-462f-89b8-a0a418962a3d --prompt-file docs/prompts/phase0-studio-check-fix.txt` and the Arc-only follow-up prompt in `docs/prompts/` edited the existing Studio project. Studio reported `bun run check`, `forge build` and `forge test` passing there, including 33/33 contract tests. The second CLI turn used `--output text` redirected to a private temporary log; no credential or preview-token URL was copied into this repository. `arc-studio pull --app c47658be-4463-462f-89b8-a0a418962a3d --out C:\GitHub\MicroCover-Private --paths 'package.json' 'scripts/check.ts' 'scripts/lint.ts' 'scripts/run-tool.ts' 'scripts/compass-chain-defs.ts' 'scripts/compass-deploy.ts' 'scripts/self-deploy.ts' --force` pulled only seven reviewed tooling files. A subsequent `pull` with the same paths and `--dry-run` returned `=` for all seven and zero changes. The CLI method is confirmed for this app; no local source file has yet been uploaded via `--file` for a reverse round trip.
+
+Separate checkout check: `Test-Path -LiteralPath 'C:\GitHub\MicroCover'` returned True; `git -C C:\GitHub\MicroCover rev-parse --show-toplevel` and local `git rev-parse --show-toplevel` returned distinct public and private paths. The public checkout was not modified.
+
+## Configuration inventory
+
+First human commit verification: `git log -1 --format='%H%n%s%n%an'` returned `91b692fd0a6192fc0ab031e6befa4389ae336faf`, `chore: import tested Arc Studio foundation`, author Abhiraj Kochale. `git status --short --branch` showed only the two plan files, SETUP_CHECKLIST.md, arkiv/ and docs/ untracked. Working/index diff stats were empty. The agent performed read-only Git verification; no tests were repeated for the commit operation itself.
+
+Pre-commit whitespace review: human staged 117 foundation files. `git diff --cached --check` failed on extra EOF blank lines in index.html, postcss.config.js, src/main.tsx, tailwind.config.js and tsconfig.json. Agent removed exactly one blank line in each working file; `git diff --numstat` showed 0 additions/1 deletion per file and working-tree `git diff --check` passed (line-ending notices only). The index still needs human re-staging and a successful cached-check rerun. A staged-path exclusion check found zero `.env`/dependency/build/CLI-state paths among the 117 files; this is not a complete secret scan. Agent synced the five corrected files into the same Studio app using `arc-studio run --app ... --file local:remote` and docs/prompts/phase0-eof-sync.txt, exit 0. Targeted `pull --dry-run` returned all five unchanged, zero changes. No runtime tests repeated for whitespace-only edits; no agent staging/commit/push.
+
+Demo-amount reconciliation (6 November 2026): documentation only. `rg` checked the phase runbook/docs for stale active 20/10 reference amounts and pending-choice text; none matched the checked patterns after reconciliation. `rg` confirmed example.ts still contains compensation `parseUsdc('5')`, escrow `parseUsdc('2')` and three attendees. PowerShell arithmetic returned bond=15, escrow=6, locked=21, failureEach=7. `git check-ignore -v .env .env.example node_modules/example contracts/out/example dist/example .arc-studio/session.json` confirmed credential/build exclusions and the example-file exception. Runtime tests were not repeated because product code did not change; prior passing results remain recorded above. No staging/commit/push occurred.
+
+Arkiv smoke query (6 November 2026): human created the synthetic Hub entity, with 24h selected in the UI. Explorer web fetch failed, so reads used the [official JSON-RPC methods](https://docs.arkiv.network/json-rpc/querying-data/). POST these JSON bodies with `Content-Type: application/json` to `https://rpc.rabdi.db-chain.testnet.arkiv.network` (public, rate limited; no access key used):
+
+```json
+{"jsonrpc":"2.0","id":1,"method":"arkiv_getEntity","params":["0x948b565d57bc65cd125a5e8457dfc34ab1b020bb8fa88de20a2c5ffa37c0fccf"]}
+```
+
+```json
+{"jsonrpc":"2.0","id":1,"method":"arkiv_query","params":["arkiv.schema = str('arkiv-hub.forum-posts') AND board = str('microcover-phase0') AND $owner = addr(0x1d39fc0e5293ab949d63217ffb375357adf3933f)",{"select":{"key":true,"owner":true,"attributes":true,"createdAt":true,"expiresAt":true,"count":true},"limit":"0xa"}]}
+```
+
+Both actual `Invoke-RestMethod` calls succeeded. Query count `0x1` returned the same entity and expected board/title/body at block `0x43e63`. Creation block `0x43e3d`, expiry block `0x4e6fd` (43,200 blocks apart). Creation flags: `readonly=false`, `permissionlessExtension=false`; owner can mutate, and the entity will cease to be live after expiry. Saved observed summary: `docs/evidence/phase0-arkiv-smoke.json`. No creation transaction receipt was inspected because no full transaction hash was supplied. This proves sample write/read/query feasibility only.
+
+CRE smoke check (6 November 2026): working directory `C:\Users\abhir\AppData\Local\Temp`. Ran the installed CRE executable with `init --project-name microcover-phase0-cre-smoke --workflow-name smoke --template hello-world-ts --non-interactive`; it unexpectedly opened registry selection despite non-interactive mode, so it was cancelled (exit 1). `cre registry list` returned `private` as available. Reran initialization with `--deployment-registry private` (exit 0; local config only). In the temporary project, `bun install --cwd ./smoke` succeeded with SDK 1.23.0. Reviewed `smoke/main.ts`: cron log and string return only, no EVM write. Initial simulation failed during WASM compilation with `spawn bun ENOENT`. Successful rerun used `$globalModules = npm root -g; $env:PATH = (Join-Path $globalModules 'bun\bin') + ';' + $env:PATH; & "$env:LOCALAPPDATA\Programs\cre\cre.exe" workflow simulate smoke --target staging-settings --trigger-index 0 --non-interactive` from the temporary project. Exit 0, compiled and returned `Hello world!`. CLI mentioned its default simulation key, but no user key was provided and no `--broadcast` flag was used. This is CLI/compiler feasibility only, not a MicroCover or Arc receiver integration. Official template guidance: https://docs.chain.link/cre/getting-started/part-1-project-setup .
+
+CRE login follow-up: the human terminal initially could not resolve `cre` via PATH. Invoking `& "$env:LOCALAPPDATA\Programs\cre\cre.exe" login` directly succeeded. Agent invocation of the same executable with `whoami` returned exit 0 (account details withheld from notes). `& "$env:LOCALAPPDATA\Programs\cre\cre.exe" workflow supported-chains --output json` returned exit 0 and listed `arc-testnet`, selector `3034092155422581607`, platform address `0x76c9cf548b4179F8901cda1f8623568b58215E62`, mock forwarder `0x6E9EE680ef59ef64Aa8C7371279c27E496b5eDc1`. Record these as observed platform registry values only; receiver integration, actual authorization path and simulation are still unverified. No deployment/signing occurred.
+
+Additional Phase 0 setup: `irm https://app.chain.link/cre/install.ps1 | iex` succeeded, installed CRE CLI v1.39.0 and reported release-signature verification. Explicit executable calls for `version`, `login --help` and `whoami --help` succeeded. The installer warned that Go is absent; no Go workflow is selected and Bun is already available. Human must run `cre login` in a new terminal. No CRE scaffold, workflow, simulation or deployment was created by this setup.
+
+Arkiv setup evidence: human screenshot reports 10 tGLM delivered on Rabdi; full transaction link still pending. Human confirmed a Rabdi access key was saved privately. Neither the key nor a writer private key has been requested/read/configured here. These observations do not prove an Arkiv entity write/query.
+
+Faucet funding evidence (6 November 2026): human supplied [transaction link](https://testnet.arcscan.app/tx/0xe038079ddeb2c9134094a20347dd89610d68dc412ffa040e4ea7f8e8a763324c). Explorer fetch was unavailable. Read-only JSON-RPC calls `eth_getTransactionByHash` and `eth_getTransactionReceipt` at `https://rpc.testnet.arc.io` returned receipt status `0x1`; the official ERC-20 USDC Transfer log paid 20,000,000 base units to `0x1d39fc0e5293ab949d63217ffb375357adf3933f`. `eth_call` to USDC `balanceOf` for that account returned 20,000,000 = 20 USDC. This is faucet/network evidence, not a guarantee or settlement transaction.
+
+The Studio export at `C:\GitHub\MicroCover-Studio-Export` has `package.json`, `bun.lock`, `.bun-version` (`1.3.14`) and `.foundry-version` (`v1.7.1`). Its scripts are `bun run dev`, `bun run contracts:build`, `bun run contracts:test`, and `bun run check` (plus deployment scripts). A source snapshot was copied to this checkout. The export contains a `.env` with Studio RPC proxy settings; values were not copied here and that file must not be committed. The app's public config name is `VITE_MICROCOVER_ADDRESS` (deferred until deployment). The actual deployment scripts also reference server-only Circle credentials, `DEPLOYER_PRIVATE_KEY` and RPC proxy settings; none belong in browser variables. `.gitignore` excludes local `.env` variants while allowing `.env.example`.
+
+## Starting/stopping and persistence
+
+Record ports, startup order, readiness checks and shutdown commands once known. Explain where evidence cursors/raw payloads persist and how restarts avoid duplicates. A dev terminal/browser tab is not production continuous collection. Identify host sleep/ephemeral filesystem limits before deployment.
+
+## Troubleshooting record
+
+For each actual issue: command, sanitized error, expected behavior, root cause, minimal fix and rerun result. Do not replace missing service access with hardcoded success.
