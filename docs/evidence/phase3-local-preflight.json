@@ -1,0 +1,56 @@
+{
+  "kind": "UNSIGNED_LOCAL_PREFLIGHT_NOT_A_DEPLOYMENT",
+  "date": "2026-11-06",
+  "userAuthorizedLocalHumanDeploymentBeforeStudio": true,
+  "studioReconciled": false,
+  "broadcast": false,
+  "signerOpened": false,
+  "environmentChanged": false,
+  "deploymentTransaction": null,
+  "plan": {
+    "kind": "UNSIGNED_LOCAL_PREFLIGHT",
+    "chainId": 5042002,
+    "rpc": "https://rpc.testnet.arc.io",
+    "sender": "0x1d39fc0e5293ab949d63217ffb375357adf3933f",
+    "usdc": "0x3600000000000000000000000000000000000000",
+    "operator": "0x1d39fc0e5293ab949d63217ffb375357adf3933f",
+    "reviewWindow": 120,
+    "uncertaintyTimeout": 120,
+    "constructorTypes": [
+      "address",
+      "address",
+      "uint64",
+      "uint64"
+    ],
+    "creationHash": "0x3ad431344208f00e3c12cce7b6a20baf54c775a5872e5765c2ca8fc2ce28cb1a",
+    "runtimeHash": "0x9f0ad4a40e5a88e4b7ffce31a03a349169997fb8f21ce07899cabd812297156d",
+    "sourceHashes": {
+      "contracts/MicroCover.sol": "0x996b6192ead870e03497ea5c88813e941a30d84e65813f9930f8e924b76826fd",
+      "node_modules/@openzeppelin/contracts/interfaces/IERC1363.sol": "0xd5ea07362ab630a6a3dee4285a74cf2377044ca2e4be472755ad64d7c5d4b69d",
+      "node_modules/@openzeppelin/contracts/interfaces/IERC165.sol": "0x0afcb7e740d1537b252cb2676f600465ce6938398569f09ba1b9ca240dde2dfc",
+      "node_modules/@openzeppelin/contracts/interfaces/IERC20.sol": "0x1a6221315ce0307746c2c4827c125d821ee796c74a676787762f4778671d4f44",
+      "node_modules/@openzeppelin/contracts/token/ERC20/IERC20.sol": "0x74ed01eb66b923d0d0cfe3be84604ac04b76482a55f9dd655e1ef4d367f95bc2",
+      "node_modules/@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol": "0x304d732678032a9781ae85c8f204c8fba3d3a5e31c02616964e75cfdc5049098",
+      "node_modules/@openzeppelin/contracts/utils/ReentrancyGuard.sol": "0xa516cbf1c7d15d3517c2d668601ce016c54395bf5171918a14e2686977465f53",
+      "node_modules/@openzeppelin/contracts/utils/StorageSlot.sol": "0xcf74f855663ce2ae00ed8352666b7935f6cddea2932fdf2c3ecd30a9b1cd0e97",
+      "node_modules/@openzeppelin/contracts/utils/introspection/IERC165.sol": "0x8891738ffe910f0cf2da09566928589bf5d63f4524dd734fd9cedbac3274dd5c"
+    },
+    "gasEstimate": "4813136",
+    "gasLimit": "5775764",
+    "estimatedFeePerGas": "25000000000",
+    "estimatedGasCostUSDC": "0.1203284",
+    "nativeBalanceUSDC": "30.75246984604",
+    "observedBlock": "71030923"
+  },
+  "checks": {
+    "foundryPassed": 294,
+    "foundryFailed": 0,
+    "foundrySuites": 41,
+    "servicePassed": 25,
+    "serviceFailed": 0,
+    "serviceExpectations": 476,
+    "appLintTypecheck": "exit0",
+    "serviceTypecheck": "exit0",
+    "historicalPhase2DeploymentRejected": true
+  }
+}

@@ -234,10 +234,13 @@ Do not begin the next feature stage until the current gate passes. Time estimate
 - Evaluate against the frozen condition and evidence policy. Concert cancellation needs the specified event-status evidence; check-in alone is insufficient. For a ride example, define its observation interval and required attestations. Do not count provider-controlled timestamps or syndicated announcements as independent sources.
 - A buyer claim starts evaluation. It cannot select a verdict, recipients or payout amount.
 - Distinguish a healthy observation interval with a missing required confirmation from unavailable collection. API outages, stale/incomplete records or invalid signatures result in `UNCERTAIN`, not automatic failure or success.
-- Store uncertain outcomes without releasing disputed funds or unlocking reserved bond. Reviewer handling is deferred and explicitly documented.
+- Store uncertain outcomes without releasing disputed funds or unlocking reserved bond during their uncertainty period. Reviewer panels remain deferred; implement the timeout fallback below in Stage 3.
+- Unresolved timeout (PS item 10 / D10): fix and disclose a separate `uncertaintyTimeout` duration before purchase; its numeric value must be selected before implementation. On first onchain entry into `UNCERTAIN`, record `uncertainSince` and derive `uncertainReadyAt`. Repeated claims, retries or submissions must not reset or extend it. This is separate from the success-review window.
+- If still unresolved at timeout eligibility, anyone may call unresolved finalization; time passing alone does not execute a transaction. Refund each beneficiary's full escrow, pay no compensation, and return the provider bond only after all escrow refunds are settled. Use bounded refund batches, retain unpaid refund liabilities and prevent duplicate payments. Close with a distinct `UNRESOLVED_REFUNDED` outcome. Established failure and finalized success cannot use this fallback. Authorized resolution and timeout finalization must obey explicit, tested state/boundary rules; terminal outcomes cannot be changed afterward.
+- A temporary offchain feed outage does not itself create an irreversible onchain dispute. Disclose the fallback tradeoff: a delivered service may be refunded if the case remains unresolved. Update the policy/interfaces and preserve historical Phase 2 evidence; documentation changes do not update its deployed contract.
 - If a general source score is included, compute it deterministically from approved independent groups and fixed weights; require sufficient coverage as well as the threshold. Missing sources cannot inflate confidence by disappearing from the denominator. A 90% score is a policy measure, not a calibrated probability.
 
-**Gate:** evidence satisfying the selected promise succeeds; verified cancellation/breach fails; outages/insufficient proof stay uncertain; tampered/replayed evidence is rejected. The evidence trail and root match. Clearly label synthetic provider systems and staged inputs.
+**Gate:** evidence satisfying the selected promise succeeds; verified cancellation/breach fails; outages/insufficient proof stay uncertain during the uncertainty period; tampered/replayed evidence is rejected. The evidence trail and root match. Clearly label synthetic provider systems and staged inputs. Test late disputes, separate review/uncertainty windows, timeout boundaries, non-resetting deadlines, permissionless finalization, partial refund batches, premature bond withdrawal, duplicate settlement and resolution-versus-timeout races. An unresolved timeout refunds escrow only, returns bond after refunds and records `UNRESOLVED_REFUNDED`; established failure/finalized success remain unaffected.
 
 **Commits:** `feat: record scoped guarantee evidence`; `feat: append and anchor evidence receipts`; `feat: evaluate deadline outcomes with uncertain fallback`.
 
@@ -355,7 +358,7 @@ The listed engineering budgets total roughly 10–14 hours including release pre
 
 If behind: simplify visual polish, keep one template, cap demo buyers and use disclosed deterministic input fixtures. Do not add 0G/ENS/Swarm or a second deployment chain. If Studio cannot meet its required flow, resolve with the sponsor rather than pretending a different workflow qualifies. If CRE or Arkiv cannot be meaningfully demonstrated, keep the core product working and remove the unsupported bounty claim; selecting fewer than three is allowed.
 
-Never replace a failed source with invented evidence or a failed sponsor integration with a logo. Keep uncertain funds locked until the stated authorized resolution path exists; clearly disclose prototype recovery limitations.
+Never replace a failed source with invented evidence or a failed sponsor integration with a logo. Keep uncertain funds locked during the frozen uncertainty period; then, if still unresolved, use the Stage 3 refund-only timeout path. Clearly disclose prototype recovery limitations.
 
 ## 10. Demo sequence and final definition of done
 
@@ -363,7 +366,7 @@ Never replace a failed source with invented evidence or a failed sponsor integra
 2. Buyer purchases; show real escrow transaction and balance change.
 3. Show the selected promise's evidence, public receipts and Arc commitment; use generic provider/beneficiary terminology.
 4. Run the CRE evaluation; explain whether simulated or deployed. Show a verified failure refund plus compensation and a small common-trigger cohort fixture.
-5. Show pre-prepared success and uncertain examples. Success releases as permitted; uncertain does not auto-pay or auto-release.
+5. Show pre-prepared success and uncertain examples. Success releases as permitted; uncertainty does not immediately pay or release. For an unresolved case whose separate timeout has expired, show transaction-triggered full escrow refunds, zero compensation and bond return after refunds, recorded as `UNRESOLVED_REFUNDED`.
 6. Show Arkiv-backed history/query and public source/deployment links. State operator and evidence trust assumptions.
 
 The build is done when the staged gates pass, both repositories retain truthful reachable history, every claimed sponsor has reproducible usage evidence, and the submission points to the exact tested code. This plan itself has not implemented, committed, deployed or submitted any product code.

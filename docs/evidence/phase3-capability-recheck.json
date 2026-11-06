@@ -1,0 +1,75 @@
+{
+  "direct": [
+    {
+      "name": "protocolVersion",
+      "value": "3"
+    },
+    {
+      "name": "usdc",
+      "value": "0x3600000000000000000000000000000000000000"
+    },
+    {
+      "name": "demoOperator",
+      "value": "0x1d39fc0e5293AB949D63217fFB375357ADf3933f"
+    },
+    {
+      "name": "reviewWindow",
+      "value": "120"
+    },
+    {
+      "name": "uncertaintyTimeout",
+      "value": "120"
+    }
+  ],
+  "multicall": [
+    {
+      "result": "3",
+      "status": "success"
+    },
+    {
+      "result": "0x3600000000000000000000000000000000000000",
+      "status": "success"
+    },
+    {
+      "result": "0x1d39fc0e5293AB949D63217fFB375357ADf3933f",
+      "status": "success"
+    },
+    {
+      "result": "120",
+      "status": "success"
+    },
+    {
+      "result": "120",
+      "status": "success"
+    }
+  ],
+  "next": "4",
+  "latest": {
+    "id": "3",
+    "terms": {
+      "provider": "0x0967c9e2561e6965d874AA05F638A571Cdc22e9e",
+      "compensation": "100000",
+      "escrowAmount": "100000",
+      "maxCohort": 2,
+      "cohortSize": 0,
+      "joinDeadline": "1793976389",
+      "settlementTime": "1793976389",
+      "termsHash": "0xec9dd851bb14d1b6e86acb7ce293c0f127e89c81f2222860c3a0858a2ef58522"
+    },
+    "state": {
+      "status": 0,
+      "outcome": 0,
+      "enrolled": 0,
+      "paidCount": 0,
+      "openSlots": 2,
+      "failureAdmittedAt": "0",
+      "bondHeld": "200000",
+      "reservedCompensation": "0",
+      "escrowHeld": "0",
+      "paidCompensation": "0",
+      "paidEscrow": "0",
+      "withdrawableBond": "0",
+      "remainingOwed": "0"
+    }
+  }
+}

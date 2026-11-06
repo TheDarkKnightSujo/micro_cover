@@ -1,0 +1,148 @@
+{
+  "chainId": 5042002,
+  "address": "0xdcd11bb347f063b5a876c8816f5a02b8ea0f11e0",
+  "guaranteeId": 2,
+  "pinnedBlock": "71043291",
+  "chainTimestamp": "1793975532",
+  "terms": {
+    "provider": "0x26DD598639E917F32D256B0cAd0408a842af0218",
+    "compensation": "5000000",
+    "escrowAmount": "2000000",
+    "maxCohort": 3,
+    "cohortSize": 1,
+    "joinDeadline": "1793976399",
+    "settlementTime": "1793976399",
+    "termsHash": "0xec9dd851bb14d1b6e86acb7ce293c0f127e89c81f2222860c3a0858a2ef58522"
+  },
+  "state": {
+    "status": 0,
+    "outcome": 0,
+    "enrolled": 1,
+    "paidCount": 0,
+    "openSlots": 2,
+    "failureAdmittedAt": "0",
+    "bondHeld": "15000000",
+    "reservedCompensation": "5000000",
+    "escrowHeld": "2000000",
+    "paidCompensation": "0",
+    "paidEscrow": "0",
+    "withdrawableBond": "0",
+    "remainingOwed": "7000000"
+  },
+  "evidence": {
+    "evidenceBound": true,
+    "policyHash": "0x390c151a55ce5c1e9861f5781528a38864fdc389edaee853de2fdb6f4d8e9d3d",
+    "cohortId": "0x8f66a6fe28647441a94a3e36d1cdf4c05af20f90f148f18bc6750a3bb81c3450",
+    "createdAt": "1793975214",
+    "uncertaintyTimeout": "120",
+    "uncertaintyStarted": false,
+    "uncertainSince": "0",
+    "uncertainReadyAt": "0",
+    "refundedCount": 0,
+    "refundedEscrow": "0",
+    "releasedUnresolvedReservation": "0",
+    "latestEvidenceRoot": "0x0000000000000000000000000000000000000000000000000000000000000000",
+    "anchorNonce": "0",
+    "nextAnchorNonce": "1",
+    "verdictNonce": "0",
+    "nextVerdictNonce": "1",
+    "failureOrigin": 0,
+    "lastReportOutcome": 0,
+    "lastReportEvaluatedAt": "0",
+    "lastReportValidUntil": "0"
+  },
+  "members": [
+    "0x0967c9e2561e6965d874AA05F638A571Cdc22e9e"
+  ],
+  "enrollmentTransaction": "0xe16b41f3a9b0a8288f11fa457c6e9187876f909a76694b2aaf21c426f15e1550",
+  "receiptBlock": "71043182",
+  "transfers": [
+    {
+      "from": "0x0967c9e2561e6965d874AA05F638A571Cdc22e9e",
+      "to": "0xDcD11bb347F063B5a876C8816F5a02b8eA0F11E0",
+      "value": "2000000"
+    }
+  ],
+  "collection": {
+    "evaluation": {
+      "domain": {
+        "chainId": "5042002",
+        "cohortId": "0x8f66a6fe28647441a94a3e36d1cdf4c05af20f90f148f18bc6750a3bb81c3450",
+        "conditionHash": "0xec9dd851bb14d1b6e86acb7ce293c0f127e89c81f2222860c3a0858a2ef58522",
+        "consumer": "0xdcd11bb347f063b5a876c8816f5a02b8ea0f11e0",
+        "guaranteeId": "2",
+        "policyHash": "0x390c151a55ce5c1e9861f5781528a38864fdc389edaee853de2fdb6f4d8e9d3d",
+        "schema": "microcover-evidence-v1"
+      },
+      "policyVersion": "synthetic-unanimous-v1",
+      "asOf": 1793976399,
+      "outcome": "UNCERTAIN",
+      "reason": "NOT_DUE",
+      "coveredSources": 0,
+      "requiredSources": 2,
+      "totalWeight": 2,
+      "successSupportBps": 0,
+      "failureSupportBps": 0,
+      "sourceGroupCount": 1,
+      "independentSourcesClaimed": false,
+      "evidenceRoot": "0x1caf984f9e8fc06e76ac6a0deaea7c0e31a2ff5470787c7b1426159f24d57c04",
+      "receiptRoot": "0xf14c0090b1b3d697e7aed19d763f09e63c0cb9b30c6bd6d51742a555d1c38a52",
+      "receiptCount": 64,
+      "sources": [
+        {
+          "id": "synthetic-status-a",
+          "usable": false,
+          "status": null,
+          "reason": "STALE"
+        },
+        {
+          "id": "synthetic-status-b",
+          "usable": false,
+          "status": null,
+          "reason": "STALE"
+        }
+      ]
+    },
+    "receipts": [
+      {
+        "attemptKey": "synthetic-status-a:31",
+        "domainKey": "0xb9049128ca40ba057c20cc68284e4ed75928d33f25ca1b6afe48ff38fb860b75",
+        "error": null,
+        "group": "team-controlled",
+        "hash": "0x9ddbfafd3423470bc2c4296a8b86a71179b518a19ea924fae96280b11ea99567",
+        "keyFingerprint": "0x06719b05cfb8f43e61538a0eaee066c7bb0757b911dfa032d561bf2277716a3d",
+        "kind": "OBSERVATION",
+        "nonce": "31",
+        "payloadHash": "0x6297171bee95e5aa16717f8ab6027cb82234106521411da3d4a3284d6dc68bee",
+        "previousHash": "0x408a7a083a2ca20a987fd889a15cf9a4e327de8451c2a2a8fa3c63f684286f83",
+        "receivedAt": 1793975524,
+        "sequence": 63,
+        "signature": "9a6e48c269e66fa47e1b666ace8c9dbe9c76781ad98139b376793f18c3ac31e7a58894f4df5f16f05d9df186680b2ecf09a04c18c9547cfe748f8a638ee36a05",
+        "sourceId": "synthetic-status-a",
+        "sourceTimestamp": 1793975524,
+        "status": "FULFILLED"
+      },
+      {
+        "attemptKey": "synthetic-status-b:31",
+        "domainKey": "0xb9049128ca40ba057c20cc68284e4ed75928d33f25ca1b6afe48ff38fb860b75",
+        "error": null,
+        "group": "team-controlled",
+        "hash": "0xf14c0090b1b3d697e7aed19d763f09e63c0cb9b30c6bd6d51742a555d1c38a52",
+        "keyFingerprint": "0xa43af6bc1a988f7fed05c34948ddf0cfc5f144b3308d014daecf455c1f81a713",
+        "kind": "OBSERVATION",
+        "nonce": "31",
+        "payloadHash": "0xb0490f022500b6ed35d1338dc84070d02048a2522a893c2d2072accfe7526b57",
+        "previousHash": "0x9ddbfafd3423470bc2c4296a8b86a71179b518a19ea924fae96280b11ea99567",
+        "receivedAt": 1793975524,
+        "sequence": 64,
+        "signature": "e45b783cedb2085cb37fe5cbd7f443463761a54012fdba924383adeb82f38903d2d96e98b2997944bc11df4f841ec10410dfb432bbc9a7d1eac61d8549628701",
+        "sourceId": "synthetic-status-b",
+        "sourceTimestamp": 1793975524,
+        "status": "FULFILLED"
+      }
+    ],
+    "nextCursor": 64,
+    "disclosure": "Both demo feeds are controlled by the same team; not independent sources."
+  },
+  "secondsToOutcome": "867"
+}

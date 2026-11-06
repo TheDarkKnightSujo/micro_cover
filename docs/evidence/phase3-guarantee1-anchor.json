@@ -1,0 +1,131 @@
+{
+  "chainId": 5042002,
+  "address": "0xdcd11bb347f063b5a876c8816f5a02b8ea0f11e0",
+  "guaranteeId": 1,
+  "transactionHash": "0xe99b50b382c8e1501ce1e1f2d16336f5e230182301f686d94a8e362cc8e4e300",
+  "status": "success",
+  "blockNumber": "71039914",
+  "blockHash": "0xfec250298f771517856ab633deac9238011033881dee91943454b3a788c4ae4f",
+  "confirmations": "105",
+  "call": {
+    "functionName": "anchorEvidence",
+    "args": [
+      "1",
+      "0x4a0b9812ea0dbb00fe6a2387d0fde5232f7ccb90be2b026c535ea72bef5421ce",
+      "0x390c151a55ce5c1e9861f5781528a38864fdc389edaee853de2fdb6f4d8e9d3d",
+      "0x1e376c945b31daa9f971311ed13159f4646275169090d72278957336bc1993cc",
+      "1"
+    ]
+  },
+  "events": [
+    {
+      "eventName": "EvidenceAnchored",
+      "args": {
+        "id": "1",
+        "root": "0x4a0b9812ea0dbb00fe6a2387d0fde5232f7ccb90be2b026c535ea72bef5421ce",
+        "nonce": "1"
+      }
+    }
+  ],
+  "before": {
+    "evidenceBound": true,
+    "policyHash": "0x390c151a55ce5c1e9861f5781528a38864fdc389edaee853de2fdb6f4d8e9d3d",
+    "cohortId": "0x1e376c945b31daa9f971311ed13159f4646275169090d72278957336bc1993cc",
+    "createdAt": "1793972891",
+    "uncertaintyTimeout": "120",
+    "uncertaintyStarted": false,
+    "uncertainSince": "0",
+    "uncertainReadyAt": "0",
+    "refundedCount": 0,
+    "refundedEscrow": "0",
+    "releasedUnresolvedReservation": "0",
+    "latestEvidenceRoot": "0x0000000000000000000000000000000000000000000000000000000000000000",
+    "anchorNonce": "0",
+    "nextAnchorNonce": "1",
+    "verdictNonce": "0",
+    "nextVerdictNonce": "1",
+    "failureOrigin": 0,
+    "lastReportOutcome": 0,
+    "lastReportEvaluatedAt": "0",
+    "lastReportValidUntil": "0"
+  },
+  "after": {
+    "evidenceBound": true,
+    "policyHash": "0x390c151a55ce5c1e9861f5781528a38864fdc389edaee853de2fdb6f4d8e9d3d",
+    "cohortId": "0x1e376c945b31daa9f971311ed13159f4646275169090d72278957336bc1993cc",
+    "createdAt": "1793972891",
+    "uncertaintyTimeout": "120",
+    "uncertaintyStarted": false,
+    "uncertainSince": "0",
+    "uncertainReadyAt": "0",
+    "refundedCount": 0,
+    "refundedEscrow": "0",
+    "releasedUnresolvedReservation": "0",
+    "latestEvidenceRoot": "0x4a0b9812ea0dbb00fe6a2387d0fde5232f7ccb90be2b026c535ea72bef5421ce",
+    "anchorNonce": "1",
+    "nextAnchorNonce": "2",
+    "verdictNonce": "0",
+    "nextVerdictNonce": "1",
+    "failureOrigin": 0,
+    "lastReportOutcome": 0,
+    "lastReportEvaluatedAt": "0",
+    "lastReportValidUntil": "0"
+  },
+  "state": {
+    "status": 0,
+    "outcome": 0,
+    "enrolled": 1,
+    "paidCount": 0,
+    "openSlots": 2,
+    "failureAdmittedAt": "0",
+    "bondHeld": "15000000",
+    "reservedCompensation": "5000000",
+    "escrowHeld": "2000000",
+    "paidCompensation": "0",
+    "paidEscrow": "0",
+    "withdrawableBond": "0",
+    "remainingOwed": "7000000"
+  },
+  "tokenEvents": 0,
+  "finalSnapshot": {
+    "domain": {
+      "chainId": "5042002",
+      "cohortId": "0x1e376c945b31daa9f971311ed13159f4646275169090d72278957336bc1993cc",
+      "conditionHash": "0xec9dd851bb14d1b6e86acb7ce293c0f127e89c81f2222860c3a0858a2ef58522",
+      "consumer": "0xdcd11bb347f063b5a876c8816f5a02b8ea0f11e0",
+      "guaranteeId": "1",
+      "policyHash": "0x390c151a55ce5c1e9861f5781528a38864fdc389edaee853de2fdb6f4d8e9d3d",
+      "schema": "microcover-evidence-v1"
+    },
+    "policyVersion": "synthetic-unanimous-v1",
+    "asOf": 1793973488,
+    "outcome": "FAILURE",
+    "reason": "MATCHING_EXPLICIT_CANCELLED",
+    "coveredSources": 2,
+    "requiredSources": 2,
+    "totalWeight": 2,
+    "successSupportBps": 0,
+    "failureSupportBps": 10000,
+    "sourceGroupCount": 1,
+    "independentSourcesClaimed": false,
+    "evidenceRoot": "0x4a0b9812ea0dbb00fe6a2387d0fde5232f7ccb90be2b026c535ea72bef5421ce",
+    "receiptRoot": "0x9163abe402c1309fae4716f1e6b6f42ca5f6ac4a1486684d89666cfccf82f05f",
+    "receiptCount": 120,
+    "sources": [
+      {
+        "id": "synthetic-status-a",
+        "usable": true,
+        "status": "CANCELLED",
+        "reason": "AUTHENTICATED"
+      },
+      {
+        "id": "synthetic-status-b",
+        "usable": true,
+        "status": "CANCELLED",
+        "reason": "AUTHENTICATED"
+      }
+    ]
+  },
+  "providerOperatorSeparate": false,
+  "studioReconciled": false
+}

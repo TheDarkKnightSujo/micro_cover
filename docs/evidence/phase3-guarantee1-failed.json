@@ -1,0 +1,100 @@
+{
+  "chainId": 5042002,
+  "address": "0xdcd11bb347f063b5a876c8816f5a02b8ea0f11e0",
+  "guaranteeId": 1,
+  "transactionHash": "0xf781fc20f4181447acb7291dce8dba5738edd20ae3426b065e320097653e9105",
+  "receiptStatus": "success",
+  "blockNumber": "71041518",
+  "blockHash": "0xc21f5e89d72e29e7e7b3c0aa6651a83c470271216232a25cfcb21acb94ff7317",
+  "confirmations": "104",
+  "call": {
+    "functionName": "submitEvidenceVerdict",
+    "args": [
+      {
+        "chainId": "5042002",
+        "consumer": "0xDcD11bb347F063B5a876C8816F5a02b8eA0F11E0",
+        "guaranteeId": "1",
+        "cohortId": "0x1e376c945b31daa9f971311ed13159f4646275169090d72278957336bc1993cc",
+        "policyHash": "0x390c151a55ce5c1e9861f5781528a38864fdc389edaee853de2fdb6f4d8e9d3d",
+        "evidenceRoot": "0x4a0b9812ea0dbb00fe6a2387d0fde5232f7ccb90be2b026c535ea72bef5421ce",
+        "outcome": 1,
+        "evaluatedAt": "1793974610",
+        "validUntil": "1793974670",
+        "nonce": "1"
+      }
+    ]
+  },
+  "events": [
+    {
+      "eventName": "EvidenceFailureEstablished",
+      "args": {
+        "id": "1",
+        "root": "0x4a0b9812ea0dbb00fe6a2387d0fde5232f7ccb90be2b026c535ea72bef5421ce",
+        "nonce": "1",
+        "evaluatedAt": "1793974610",
+        "enrolled": 1,
+        "totalOwed": "7000000"
+      }
+    }
+  ],
+  "receiptState": {
+    "status": 1,
+    "outcome": 1,
+    "enrolled": 1,
+    "paidCount": 0,
+    "openSlots": 0,
+    "failureAdmittedAt": "0",
+    "bondHeld": "15000000",
+    "reservedCompensation": "5000000",
+    "escrowHeld": "2000000",
+    "paidCompensation": "0",
+    "paidEscrow": "0",
+    "withdrawableBond": "0",
+    "remainingOwed": "7000000"
+  },
+  "state": {
+    "status": 1,
+    "outcome": 1,
+    "enrolled": 1,
+    "paidCount": 0,
+    "openSlots": 0,
+    "failureAdmittedAt": "0",
+    "bondHeld": "15000000",
+    "reservedCompensation": "5000000",
+    "escrowHeld": "2000000",
+    "paidCompensation": "0",
+    "paidEscrow": "0",
+    "withdrawableBond": "0",
+    "remainingOwed": "7000000"
+  },
+  "evidence": {
+    "evidenceBound": true,
+    "policyHash": "0x390c151a55ce5c1e9861f5781528a38864fdc389edaee853de2fdb6f4d8e9d3d",
+    "cohortId": "0x1e376c945b31daa9f971311ed13159f4646275169090d72278957336bc1993cc",
+    "createdAt": "1793972891",
+    "uncertaintyTimeout": "120",
+    "uncertaintyStarted": false,
+    "uncertainSince": "0",
+    "uncertainReadyAt": "0",
+    "refundedCount": 0,
+    "refundedEscrow": "0",
+    "releasedUnresolvedReservation": "0",
+    "latestEvidenceRoot": "0x4a0b9812ea0dbb00fe6a2387d0fde5232f7ccb90be2b026c535ea72bef5421ce",
+    "anchorNonce": "1",
+    "nextAnchorNonce": "2",
+    "verdictNonce": "1",
+    "nextVerdictNonce": "2",
+    "failureOrigin": 2,
+    "lastReportOutcome": 1,
+    "lastReportEvaluatedAt": "1793974610",
+    "lastReportValidUntil": "1793974670"
+  },
+  "members": [
+    "0x26DD598639E917F32D256B0cAd0408a842af0218"
+  ],
+  "tokenEvents": 0,
+  "providerAdmissionEvent": false,
+  "providerOperatorSeparate": false,
+  "sourceIndependenceClaimed": false,
+  "studioReconciled": false
+}
