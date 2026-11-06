@@ -1,0 +1,15 @@
+**/.env
+**/.env.*
+**/.git
+**/node_modules
+**/dist
+**/out
+**/cache
+**/broadcast
+**/*.pem
+**/*.key
+**/*.sqlite*
+**/.npmrc
+**/.arc-studio
+**/.code-review-graph
+local-deploy*
