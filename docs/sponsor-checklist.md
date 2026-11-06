@@ -8,8 +8,8 @@ Official: https://ethglobal.com/events/mumbai/prizes/arc
 
 - [ ] Studio project created as build starting point; shareable URL recorded.
 - [x] Supported external-edit/source-sync workflow confirmed.
-- [ ] Required contract testing/deployment and app connection demonstrated in Studio.
-- [ ] Real official testnet USDC bond, escrow and settlement transactions linked.
+- [x] Required contract testing/deployment and app connection demonstrated in Studio.
+- [x] Real official testnet USDC bond, escrow and settlement transactions linked.
 - [ ] Working frontend/backend, architecture and source links prepared.
 - [ ] Studio appears in actual demo; selected bounty stated explicitly.
 
@@ -73,3 +73,17 @@ Do not rely on a stale copied deadline. Record the dashboard value and announcem
 Phase 1 reference-flow follow-up: real bond, all three enrollments, provider admission and three exact 7 USDC payouts are verified. Final contract token balance and guarantee liabilities zero, CLOSED / FAILURE. Linked public evidence in phase1-settlement.json and phase1-post-settlement.json. Deployment/funding/payout evidence exists; combined testing milestone still retains the runbook's separate-active-guarantee withdrawal check. No final phase/sponsor eligibility pass or public release asserted.
 
 Phase 1 final: all required contract/app checks and real human testnet flows completed. Three 7 USDC payouts, separate-active-guarantee withdrawal protection, partial 0.2 payout and 0.1 unused-bond return verified. Both guarantees closed with zero token balance/obligations at block 0x43b49fa. Source parity remains exact. Phase 1 PASSED; sponsor eligibility/judge sharing, future phases, public publication and final submission remain separate. Evidence: docs/evidence/phase1-final.json.
+
+## Phase 2 current observation — 6 November 2026
+
+Success lifecycle and core UI implemented through the same Arc Studio app, reviewed/pulled privately. Local 210 contract tests, lint/typecheck, production build, 77-entry ABI comparison and source-only Studio parity pass. Preview/mobile and old Phase 1 deployment blocking observed. No Phase 2 deployment, real success release, connected-wallet checkpoint or new public source publication yet. The immutable operator is explicitly trusted demo authority, not CRE or independent evidence. No new Chainlink/Arkiv integration claim. Phase 0 judge access remains unresolved; local/source checks do not establish eligibility. Historical sponsor observations above remain dated records; Phase 1 completed receipt evidence is in phase1-final.json.
+
+## Final Phase 2 checkpoint — PASSED, 6 November 2026
+
+Human Edge InPrivate screenshot codex-clipboard-688576f1-0c1f-433c-af4e-b5a6d04abd5e.png shows public guarantee1 Closed/Success finalized, cohort3/3 and bond0 without a wallet connected. Wrong-network screenshot shows funding controls replaced by Switch to Arc Testnet; rejection screenshot shows Cancelled in your wallet and Create disabled. This is genuine human operational verification, not an independent audit or invented browser automation result.
+
+Final read-only pinned check at block0x43b94fb confirms Guarantee1 CLOSED/SUCCESS and Guarantee2 CLOSED/FAILURE, all held assets/reserves/liabilities zero, actual contract USDC balance0, nextGuaranteeId3 (only two guarantees created) and provider allowance0 after the cancellation test. Exact command: bun "$env:TEMP\microcover-phase2-final.ts" exited0. Evidence: docs/evidence/phase2-final.json and linked phase2 deployment/receipt snapshots. Both failure and success are usable through the human-operated UI; finality boundaries, early release rejection and failure-to-success rejection are independently decoded from read-only calls.
+
+Existing local 210-test suite, lint/typecheck, Vite build and 77-entry ABI match remain applicable because product code did not change. Build warnings remain documented. No additional functional test rerun is claimed. New work in this finalization is evidence/docs only. Phase0 Studio judge access remains unresolved under D17; operator is a trusted demo role, uncertain funds may remain locked until provider concession, no production protection or later evidence/CRE/Arkiv integration is claimed. No frontend publication. Local server remains available for review.
+
+Stop at Phase2. Phase3 NOT_STARTED. No phase2 commit/push/staging, public checkout update or agent wallet signing/deployment. Human commit instructions: docs/phase2-private-commits.md; proposed groups contracts/tests, UI, documentation/evidence. Planned Phase2 public publisher Atharva7406 remains a publisher assignment, not an authorship claim. Public transfer must be separately reviewed/authorized.

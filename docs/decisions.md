@@ -11,7 +11,7 @@ Accepted direction comes from the user's plans; technical choices below stay pen
 | D05 | Reuse Studio-generated language/framework/package manager | Retained React/Vite/TypeScript + Bun 1.3.14 and Foundry 1.7.1; local checks recorded in runbook.md. |
 | D06 | One isolated bond per guarantee; full escrow in first demo | Selected 6 November 2026 under user delegation: preserve Studio's 2 USDC escrow / 5 compensation / 15 bond / 21 total example. Prior 20/10 notes reconciled. Generic contract remains configurable. |
 | D07 | Three demo accounts, one enrollment/account | Selected demo configuration; foundation enforces one enrollment per account/guarantee and rejects provider enrollment. |
-| D08 | Success release and unlock after configured finality conditions | Pending exact timestamps/state transitions |
+| D08 | Success release and unlock after configured finality conditions | Phase 2 implementation design frozen in interfaces.md / phase2-lifecycle prompt: immutable review window, no success proposal before settlement/cutoff, full window after late proposal, claims inclusive at boundary and finalize strictly after. Pending source/tests review, not deployed. |
 | D09 | Evidence source groups, freshness and threshold | Pending explicit policy; no production independence claim |
 | D10 | UNCERTAIN locks funds; reviewer system deferred | Accepted scope; document prototype recovery authority/limits |
 | D11 | Restricted early operator replaced/connected to actual CRE path | Pending supported receiver/report design |
@@ -21,7 +21,8 @@ Accepted direction comes from the user's plans; technical choices below stay pen
 | D15 | Hosting and persistent collector storage | Pending scaffold/host inspection |
 | D16 | Single implementation operator and rotating publishers | User handles all implementation roles on one laptop; the four supplied GitHub accounts publish complete phase snapshots per contributions.md. Publication is not implementation attribution. |
 | D17 | Continue Phase 1 while Studio judge-sharing is unresolved | User authorized progression after discussion. Phase 0 technical evidence retained; final sponsor access requirement remains open, with no eligibility or Phase 0 pass asserted. |
-| D18 | Phase 1 financial/lifecycle slice | Implemented and locally verified in Studio/private source: full escrow/full-capacity bond; provider-only failure; enrollment-order payouts, batch 1–20; remaining bond only after all failed-cohort payouts. Explicit outcome survives closure and timestamp zero. No OPEN withdrawal or success release. 115 tests pass; real Arc transactions pending. |
+| D18 | Phase 1 financial/lifecycle slice | Implemented and locally verified in Studio/private source: full escrow/full-capacity bond; provider-only failure; enrollment-order payouts, batch 1–20; remaining bond only after all failed-cohort payouts. Explicit outcome survives closure and timestamp zero. No OPEN withdrawal or success release. Historical Phase 1 local suite 115 tests passed; human Arc flows later passed, with final receipts in docs/evidence/phase1-final.json. Phase 2 expands the suite to 210 tests. |
+| D19 | Phase 2 restricted prototype authority / uncertainty | Immutable human-specified demo operator may propose success or mark uncertainty, never arbitrary payouts. Beneficiary dispute requests review and freezes success; provider concession remains possible. No operator override of UNCERTAIN to success in Phase 2, no evaluator/CRE proof implied. Constructor/public ABI change requires new deployment; testnet-only suggested review window 120 seconds. |
 
 ## Change entry
 
@@ -33,3 +34,5 @@ Why:
 Affected files/interfaces:
 Checks and evidence:
 Unresolved consequences:
+
+6 November 2026 Phase2 completion: D19 implemented in the verified three-argument deployment0xa1e621497040d845fe4dc952dc524b88231ade16 with Account1 operator/review120s. Both real financial flows and required human wallet/fresh-session UI observations passed; final evidence phase2-final.json. Freeze Phase2 at this checkpoint; Phase3 remains unstarted. No public eligibility/sharing claim or Git/publication authorization is inferred.

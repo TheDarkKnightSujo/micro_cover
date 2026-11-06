@@ -1,0 +1,130 @@
+{
+  "phase": 2,
+  "status": "PASSED",
+  "date": "2026-11-06",
+  "address": "0xa1e621497040d845fe4dc952dc524b88231ade16",
+  "observedBlock": "0x43b94fb",
+  "actualContractUsdcBalance": "0",
+  "nextGuaranteeId": "3",
+  "providerAllowanceAfterCancelledRequest": "0",
+  "guarantees": [
+    {
+      "id": "1",
+      "terms": {
+        "provider": "0x1d39fc0e5293AB949D63217fFB375357ADf3933f",
+        "compensation": "5000000",
+        "escrowAmount": "2000000",
+        "maxCohort": 3,
+        "cohortSize": 3,
+        "joinDeadline": "1793958217",
+        "settlementTime": "1793958217",
+        "termsHash": "0xec9dd851bb14d1b6e86acb7ce293c0f127e89c81f2222860c3a0858a2ef58522"
+      },
+      "state": {
+        "status": 2,
+        "outcome": 2,
+        "enrolled": 3,
+        "paidCount": 0,
+        "openSlots": 0,
+        "failureAdmittedAt": "0",
+        "bondHeld": "0",
+        "reservedCompensation": "0",
+        "escrowHeld": "0",
+        "paidCompensation": "0",
+        "paidEscrow": "0",
+        "withdrawableBond": "0",
+        "remainingOwed": "0"
+      },
+      "lifecycle": {
+        "status": 2,
+        "outcome": 2,
+        "joinDeadline": "1793958217",
+        "settlementTime": "1793958217",
+        "claimEndsAt": "1793958337",
+        "successProposedAt": "1793958231",
+        "successReadyAt": "1793958351",
+        "successFinalizedAt": "1793958382",
+        "uncertainAt": "0",
+        "uncertainBy": "0x0000000000000000000000000000000000000000",
+        "successEscrowReleased": true,
+        "releasedSuccessReservation": "15000000",
+        "releasedSuccessEscrow": "6000000",
+        "withdrawnBond": "15000000",
+        "demoOperator": "0x1d39fc0e5293AB949D63217fFB375357ADf3933f",
+        "reviewWindow": "120"
+      }
+    },
+    {
+      "id": "2",
+      "terms": {
+        "provider": "0x1d39fc0e5293AB949D63217fFB375357ADf3933f",
+        "compensation": "100000",
+        "escrowAmount": "100000",
+        "maxCohort": 2,
+        "cohortSize": 1,
+        "joinDeadline": "1793959287",
+        "settlementTime": "1793959287",
+        "termsHash": "0xec9dd851bb14d1b6e86acb7ce293c0f127e89c81f2222860c3a0858a2ef58522"
+      },
+      "state": {
+        "status": 2,
+        "outcome": 1,
+        "enrolled": 1,
+        "paidCount": 1,
+        "openSlots": 0,
+        "failureAdmittedAt": "1793959004",
+        "bondHeld": "0",
+        "reservedCompensation": "0",
+        "escrowHeld": "0",
+        "paidCompensation": "100000",
+        "paidEscrow": "100000",
+        "withdrawableBond": "0",
+        "remainingOwed": "0"
+      },
+      "lifecycle": {
+        "status": 2,
+        "outcome": 1,
+        "joinDeadline": "1793959287",
+        "settlementTime": "1793959287",
+        "claimEndsAt": "1793959407",
+        "successProposedAt": "0",
+        "successReadyAt": "0",
+        "successFinalizedAt": "0",
+        "uncertainAt": "0",
+        "uncertainBy": "0x0000000000000000000000000000000000000000",
+        "successEscrowReleased": false,
+        "releasedSuccessReservation": "0",
+        "releasedSuccessEscrow": "0",
+        "withdrawnBond": "100000",
+        "demoOperator": "0x1d39fc0e5293AB949D63217fFB375357ADf3933f",
+        "reviewWindow": "120"
+      }
+    }
+  ],
+  "checks": {
+    "financialReferences": "Both closed; receipts and exact transfers saved in linked phase2 evidence files",
+    "wrongNetwork": {
+      "passed": true,
+      "humanScreenshot": "codex-clipboard-8215536c-6045-42de-b156-ec832ae36542.png",
+      "observed": "Warning and Switch to Arc Testnet replace funding controls"
+    },
+    "walletRejection": {
+      "passed": true,
+      "humanScreenshot": "codex-clipboard-ed2b0f48-9296-4071-9853-ae5a5a9fff1b.png",
+      "observed": "Cancelled in your wallet; Create disabled"
+    },
+    "freshPrivateSession": {
+      "passed": true,
+      "humanScreenshot": "codex-clipboard-688576f1-0c1f-433c-af4e-b5a6d04abd5e.png",
+      "observed": "Edge InPrivate, no wallet connected, guarantee1 Closed/Success, cohort3/3 and bond0"
+    }
+  },
+  "limitations": [
+    "Trusted demo operator; no CRE or evidence integration",
+    "Uncertain guarantees can remain locked until provider concedes",
+    "Phase0 Studio judge-sharing unresolved",
+    "Local URL only usable on this laptop; no frontend publication",
+    "No Phase2 Git commit/push; public repo remains Phase1"
+  ],
+  "phase3Started": false
+}

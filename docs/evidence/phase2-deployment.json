@@ -1,0 +1,48 @@
+{
+  "networkChainId": 5042002,
+  "observedBlock": "0x43b7d40",
+  "address": "0xa1e621497040d845fe4dc952dc524b88231ade16",
+  "txHash": "0x084dba30b381e7236fedf3347d256f947eefa432ace9d89f97f8ed8616f14b93",
+  "receiptStatus": "0x1",
+  "receiptContractAddress": null,
+  "outerTransactionSender": "0xc6fb8d992b950b6e189664b00105580d13795668",
+  "transactionTo": "0x5ff137d4b0fdcd49dca30c7cf57e578a026d2789",
+  "deploymentBlock": "0x43b7bd4",
+  "creationPayloadPresentInTransaction": true,
+  "codeAbsentInPriorBlock": true,
+  "codeAtDeploymentBlockMatches": true,
+  "runtimeBytes": 14841,
+  "fullRuntimeMatchWithValidatedImmutableValues": true,
+  "runtimeKeccak256": "0xd52324e42ebbe5a7efc329de60f56d69c2b64ca338f50357a5d62c2127798d27",
+  "immutableBindings": [
+    {
+      "artifactReference": "161",
+      "value": "0000000000000000000000003600000000000000000000000000000000000000",
+      "locations": 12
+    },
+    {
+      "artifactReference": "164",
+      "value": "0000000000000000000000001d39fc0e5293ab949d63217ffb375357adf3933f",
+      "locations": 4
+    },
+    {
+      "artifactReference": "167",
+      "value": "0000000000000000000000000000000000000000000000000000000000000078",
+      "locations": 4
+    }
+  ],
+  "reads": {
+    "protocolVersion": "2",
+    "usdc": "0x3600000000000000000000000000000000000000",
+    "demoOperator": "0x1d39fc0e5293AB949D63217fFB375357ADf3933f",
+    "reviewWindow": "120",
+    "nextGuaranteeId": "1",
+    "MAX_COHORT": "100",
+    "MAX_SETTLEMENT_BATCH": "20"
+  },
+  "usdcBalancesBaseUnits": {
+    "provider": "4876509",
+    "contract": "0"
+  },
+  "verificationPassed": true
+}
