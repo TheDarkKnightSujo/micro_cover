@@ -1,0 +1,8 @@
+local-simulation:
+  user-workflow:
+    workflow-name: microcover-evidence-local
+    deployment-registry: private
+  workflow-artifacts:
+    workflow-path: ./main.ts
+    config-path: ./config.local.json
+    secrets-path: ""

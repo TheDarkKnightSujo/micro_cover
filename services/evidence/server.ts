@@ -1,4 +1,6 @@
 import type { Address } from 'viem'
+import { readFileSync } from 'node:fs'
+import { publicCreRun } from './cre-run'
 import { hash, SOURCE_IDS } from './model'
 import { EvidenceStore } from './store'
 import { Collector } from './collector'
@@ -37,13 +39,26 @@ export function serveEvidence(directory:string,consumer:Address|undefined,port=8
         if(!SOURCE_IDS.includes(fixture[1] as typeof SOURCE_IDS[number]))return json({error:'UNKNOWN_SOURCE'},404,headers)
         return json(fixtureResponse(directory,store,fixture[1] as typeof SOURCE_IDS[number],a,Number(fixture[3]),Math.floor(Date.now()/1000)))
       }
-      const match=url.pathname.match(/^\/api\/evidence\/v1\/guarantees\/([1-9]\d{0,17})(\/prepare)?$/)
+      const match=url.pathname.match(/^\/api\/evidence\/v1\/guarantees\/([1-9]\d{0,17})(\/(?:prepare|snapshot|cre))?$/)
       if(match){
         if(!observer||chainError)return json({error:chainError||'CHAIN_UNAVAILABLE'},503,headers)
         const id=BigInt(match[1])
-        if(match[2])return json(await observer.prepare(id),200,headers)
+        if(match[2]==='/cre'){
+          for(const name of ['success','failure','uncertain']){
+            try{return json(publicCreRun(JSON.parse(readFileSync(`docs/evidence/phase4/${name}.json`,'utf8')) as unknown,consumer!,id.toString()),200,headers)}catch{ /* Try only fixed local public record names. */ }
+          }
+          return json({error:'NO_MATCHING_CRE_SIMULATION'},404,headers)
+        }
+        if(match[2]==='/prepare')return json(await observer.prepare(id),200,headers)
         const key=await observer.activate(id)
         if(!key)return json({error:'NO_BOUND_EVIDENCE_POLICY'},409,headers)
+        if(match[2]==='/snapshot'){
+          const activation=store.activation(key)
+          const receipts=store.verified(key).filter(r=>r.receivedAt<=activation.outcomeDeadline)
+          // Bound simulator response size; no raw/private envelopes are exported.
+          if(receipts.length>1000)return json({error:'SNAPSHOT_TOO_LARGE'},413,headers)
+          return json({activation,receipts,trust:'Collector authenticated private envelopes; CRE rechecks public receipt integrity, not source signatures or truth.'},200,headers)
+        }
         const evaluation=evaluate(store,key,Math.floor(Date.now()/1000))
         const after=Number(url.searchParams.get('after')??'0')
         if(!Number.isSafeInteger(after)||after<0)return json({error:'INVALID_CURSOR'},400,headers)

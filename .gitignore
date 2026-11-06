@@ -17,3 +17,8 @@ cache/
 broadcast/
 .code-review-graph/
 .arc-studio/
+
+# CRE compiler intermediates (source/config and sanitized evidence are tracked)
+.cre_build_tmp.js
+.cre_build_tmp.wasm
+*.wasm
