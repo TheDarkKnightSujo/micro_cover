@@ -25,6 +25,8 @@ abstract contract Phase1Base is Test {
     address internal carol = makeAddr("carol");
     address internal dave = makeAddr("dave");
     address internal stranger = makeAddr("stranger");
+    address internal operator = makeAddr("demoOperator");
+    uint64 internal constant WINDOW = 120;
 
     uint128 internal constant COMP = 5e6;
     uint128 internal constant ESC = 2e6;
@@ -42,7 +44,7 @@ abstract contract Phase1Base is Test {
 
     function setUp() public virtual {
         usdc = _deployToken();
-        cover = new MicroCover(IERC20(address(usdc)));
+        cover = new MicroCover(IERC20(address(usdc)), operator, WINDOW);
         joinDeadline = uint64(block.timestamp + 1 days);
         settlementTime = uint64(block.timestamp + 7 days);
         _fundProvider(provider);

@@ -6,26 +6,36 @@ import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol
 import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
 /// @title MicroCover
-/// @notice Phase 1: provider failure admission, bounded permissionless settlement, and
-/// provider leftover bond withdrawal. No success release exists.
-/// @dev Testnet only; not upgradeable and no owner, operator, or admin exists.
-/// An OPEN guarantee whose provider never admits failure keeps its funds locked.
-/// A beneficiary the token refuses to pay (e.g. a blocklisted address) makes settlement
+/// @notice Phase 2 prototype only: provider-admitted failure and reviewed success lifecycle.
+/// @dev Not upgradeable; no owner/admin/role rotation. demoOperator is a trusted, immutable,
+/// human-controlled demo authority: it cannot decide failure, move funds, or shorten a review
+/// window. It can only propose success or mark uncertain (trusted blocking power, without a
+/// time bound). Any enrolled beneficiary can freeze an OPEN or SUCCESS_PENDING guarantee
+/// into UNCERTAIN within its dispute window: this creates a griefing risk. Only provider
+/// admitFailure resolves UNCERTAIN; provider nonresponse can lock funds indefinitely.
+/// There is no reviewer/evidence policy and no route from UNCERTAIN back to success.
+/// The provider can still admit failure until finalizeSuccess is actually called, even after
+/// the review window elapsed. reviewWindow is a short synthetic test value, not a production
+/// safety claim. An OPEN guarantee without a verdict can also keep its funds locked.
+/// A beneficiary the token refuses to pay (e.g. a blocklisted address) makes failure settlement
 /// revert atomically for that guarantee; there is no skip or alternate recipient path.
 /// Direct token donations are unaccounted, cannot be withdrawn, and never create capacity.
-/// Every payout (including the provider's leftover withdrawal) requires the contract to be
-/// debited exactly the amount AND the recipient to gain exactly that amount, else the whole
-/// call reverts. Official USDC is the supported asset; this does not claim safety for
-/// arbitrary rebasing, fee-charging or malicious ERC-20s.
+/// Every outgoing transfer requires the contract to be debited exactly the amount AND the
+/// recipient to gain exactly that amount, else the whole call reverts. Official USDC is the
+/// supported asset; this does not claim safety for arbitrary rebasing, fee-charging or
+/// malicious ERC-20s. All success accounting and releases are guarantee-local.
 /// Verdict (Outcome), lifecycle (Status), and payout progress (counters) are distinct.
+/// Outcome is explicitly stored, never inferred from time, and survives terminal CLOSED.
+/// paidCompensation, paidEscrow, isPaid and paidCount track FAILURE payouts only;
+/// releasedSuccessReservation and releasedSuccessEscrow are separate success counters.
 /// Per-guarantee invariants (amounts in USDC base units):
 /// bondOf + paidCompensation + withdrawnBond == compensation * maxCohort;
-/// escrowedOf + paidEscrow == escrowAmount * cohortSize;
-/// reservedOf + paidCompensation == compensation * cohortSize;
+/// escrowedOf + paidEscrow + releasedSuccessEscrow == escrowAmount * cohortSize;
+/// reservedOf + paidCompensation + releasedSuccessReservation == compensation * cohortSize;
 /// reservedOf <= bondOf; paidCount <= cohortSize <= maxCohort <= 100;
-/// _beneficiaries.length == cohortSize. Without donations, the sum over guarantees of
-/// bondOf + escrowedOf equals usdc.balanceOf(address(this)). Reserved compensation is
-/// a subset of bondOf and is never added separately to the accounted token balance.
+/// _beneficiaries.length == cohortSize. The sum over guarantees of bondOf + escrowedOf
+/// equals usdc.balanceOf(address(this)) minus unaccounted donations. Reserved compensation
+/// is a subset of bondOf and is never added separately to the accounted token balance.
 contract MicroCover is ReentrancyGuard {
     using SafeERC20 for IERC20;
 
@@ -42,14 +52,50 @@ contract MicroCover is ReentrancyGuard {
         bytes32 termsHash;
     }
 
-    /// @notice Phase 1 lifecycle only; no success status exists.
-    /// @dev OPEN: enrolling/awaiting provider verdict. FAILED: failure admitted,
-    /// enrollment closed, obligations outstanding. CLOSED: no remaining obligation.
-    enum Status { OPEN, FAILED, CLOSED }
+    /// @notice Append-only lifecycle values, independent of the explicitly stored verdict.
+    /// @dev OPEN (0): enrollment/awaiting verdict. FAILED (1): failure admitted, settlement
+    /// available. CLOSED (2): terminal for either outcome, with no remaining obligation.
+    /// SUCCESS_PENDING (3): enrollment closed, success under review, no verdict yet.
+    /// SUCCEEDED (4): finalized success, escrow release and bond withdrawal remain.
+    /// UNCERTAIN (5): frozen; only provider failure admission can resolve it in Phase 2.
+    enum Status { OPEN, FAILED, CLOSED, SUCCESS_PENDING, SUCCEEDED, UNCERTAIN }
 
-    /// @notice Provider verdict, recorded explicitly when failure is admitted so it never
-    /// depends on the block timestamp being nonzero.
-    enum Outcome { NONE, FAILURE }
+    /// @notice Explicit verdict: NONE (0) means no final verdict; FAILURE (1) means provider
+    /// admitted failure; SUCCESS (2) means reviewed success finalized. Survives closure.
+    enum Outcome { NONE, FAILURE, SUCCESS }
+
+    /// @notice Separate lifecycle history and success release accounting.
+    struct Lifecycle {
+        uint64 claimEndsAt;
+        uint64 successProposedAt;
+        uint64 successReadyAt;
+        uint64 successFinalizedAt;
+        uint64 uncertainAt;
+        address uncertainBy;
+        bool successEscrowReleased;
+        uint256 releasedSuccessReservation;
+        uint256 releasedSuccessEscrow;
+    }
+
+    /// @notice Fixed-order lifecycle snapshot, separate from the Phase 1 state tuple.
+    struct LifecycleView {
+        Status status;
+        Outcome outcome;
+        uint64 joinDeadline;
+        uint64 settlementTime;
+        uint64 claimEndsAt;
+        uint64 successProposedAt;
+        uint64 successReadyAt;
+        uint64 successFinalizedAt;
+        uint64 uncertainAt;
+        address uncertainBy;
+        bool successEscrowReleased;
+        uint256 releasedSuccessReservation;
+        uint256 releasedSuccessEscrow;
+        uint256 withdrawnBond;
+        address demoOperator;
+        uint64 reviewWindow;
+    }
 
     /// @notice Lifecycle and payout counters, separate from immutable guarantee terms.
     struct Progress {
@@ -86,6 +132,10 @@ contract MicroCover is ReentrancyGuard {
 
     /// @notice USDC used for all bonds and escrow; amounts use its 6-decimal ERC-20 view.
     IERC20 public immutable usdc;
+    /// @notice Trusted immutable demo authority; may only propose success or block it.
+    address public immutable demoOperator;
+    /// @notice Synthetic review duration in seconds; not a production safety claim.
+    uint64 public immutable reviewWindow;
 
     /// @notice The identifier assigned to the next guarantee, starting at 1.
     uint256 public nextGuaranteeId = 1;
@@ -93,6 +143,7 @@ contract MicroCover is ReentrancyGuard {
     mapping(uint256 id => Guarantee) private _guarantees;
     mapping(uint256 id => mapping(address beneficiary => bool)) private _members;
     mapping(uint256 id => Progress) private _progress;
+    mapping(uint256 id => Lifecycle) private _lifecycle;
     mapping(uint256 id => address[]) private _beneficiaries;
     mapping(uint256 id => mapping(address beneficiary => bool)) private _paid;
 
@@ -100,12 +151,13 @@ contract MicroCover is ReentrancyGuard {
     /// decreases on compensation payouts and leftover withdrawal. Unknown ids return zero.
     mapping(uint256 id => uint256) public bondOf;
 
-    /// @notice Escrow USDC currently held; increases on join and decreases on settlement.
+    /// @notice Escrow USDC held; increases on join, decreases on failure payout or success release.
     /// @dev Unknown identifiers return zero.
     mapping(uint256 id => uint256) public escrowedOf;
 
-    /// @notice Compensation reserved for enrolled, unpaid beneficiaries; a subset of bondOf.
-    /// @dev Increases by compensation per join and decreases per payout. Unknown ids return zero.
+    /// @notice Compensation reserved for unresolved beneficiaries; a subset of bondOf.
+    /// @dev Increases per join, decreases per failure payout, cleared on finalized success.
+    /// Unknown identifiers return zero.
     mapping(uint256 id => uint256) public reservedOf;
 
     /// @notice The USDC address cannot be zero.
@@ -176,10 +228,57 @@ contract MicroCover is ReentrancyGuard {
     event GuaranteeClosed(uint256 indexed id);
     event RemainingBondWithdrawn(uint256 indexed id, address indexed provider, uint256 amount);
 
+    /// @notice The immutable demo operator cannot be zero.
+    error ZeroOperatorAddress();
+    /// @notice The review duration must be positive.
+    error ZeroReviewWindow();
+    /// @notice A computed timestamp cannot fit the stored uint64 representation.
+    error TimestampOverflow(uint256 value);
+    /// @notice The caller is not the immutable demo operator.
+    error NotDemoOperator(address caller);
+    /// @notice This operation is unavailable in the guarantee's current status.
+    error InvalidStatus(uint256 id, Status status);
+    /// @notice Success cannot be proposed before enrollment ends and settlement is due.
+    error ProposalTooEarly(uint256 id, uint256 earliestTimestamp);
+    /// @notice Only an enrolled beneficiary may raise a dispute.
+    error NotBeneficiary(uint256 id, address caller);
+    /// @notice The inclusive beneficiary dispute deadline has passed.
+    error DisputeWindowClosed(uint256 id, uint64 deadline);
+    /// @notice Failure cannot be admitted after success has finalized.
+    error SuccessAlreadyFinalized(uint256 id);
+    /// @notice Success finalization requires strictly passing the review deadline.
+    error ReviewWindowOpen(uint256 id, uint64 successReadyAt);
+    /// @notice Success escrow has already been released, including a zero release.
+    error SuccessEscrowAlreadyReleased(uint256 id);
+    /// @notice Success escrow must be released before withdrawing the bond.
+    error SuccessEscrowNotReleased(uint256 id);
+
+    /// @notice The operator proposed success without recording a final verdict.
+    event SuccessProposed(uint256 indexed id, address indexed operator, uint64 readyAt);
+    /// @notice An enrolled beneficiary froze the guarantee without selecting a payout.
+    event DisputeRaised(uint256 indexed id, address indexed beneficiary);
+    /// @notice The operator exercised trusted blocking power without selecting a payout.
+    event UncertaintyMarked(uint256 indexed id, address indexed operator);
+    /// @notice Success finalized and this guarantee's compensation reservation was released.
+    event SuccessFinalized(uint256 indexed id, uint256 releasedReservation);
+    /// @notice This guarantee's success escrow was released once to its provider.
+    event SuccessEscrowReleased(uint256 indexed id, address indexed provider, uint256 amount);
+
     /// @param usdc_ USDC address supplied by the deployer; not hardcoded.
-    constructor(IERC20 usdc_) {
+    /// @param demoOperator_ Trusted immutable human-controlled demo authority.
+    /// @param reviewWindow_ Positive synthetic review duration in seconds.
+    constructor(IERC20 usdc_, address demoOperator_, uint64 reviewWindow_) {
         if (address(usdc_) == address(0)) revert ZeroUsdcAddress();
+        if (demoOperator_ == address(0)) revert ZeroOperatorAddress();
+        if (reviewWindow_ == 0) revert ZeroReviewWindow();
         usdc = usdc_;
+        demoOperator = demoOperator_;
+        reviewWindow = reviewWindow_;
+    }
+
+    /// @notice Return the contract lifecycle protocol version.
+    function protocolVersion() external pure returns (uint256) {
+        return 2;
     }
 
     /// @notice Create a guarantee and lock compensation times maxCohort as its bond.
@@ -190,7 +289,7 @@ contract MicroCover is ReentrancyGuard {
     /// @param settlementTime Settlement timestamp, no earlier than joinDeadline.
     /// @param termsHash Opaque hash of off-chain terms.
     /// @return id The newly created guarantee identifier.
-    /// @dev settlementTime is stored metadata; Phase 1 failure admission is not time-gated.
+    /// @dev settlementTime gates success proposals; provider failure admission is not time-gated.
     function createGuarantee(
         uint128 compensation,
         uint128 escrowAmount,
@@ -204,6 +303,7 @@ contract MicroCover is ReentrancyGuard {
         if (maxCohort == 0 || maxCohort > MAX_COHORT) revert InvalidMaxCohort();
         if (joinDeadline <= block.timestamp) revert InvalidJoinDeadline();
         if (settlementTime < joinDeadline) revert InvalidSettlementTime();
+        uint64 claimEndsAt = _timestamp64(uint256(settlementTime) + reviewWindow);
 
         uint256 bond = uint256(compensation) * uint256(maxCohort);
         id = nextGuaranteeId;
@@ -220,6 +320,7 @@ contract MicroCover is ReentrancyGuard {
         });
         bondOf[id] = bond;
         escrowedOf[id] = 0;
+        _lifecycle[id].claimEndsAt = claimEndsAt;
 
         _pullUsdc(msg.sender, bond);
 
@@ -260,16 +361,114 @@ contract MicroCover is ReentrancyGuard {
         emit CohortJoined(id, msg.sender, guarantee.cohortSize);
     }
 
+    /// @notice Propose success once, closing enrollment without a verdict or token movement.
+    /// @dev Only demoOperator; a late proposal still receives a full reviewWindow.
+    /// No reservation is released until permissionless finalization strictly after readyAt.
+    function proposeSuccess(uint256 id) external nonReentrant {
+        Guarantee storage guarantee = _guarantees[id];
+        if (guarantee.provider == address(0)) revert UnknownGuarantee(id);
+        if (msg.sender != demoOperator) revert NotDemoOperator(msg.sender);
+        Progress storage progress = _progress[id];
+        if (progress.status != Status.OPEN) revert InvalidStatus(id, progress.status);
+        uint256 earliest = uint256(guarantee.joinDeadline) + 1;
+        if (guarantee.settlementTime > earliest) earliest = guarantee.settlementTime;
+        if (block.timestamp < earliest) revert ProposalTooEarly(id, earliest);
+        Lifecycle storage lifecycle = _lifecycle[id];
+        uint256 readyAt = block.timestamp + uint256(reviewWindow);
+        if (lifecycle.claimEndsAt > readyAt) readyAt = lifecycle.claimEndsAt;
+        uint64 ready = _timestamp64(readyAt);
+        progress.status = Status.SUCCESS_PENDING;
+        lifecycle.successProposedAt = _timestamp64(block.timestamp);
+        lifecycle.successReadyAt = ready;
+        emit SuccessProposed(id, msg.sender, ready);
+    }
+
+    /// @notice Freeze an OPEN or pending guarantee within its inclusive dispute window.
+    /// @dev Only enrolled beneficiaries; no payout is selected and no tokens move.
+    /// UNCERTAIN has no path back to success; only provider failure admission resolves it.
+    function raiseDispute(uint256 id) external nonReentrant {
+        if (_guarantees[id].provider == address(0)) revert UnknownGuarantee(id);
+        if (!_members[id][msg.sender]) revert NotBeneficiary(id, msg.sender);
+        Status status = _progress[id].status;
+        uint64 deadline;
+        if (status == Status.OPEN) deadline = _lifecycle[id].claimEndsAt;
+        else if (status == Status.SUCCESS_PENDING) deadline = _lifecycle[id].successReadyAt;
+        else revert InvalidStatus(id, status);
+        if (block.timestamp > deadline) revert DisputeWindowClosed(id, deadline);
+        _markUncertain(id);
+        emit DisputeRaised(id, msg.sender);
+    }
+
+    /// @notice Exercise trusted operator blocking power on an OPEN or pending guarantee.
+    /// @dev No time bound, token movement or payout selection. Only provider failure
+    /// admission resolves UNCERTAIN; no route from UNCERTAIN to success exists in Phase 2.
+    function markUncertain(uint256 id) external nonReentrant {
+        if (_guarantees[id].provider == address(0)) revert UnknownGuarantee(id);
+        if (msg.sender != demoOperator) revert NotDemoOperator(msg.sender);
+        Status status = _progress[id].status;
+        if (status != Status.OPEN && status != Status.SUCCESS_PENDING) revert InvalidStatus(id, status);
+        _markUncertain(id);
+        emit UncertaintyMarked(id, msg.sender);
+    }
+
+    /// @notice Finalize reviewed success permissionlessly, releasing only its reservation.
+    /// @dev Strictly after successReadyAt. Records SUCCESS explicitly, moves no tokens,
+    /// and leaves bond and escrow held for separate release and withdrawal calls.
+    function finalizeSuccess(uint256 id) external nonReentrant {
+        if (_guarantees[id].provider == address(0)) revert UnknownGuarantee(id);
+        Progress storage progress = _progress[id];
+        if (progress.status != Status.SUCCESS_PENDING) revert InvalidStatus(id, progress.status);
+        Lifecycle storage lifecycle = _lifecycle[id];
+        if (block.timestamp <= lifecycle.successReadyAt) revert ReviewWindowOpen(id, lifecycle.successReadyAt);
+        progress.outcome = Outcome.SUCCESS;
+        progress.status = Status.SUCCEEDED;
+        lifecycle.successFinalizedAt = _timestamp64(block.timestamp);
+        uint256 released = reservedOf[id];
+        lifecycle.releasedSuccessReservation = released;
+        reservedOf[id] = 0;
+        emit SuccessFinalized(id, released);
+    }
+
+    /// @notice Release this guarantee's entire success escrow once to its provider.
+    /// @dev Permissionless; effects precede exact sender-debit and recipient-credit checks.
+    /// An empty cohort records a zero release and emits the event without a token transfer.
+    /// @return amount The escrow released; never supplied by the caller.
+    function releaseSuccessEscrow(uint256 id) external nonReentrant returns (uint256 amount) {
+        Guarantee storage guarantee = _guarantees[id];
+        if (guarantee.provider == address(0)) revert UnknownGuarantee(id);
+        Status status = _progress[id].status;
+        if (status != Status.SUCCEEDED) revert InvalidStatus(id, status);
+        Lifecycle storage lifecycle = _lifecycle[id];
+        if (lifecycle.successEscrowReleased) revert SuccessEscrowAlreadyReleased(id);
+        amount = escrowedOf[id];
+        escrowedOf[id] = 0;
+        lifecycle.releasedSuccessEscrow = amount;
+        lifecycle.successEscrowReleased = true;
+        if (amount > 0) _sendUsdc(guarantee.provider, amount);
+        emit SuccessEscrowReleased(id, guarantee.provider, amount);
+    }
+
     /// @notice Admit failure once, closing enrollment without moving any tokens.
-    /// @dev Only this guarantee's provider may admit failure, at any time while OPEN.
+    /// @dev Only this guarantee's provider, while OPEN, SUCCESS_PENDING or UNCERTAIN,
+    /// even after a review deadline until success is actually finalized.
     /// Zero enrollment remains FAILED until the provider withdraws the whole bond.
     function admitFailure(uint256 id) external nonReentrant {
         Guarantee storage guarantee = _guarantees[id];
         if (guarantee.provider == address(0)) revert UnknownGuarantee(id);
         if (msg.sender != guarantee.provider) revert NotProvider(id, msg.sender);
         Progress storage progress = _progress[id];
-        if (progress.status != Status.OPEN) revert AlreadyAdmitted(id);
+        if (progress.status == Status.FAILED
+            || (progress.status == Status.CLOSED && progress.outcome == Outcome.FAILURE)) {
+            revert AlreadyAdmitted(id);
+        }
+        if (progress.status == Status.SUCCEEDED
+            || (progress.status == Status.CLOSED && progress.outcome == Outcome.SUCCESS)) {
+            revert SuccessAlreadyFinalized(id);
+        }
+        if (progress.status != Status.OPEN && progress.status != Status.SUCCESS_PENDING
+            && progress.status != Status.UNCERTAIN) revert InvalidStatus(id, progress.status);
 
+        _lifecycle[id].successReadyAt = 0;
         progress.status = Status.FAILED;
         progress.outcome = Outcome.FAILURE;
         progress.failureAdmittedAt = uint64(block.timestamp);
@@ -293,6 +492,10 @@ contract MicroCover is ReentrancyGuard {
         if (guarantee.provider == address(0)) revert UnknownGuarantee(id);
         Progress storage progress = _progress[id];
         if (progress.status == Status.OPEN) revert NotFailed(id);
+        if (progress.status != Status.FAILED
+            && !(progress.status == Status.CLOSED && progress.outcome == Outcome.FAILURE)) {
+            revert InvalidStatus(id, progress.status);
+        }
         uint32 start = progress.paidCount;
         if (start == guarantee.cohortSize) revert NothingToSettle(id);
         settled = guarantee.cohortSize - start;
@@ -323,8 +526,9 @@ contract MicroCover is ReentrancyGuard {
     }
 
     /// @notice Withdraw only this guarantee's leftover bond to its own provider.
-    /// @dev Requires failure admission and all beneficiaries paid; the amount is derived
-    /// from bondOf, never supplied by the caller. A fully paid full cohort is already CLOSED.
+    /// @dev Requires failure admission and all beneficiaries paid, or finalized success
+    /// with success escrow already released. The amount is derived from bondOf, never
+    /// supplied by the caller. A fully paid full failure cohort is already CLOSED.
     /// @return amount Leftover bond withdrawn.
     function withdrawRemainingBond(uint256 id) external nonReentrant returns (uint256 amount) {
         Guarantee storage guarantee = _guarantees[id];
@@ -333,8 +537,13 @@ contract MicroCover is ReentrancyGuard {
         Progress storage progress = _progress[id];
         if (progress.status == Status.OPEN) revert NotFailed(id);
         if (progress.status == Status.CLOSED) revert NothingToWithdraw(id);
-        if (progress.paidCount < guarantee.cohortSize) {
-            revert LiabilitiesUnpaid(id, guarantee.cohortSize - progress.paidCount);
+        if (progress.status == Status.SUCCEEDED) {
+            if (!_lifecycle[id].successEscrowReleased) revert SuccessEscrowNotReleased(id);
+        } else {
+            if (progress.status != Status.FAILED) revert InvalidStatus(id, progress.status);
+            if (progress.paidCount < guarantee.cohortSize) {
+                revert LiabilitiesUnpaid(id, guarantee.cohortSize - progress.paidCount);
+            }
         }
         if (reservedOf[id] != 0) revert ReservedCompensationRemaining(id, reservedOf[id]);
         amount = bondOf[id];
@@ -344,11 +553,7 @@ contract MicroCover is ReentrancyGuard {
         emit RemainingBondWithdrawn(id, guarantee.provider, amount);
         emit GuaranteeClosed(id);
 
-        uint256 balanceBefore = usdc.balanceOf(address(this));
-        uint256 providerBefore = usdc.balanceOf(guarantee.provider);
-        usdc.safeTransfer(guarantee.provider, amount);
-        _checkUsdcSent(amount, balanceBefore);
-        _checkRecipientReceived(guarantee.provider, amount, providerBefore);
+        _sendUsdc(guarantee.provider, amount);
     }
 
     /// @notice Return the terms and current cohort size of an existing guarantee.
@@ -383,8 +588,8 @@ contract MicroCover is ReentrancyGuard {
         return _progress[id].status;
     }
 
-    /// @notice Return the provider verdict, independent of lifecycle and payout counters.
-    /// @dev Stored explicitly when failure is admitted; unknown identifiers revert.
+    /// @notice Return the stored verdict, independent of lifecycle and payout counters.
+    /// @dev Explicitly recorded on failure admission or success finalization; unknown ids revert.
     function outcomeOf(uint256 id) external view returns (Outcome) {
         if (_guarantees[id].provider == address(0)) revert UnknownGuarantee(id);
         return _progress[id].outcome;
@@ -414,11 +619,39 @@ contract MicroCover is ReentrancyGuard {
             uint32 slots = guarantee.maxCohort - guarantee.cohortSize;
             state.openSlots = capacity < slots ? uint32(capacity) : slots;
         }
-        if (progress.status == Status.FAILED && progress.paidCount == guarantee.cohortSize) {
+        if ((progress.status == Status.FAILED && progress.paidCount == guarantee.cohortSize)
+            || (progress.status == Status.SUCCEEDED && _lifecycle[id].successEscrowReleased)) {
             state.withdrawableBond = state.bondHeld;
         }
-        state.remainingOwed = (uint256(guarantee.escrowAmount) + uint256(guarantee.compensation))
-            * (guarantee.cohortSize - progress.paidCount);
+        if (progress.outcome != Outcome.SUCCESS) {
+            state.remainingOwed = (uint256(guarantee.escrowAmount) + uint256(guarantee.compensation))
+                * (guarantee.cohortSize - progress.paidCount);
+        }
+    }
+
+    /// @notice Return the fixed-order lifecycle history and immutable review configuration.
+    /// @dev Unknown guarantees revert; this does not alter the Phase 1 getState tuple.
+    function getLifecycle(uint256 id) external view returns (LifecycleView memory state) {
+        Guarantee storage guarantee = _guarantees[id];
+        if (guarantee.provider == address(0)) revert UnknownGuarantee(id);
+        Progress storage progress = _progress[id];
+        Lifecycle storage lifecycle = _lifecycle[id];
+        state.status = progress.status;
+        state.outcome = progress.outcome;
+        state.joinDeadline = guarantee.joinDeadline;
+        state.settlementTime = guarantee.settlementTime;
+        state.claimEndsAt = lifecycle.claimEndsAt;
+        state.successProposedAt = lifecycle.successProposedAt;
+        state.successReadyAt = lifecycle.successReadyAt;
+        state.successFinalizedAt = lifecycle.successFinalizedAt;
+        state.uncertainAt = lifecycle.uncertainAt;
+        state.uncertainBy = lifecycle.uncertainBy;
+        state.successEscrowReleased = lifecycle.successEscrowReleased;
+        state.releasedSuccessReservation = lifecycle.releasedSuccessReservation;
+        state.releasedSuccessEscrow = lifecycle.releasedSuccessEscrow;
+        state.withdrawnBond = progress.withdrawnBond;
+        state.demoOperator = demoOperator;
+        state.reviewWindow = reviewWindow;
     }
 
     /// @notice Return enrolled beneficiary count; unknown identifiers return zero.
@@ -442,6 +675,30 @@ contract MicroCover is ReentrancyGuard {
     /// @notice Return whether account has been paid; unknown ids/accounts return false.
     function isPaid(uint256 id, address account) external view returns (bool) {
         return _paid[id][account];
+    }
+
+    /// @dev Checked timestamp narrowing for new lifecycle fields.
+    function _timestamp64(uint256 value) private pure returns (uint64) {
+        if (value > type(uint64).max) revert TimestampOverflow(value);
+        return uint64(value);
+    }
+
+    /// @dev Cancel pending eligibility while preserving proposal history; never moves funds.
+    function _markUncertain(uint256 id) private {
+        _progress[id].status = Status.UNCERTAIN;
+        Lifecycle storage lifecycle = _lifecycle[id];
+        lifecycle.uncertainAt = _timestamp64(block.timestamp);
+        lifecycle.uncertainBy = msg.sender;
+        lifecycle.successReadyAt = 0;
+    }
+
+    /// @dev Every outgoing transfer checks both exact contract debit and recipient credit.
+    function _sendUsdc(address to, uint256 amount) private {
+        uint256 balanceBefore = usdc.balanceOf(address(this));
+        uint256 recipientBefore = usdc.balanceOf(to);
+        usdc.safeTransfer(to, amount);
+        _checkUsdcSent(amount, balanceBefore);
+        _checkRecipientReceived(to, amount, recipientBefore);
     }
 
     /// @dev Transfer only an already-accounted batch, at most MAX_SETTLEMENT_BATCH entries.
