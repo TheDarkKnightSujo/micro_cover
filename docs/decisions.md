@@ -20,8 +20,12 @@ Accepted direction comes from the user's plans; technical choices below stay pen
 | D14 | Open-source licence and third-party attribution | Human selection pending |
 | D15 | Hosting and persistent collector storage | Pending scaffold/host inspection |
 | D16 | Single implementation operator and rotating publishers | User handles all implementation roles on one laptop; the four supplied GitHub accounts publish complete phase snapshots per contributions.md. Publication is not implementation attribution. |
+| D17 | Continue Phase 1 while Studio judge-sharing is unresolved | User authorized progression after discussion. Phase 0 technical evidence retained; final sponsor access requirement remains open, with no eligibility or Phase 0 pass asserted. |
+| D18 | Phase 1 financial/lifecycle slice | Implemented and locally verified in Studio/private source: full escrow/full-capacity bond; provider-only failure; enrollment-order payouts, batch 1–20; remaining bond only after all failed-cohort payouts. Explicit outcome survives closure and timestamp zero. No OPEN withdrawal or success release. 115 tests pass; real Arc transactions pending. |
 
 ## Change entry
+
+6 November 2026 publication update: user explicitly takes the first public commit. First snapshot includes the foundation and completed Phase 1 together. Revised future rotation: Atharva7406 Phase 2, Vedanto28 Phase 3, NamanN-Creator Phase 4, current user Phase 5, Atharva7406 Phase 6. Default to whole verified phases; coherent independently reviewed task snapshots allowed if actually needed. This supersedes the earlier publisher assignments, does not grant the agent permission to publish, and does not reassign implementation authorship. Exact file manifest and human commands are in first-public-commit.md / public-release-files.txt. Public repo remains untouched.
 
 Date / owner / ID:
 What changed:

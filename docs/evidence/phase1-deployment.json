@@ -1,0 +1,27 @@
+{
+  "creationPayloadPresentInTransaction": true,
+  "codeAbsentInPriorBlock": true,
+  "codeAtDeploymentBlockMatches": true,
+  "networkChainId": 5042002,
+  "observedBlock": "0x43b3ab8",
+  "address": "0xff679b65c1d09e8d49fb18bb656f4509b33af9a0",
+  "txHash": "0x6e425c0bbb59428dd4f881b44f872193df16648dc953a87b7825e18f44d56625",
+  "receiptStatus": "0x1",
+  "receiptContractAddress": null,
+  "outerTransactionSender": "0x99a29bff54d34711ae80dd569ea48a3e3e96c743",
+  "deploymentBlock": "0x43b391f",
+  "transactionTo": "0x5ff137d4b0fdcd49dca30c7cf57e578a026d2789",
+  "runtimeBytes": 10404,
+  "localRuntimeBytes": 10404,
+  "fullRuntimeMatch": true,
+  "executableRuntimeMatchExcludingMetadata": true,
+  "immutableReferences": 12,
+  "immutableUsdcMatches": true,
+  "runtimeKeccak256": "0x08b430d2181bd285f51889794cec97f4146ed0aef49f9bfe2b51a365e9e8183d",
+  "reads": {
+    "usdc": "0x3600000000000000000000000000000000000000",
+    "MAX_COHORT": "100",
+    "MAX_SETTLEMENT_BATCH": "20",
+    "nextGuaranteeId": "1"
+  }
+}

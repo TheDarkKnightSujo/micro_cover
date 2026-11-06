@@ -1,0 +1,12 @@
+{
+  "guaranteeId": "2",
+  "observedBlock": "0x43b48bd",
+  "method": "read-only eth_call; no signing/broadcast",
+  "caller": "0x1d39fc0e5293AB949D63217fFB375357ADf3933f",
+  "status": 1,
+  "enrolled": 1,
+  "reservedCompensation": "100000",
+  "error": "LiabilitiesUnpaid",
+  "expected": "LiabilitiesUnpaid",
+  "passed": true
+}

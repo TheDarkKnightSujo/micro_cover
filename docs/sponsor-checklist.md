@@ -23,6 +23,10 @@ Human Preview screenshot shows the undeployed illustrative app. Studio's Share m
 
 Independent account test: teammate's screenshots at the exact project URL show `New Project` and an empty Code file list. Project access not demonstrated. Arc staff clarification is required; unsent question is prepared in `docs/arc-sharing-question.md`.
 
+Phase 1: required source was extended through the same Studio project and pulled selectively; contract/app/tests have zero dry-run differences. Private local checks pass (115 contract tests, lint/typecheck, production build). Human testnet deployment, bond, three enrollments and payouts remain pending, so deployment/transaction checkboxes stay unchecked. Judge-sharing remains deferred under D17, not solved by source parity or frontend hosting.
+
+Later deployment verification: human initiated Studio deployment and agent confirmed the exact reviewed runtime at `0xff679b65c1d09e8d49fb18bb656f4509b33af9a0` on Arc Testnet. Evidence: docs/evidence/phase1-deployment.json. User preview shows Create and fund, Actions and address; guarantee count still zero. Real guarantee funding/three enrollments/payouts and sponsor judge access remain pending; combined checklist requirements are not marked complete prematurely.
+
 ## Chainlink — CRE workflow
 
 Official: https://ethglobal.com/events/mumbai/prizes/chainlink
@@ -65,3 +69,7 @@ Official: https://ethglobal.com/events/mumbai/info/details
 - [ ] Submitted confirmation captured before deadline.
 
 Do not rely on a stale copied deadline. Record the dashboard value and announcements here when manually checked.
+
+Phase 1 reference-flow follow-up: real bond, all three enrollments, provider admission and three exact 7 USDC payouts are verified. Final contract token balance and guarantee liabilities zero, CLOSED / FAILURE. Linked public evidence in phase1-settlement.json and phase1-post-settlement.json. Deployment/funding/payout evidence exists; combined testing milestone still retains the runbook's separate-active-guarantee withdrawal check. No final phase/sponsor eligibility pass or public release asserted.
+
+Phase 1 final: all required contract/app checks and real human testnet flows completed. Three 7 USDC payouts, separate-active-guarantee withdrawal protection, partial 0.2 payout and 0.1 unused-bond return verified. Both guarantees closed with zero token balance/obligations at block 0x43b49fa. Source parity remains exact. Phase 1 PASSED; sponsor eligibility/judge sharing, future phases, public publication and final submission remain separate. Evidence: docs/evidence/phase1-final.json.

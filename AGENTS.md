@@ -44,7 +44,9 @@ Keep raw/private evidence off public storage. Hash canonical payloads, append ne
 
 Do not request private keys in chat or print secrets. Use local/host environment settings; commit only placeholder examples after the actual config names are known. Never embed secrets in NEXT_PUBLIC_/VITE_ or similar browser-exposed variables.
 
-User workflow update, 6 November 2026: agents may stage, create coherent local task commits and verify them without asking again, using the operator's existing Git author identity and accurate AI-use disclosure. This supersedes older planning instructions reserving commits for humans. Do not automatically push, merge, tag, publish, deploy or sign wallet transactions; prepare those steps for humans unless separately authorized. Local inspection, implementation and necessary tests are authorized within the requested phase. Do not modify the separate public checkout as a side effect. Preserve unrelated changes and inspect the staged diff before each commit.
+The latest user-supplied repository instructions reserve deployment, commit and publication steps for humans. Do not automatically commit, push, merge, tag, publish, deploy or sign wallet transactions. Prepare the exact commands instead. This supersedes the earlier local-commit authorization recorded in historical notes. Local inspection, implementation and necessary tests are authorized within the requested phase. Do not modify the separate public checkout as a side effect. Preserve unrelated changes and inspect proposed commit contents.
+
+Specific release authorization, 6 November 2026: the user explicitly requested that the agent execute all commits/pushes and the public snapshot export in docs/first-public-commit.md for the first completed Phase 1 release. This authorizes those private/public Git actions and the named public checkout update for that release only, using the existing genuine author identity. It does not authorize later releases, force pushes, history rewriting, deployment or wallet signing. Inspect staged contents, exclude secrets, verify remote SHAs and record actual release results.
 
 ## Git and contributions
 

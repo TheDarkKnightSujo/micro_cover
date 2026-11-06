@@ -1,10 +1,10 @@
 # MicroCover
 
-A generic programmable-guarantee protocol on Arc Testnet, settled in official USDC. A provider posts a bond, beneficiaries lock escrow to join a bounded cohort, and each beneficiary is covered by a fixed compensation. This first pass is the foundation only: creating a guarantee, joining a cohort and reading state. Settlement is not built yet, so funds sent to the contract stay locked. Use testnet only.
+A generic programmable-guarantee protocol for Arc Testnet, settled in official USDC. A provider posts a bond and beneficiaries lock escrow to join a bounded cohort. Phase 1 adds provider-admitted failure and fixed payouts derived from enrollment. Use testnet only. OPEN funds remain locked until the provider admits failure; success release, evidence verdicts, CRE and Arkiv app integration belong to later phases.
 
 Built with [Arc Studio](https://studio.arc.io)
 
-The app shows a synthetic example (an event with three attendees) of the generic model, the network setup, and a live reader for guarantees once the contract is deployed.
+The app supports create/fund, enroll, provider failure admission and bounded payout continuation. Human initiated the Studio deployment to Arc Testnet at `0xff679b65c1d09e8d49fb18bb656f4509b33af9a0`; its runtime matches the reviewed local build. The synthetic three-beneficiary example uses a 15 USDC bond, 2 USDC escrow and 5 USDC compensation each: total locked 21, failure payout 7 each. Phase 1 passed its human testnet checkpoint: the reference guarantee and a partial-cohort withdrawal test are both closed with no funds remaining in the contract. Receipts, limits and proposed commit steps are in [the Phase 1 checkpoint](docs/phase1-checkpoint.md). Later phases and Studio judge access remain separate pending work.
 
 ## Tech stack
 
@@ -34,10 +34,10 @@ bun run check            # lint and typecheck
 The constructor takes one argument: the official Arc Testnet USDC address, `0x3600000000000000000000000000000000000000`.
 
 - In Arc Studio, ask to deploy MicroCover to Arc Testnet.
-- From your own wallet with the sandbox script (needs Circle credentials in `.env`):
+- Inside the Studio sandbox with Circle developer-controlled wallet credentials, the generated script offers:
   `bun run deploy:self MicroCover '["0x3600000000000000000000000000000000000000"]' --chain ARC-TESTNET`
 
-After deploying, add the contract address to `.env` as `VITE_MICROCOVER_ADDRESS`.
+This script expects Studio filesystem paths and Circle credentials; it is not a verified local MetaMask deployment route. Follow the supported Studio workflow and human deployment request in the checkpoint. After deployment, set public `VITE_MICROCOVER_ADDRESS` in the relevant ignored environment file and restart Vite. Never put wallet keys or Circle secrets in browser variables or chat.
 
 ## Working with external tools
 
