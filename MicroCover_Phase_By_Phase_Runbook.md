@@ -177,11 +177,13 @@ steps for us; report checkpoint evidence and proposed small commit groups.
 
 ### Checkpoint 1
 
-- [ ] Bond, three enrollments and payouts are real testnet transactions.
-- [ ] Refund comes from buyer escrow; compensation comes from provider bond.
-- [ ] Unauthorized caller, excess capacity and repeat payout cases fail.
-- [ ] Tests check cross-guarantee isolation, zero/invalid parameters and arithmetic.
-- [ ] No unexplained operator button can send arbitrary money.
+- [x] Bond, three enrollments and payouts are real testnet transactions.
+- [x] Refund comes from buyer escrow; compensation comes from provider bond.
+- [x] Unauthorized caller, excess capacity and repeat payout cases fail.
+- [x] Tests check cross-guarantee isolation, zero/invalid parameters and arithmetic.
+- [x] No unexplained operator button can send arbitrary money.
+
+PASSED 6 November 2026. Human signed reference and partial-cohort test flows; agent independently verified receipts, transfers and final zero balances. Negative cases used decoded read-only eth_call against deployed state, not signed failed transactions. The different active guarantee's reserved bond was protected in OPEN and FAILED states; its payout and unused-bond return are complete. See docs/phase1-checkpoint.md and docs/evidence/phase1-final.json. Phase 0 judge-sharing remains unresolved; this does not start Phase 2 or authorize publication.
 
 **Commits:** `feat: create bonded guarantees`; `feat: enroll beneficiaries into escrow`; `feat: settle provider-admitted failure`; `test: cover capacity and payout authorization`.
 

@@ -1,8 +1,32 @@
-# Shared interfaces — observed foundation and proposed extensions
+# Shared interfaces — Phase 1 and proposed extensions
 
-The observed foundation below exists in the Studio-generated source and is not deployed. Subsequent sections describe proposed lifecycle/evidence extensions; they are not claims of implemented APIs. Record accepted changes in decisions.md and update consumers together.
+Phase 1 extends the original Studio foundation in the same project. Human initiated Studio deployment to Arc Testnet at `0xff679b65c1d09e8d49fb18bb656f4509b33af9a0`; runtime bytecode matches the reviewed local build exactly with the USDC immutable populated. Verification: `docs/evidence/phase1-deployment.json`. Later lifecycle/evidence sections remain proposals. Record accepted changes in decisions.md and update consumers together.
 
-## Observed Phase 0 foundation
+## Phase 1 API and accounting
+
+The original `createGuarantee` signature and Guarantee terms tuple are preserved. `joinCohort` remains one enrollment/account/guarantee, excludes the provider and is permitted through the join deadline inclusive, while OPEN and within guarantee-local capacity. The full bond is compensation times maximum cohort; the full beneficiary payment is escrow. `settlementTime` and opaque `termsHash` are frozen metadata, not a release authorization or implemented evidence policy.
+
+| Function | Authority / effect |
+|---|---|
+| `admitFailure(uint256 id)` | Only that guarantee's provider, once while OPEN; closes enrollment, stores FAILURE verdict and admission timestamp, moves no funds. No time gate. |
+| `settleFailure(uint256 id, uint32 maxBeneficiaries) returns (uint32 settled)` | Permissionless after admission; batch 1–20, derives next enrollment-order recipients and fixed escrow + compensation from state. No external payout list. Whole batch reverts on transfer failure or incorrect amount; repeat payout rejected. |
+| `withdrawRemainingBond(uint256 id) returns (uint256 amount)` | Only provider after failure and all enrolled liabilities paid, reserved compensation zero; derives unused bond, transfers only to provider, closes guarantee. No OPEN withdrawal. Zero enrollment can withdraw the entire admitted-failure bond. |
+| `getState(uint256 id)` | Returns snapshot described below; unknown IDs revert. |
+| `statusOf`, `outcomeOf` | Existing-ID lifecycle and explicit verdict, retained after payouts/closure; unknown IDs revert. |
+| `beneficiaryCount`, `beneficiaryAt`, `getBeneficiaries`, `isPaid` | Enrollment order and payout flags. List bounded by 100; out-of-range index reverts. Unknown count/list/paid return 0/empty/false. |
+| `reservedOf` | Unpaid compensation liability, a subset of `bondOf`, never added to bond a second time. Unknown IDs return zero. |
+
+`Status`: OPEN=0, FAILED=1, CLOSED=2. `Outcome`: NONE=0, FAILURE=1. Full cohorts close automatically on the last successful payout; partial/empty cohorts stay FAILED until unused bond withdrawal. There is no success, evaluation, uncertain or CRE state in this enum. Never reuse proposed later-phase enum numbers as deployed ABI values.
+
+`getState` tuple order: `(uint8 status, uint8 outcome, uint32 enrolled, uint32 paidCount, uint32 openSlots, uint64 failureAdmittedAt, uint256 bondHeld, uint256 reservedCompensation, uint256 escrowHeld, uint256 paidCompensation, uint256 paidEscrow, uint256 withdrawableBond, uint256 remainingOwed)`. `openSlots` measures OPEN ledger capacity; consult `isJoinable` for deadline eligibility. `withdrawableBond` is zero until FAILED and all enrolled beneficiaries are paid.
+
+Per-guarantee conservation: `bondOf + paidCompensation + withdrawnBond = compensation * maxCohort`; `escrowedOf + paidEscrow = escrowAmount * cohortSize`; `reservedOf + paidCompensation = compensation * cohortSize`. Global token assets cover the sum of each guarantee's held bond plus escrow. Donations are extra assets, never capacity or withdrawable funds. Exact inbound receipts, outbound contract debits and recipient gains are checked. Token failures revert accounting and earlier transfers within the same transaction.
+
+New events: `FailureAdmitted(id, provider, enrolled, totalOwed)`, `BeneficiaryPaid(id, beneficiary, escrowReturned, compensationPaid)`, `SettlementBatchProcessed(id, caller, settled, paidCount, enrolled)`, `GuaranteeClosed(id)`, `RemainingBondWithdrawn(id, provider, amount)`. ID and relevant account fields are indexed in source. Custom errors identify authorization, state, batch, accounting and recipient receipt failures; UI decodes the ABI rather than inferring success from submitted hashes.
+
+UI uses the same public contract-address variable, official Arc Testnet and six-decimal token helpers. It waits for mined receipt success and shows cancellation/revert/error separately. Complete reads are required before dependent actions; RPC failure is unavailable, only decoded `UnknownGuarantee` means unknown ID. Contract/id/account action keys reset irreversible confirmation state. These are local implementation behaviors; real-wallet flows remain manual checkpoint checks.
+
+## Historical Phase 0 foundation (superseded by Phase 1 source)
 
 - `createGuarantee(uint128 compensation, uint128 escrowAmount, uint32 maxCohort, uint64 joinDeadline, uint64 settlementTime, bytes32 termsHash) returns (uint256 id)` pulls `compensation * maxCohort` as the provider bond.
 - `joinCohort(uint256 id)` pulls the fixed escrow amount from the joining beneficiary. One enrollment/account/guarantee, provider cannot enroll, contract maximum 100, guarantee-specific cap enforced. Enrollment at exactly `joinDeadline` is currently permitted; after it is rejected.

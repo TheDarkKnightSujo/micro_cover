@@ -1,0 +1,28 @@
+{
+  "block": "0x43b42fa",
+  "address": "0xff679b65c1d09e8d49fb18bb656f4509b33af9a0",
+  "method": "read-only eth_call; no transaction/signature",
+  "results": [
+    {
+      "label": "beneficiary cannot admit failure",
+      "caller": "0x26DD598639E917F32D256B0cAd0408a842af0218",
+      "error": "NotProvider",
+      "expected": "NotProvider",
+      "passed": true
+    },
+    {
+      "label": "full cohort rejects synthetic nonmember (eth_call only)",
+      "caller": "0x000000000000000000000000000000000000dead",
+      "error": "CohortFull",
+      "expected": "CohortFull",
+      "passed": true
+    },
+    {
+      "label": "provider cannot withdraw OPEN bond",
+      "caller": "0x1d39fc0e5293ab949d63217ffb375357adf3933f",
+      "error": "NotFailed",
+      "expected": "NotFailed",
+      "passed": true
+    }
+  ]
+}

@@ -1,0 +1,59 @@
+{
+  "observedBlock": "0x43b49fa",
+  "address": "0xff679b65c1d09e8d49fb18bb656f4509b33af9a0",
+  "method": "read-only RPC; no signature/broadcast",
+  "states": [
+    {
+      "id": "1",
+      "state": {
+        "status": 2,
+        "outcome": 1,
+        "enrolled": 3,
+        "paidCount": 3,
+        "openSlots": 0,
+        "failureAdmittedAt": "1793949801",
+        "bondHeld": "0",
+        "reservedCompensation": "0",
+        "escrowHeld": "0",
+        "paidCompensation": "15000000",
+        "paidEscrow": "6000000",
+        "withdrawableBond": "0",
+        "remainingOwed": "0"
+      }
+    },
+    {
+      "id": "2",
+      "state": {
+        "status": 2,
+        "outcome": 1,
+        "enrolled": 1,
+        "paidCount": 1,
+        "openSlots": 0,
+        "failureAdmittedAt": "1793950409",
+        "bondHeld": "0",
+        "reservedCompensation": "0",
+        "escrowHeld": "0",
+        "paidCompensation": "100000",
+        "paidEscrow": "100000",
+        "withdrawableBond": "0",
+        "remainingOwed": "0"
+      }
+    }
+  ],
+  "contractUsdcBalance": "0",
+  "guarantee2BeneficiaryPaid": true,
+  "unusedBondWithdrawal": {
+    "transactionHash": "0x321b0311ddb27c2bb4adaeae31a9c1052e3807f368211cdecde6566f20826fdf",
+    "status": "0x1",
+    "usdcTransfers": [
+      {
+        "from": "0xFF679b65C1d09E8D49fb18bb656f4509B33aF9a0",
+        "to": "0x1d39fc0e5293AB949D63217fFB375357ADf3933f",
+        "value": "100000"
+      }
+    ]
+  },
+  "exactPointOneUsdcReturn": true,
+  "repeatWithdrawalError": "NothingToWithdraw",
+  "passed": true
+}

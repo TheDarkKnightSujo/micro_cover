@@ -2,9 +2,11 @@
 
 Authoritative detailed commands are in section 2 of MicroCover_Implementation_Plan.md. Inspect current history before running any branch/bootstrap command. This document is a checklist, not permission to rewrite repository history.
 
-User update, 6 November 2026: Codex is authorized to stage, make coherent local commits and verify them without repeated approval. Use the existing operator identity, disclose AI assistance, and exclude unrelated work. Pushes, merges, tags, public publication, deployment and wallet signing remain human steps unless separately authorized. This update supersedes the original plans' human-only local commit guidance.
+Earlier on 6 November 2026, the user authorized local agent commits. The latest user-supplied AGENTS instructions reserve commits and deployment/publication for humans, so that newer instruction governs this task. Prepare exact coherent commit groups under the existing operator identity with accurate AI disclosure; do not automatically commit, push, merge, tag, publish, deploy or sign. Phase 1 commands are in docs/phase1-checkpoint.md; no Phase 1 staging/commit has been performed.
 
 ## Folders
+
+Release-specific exception: after preparation, the user explicitly asked the agent to execute all pushes and steps in first-public-commit.md. The first Phase 1 private commits/push, reviewed snapshot into the named public checkout and public commit/push are now authorized. Record actual results; do not treat this as standing permission for later releases or financial actions.
 
 - MicroCover-Private/: canonical working checkout with its own GitHub origin.
 - MicroCover/: separate submission checkout with its own GitHub origin.

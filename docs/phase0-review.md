@@ -32,4 +32,4 @@ Selected 6 November 2026 under the user's instruction to choose the better optio
 - Future success finality, evidence policy and CRE receiver/Arkiv receipt designs remain deferred to their requested phases; do not implement them to close Phase 0.
 - Human verified the Git author identity and made/pushed the first two commits. User subsequently authorized agent local commits and their verification; remote publication remains a human step unless separately authorized.
 
-Status: BLOCKED on independent Studio-access verification. Technical setup audit complete; no Phase 1 work performed. The audit correction and records are a coherent authorized local commit; no agent push or publication is authorized.
+Initial audit status was BLOCKED on independent Studio access. User subsequently authorized further development with that submission requirement deferred (D17). Phase 0 remains IN_PROGRESS, not PASSED; Phase 1 is now authorized. Technical setup evidence is retained. No agent push or publication is authorized.
