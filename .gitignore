@@ -1,0 +1,19 @@
+# Local credentials and private configuration
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+.npmrc
+
+# Dependencies, generated output and local tool state
+node_modules/
+dist/
+build/
+coverage/
+.next/
+out/
+cache/
+broadcast/
+.code-review-graph/
+.arc-studio/
