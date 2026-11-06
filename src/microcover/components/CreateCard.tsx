@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { parseEventLogs } from 'viem'
+import { bytesToHex, parseEventLogs } from 'viem'
 import { formatUsdc, parseUsdc } from '@/onchain-money'
 import { EXAMPLE } from '../example'
 import { MAX_COHORT_LIMIT, MICROCOVER_ADDRESS, TARGET_CHAIN_ID, UINT128_MAX, microCoverAbi } from '../contract'
@@ -14,6 +14,7 @@ import { Badge, Callout, Card, Dl, Row } from './Card'
 import { ChainGate, primaryButton } from './ChainGate'
 import { Field } from './Field'
 import { TxStatus } from './TxStatus'
+import { EVIDENCE_DISCLOSURE, evidenceGet, useEvidencePolicy, validatePublicPolicy } from '../evidenceClient'
 
 const MAX_MINUTES = 10_080n // one week
 
@@ -50,7 +51,10 @@ interface Props {
 
 export function CreateCard({ cap, chain, onCreated }: Props) {
   const contract = MICROCOVER_ADDRESS
-  const live = cap.state === 'ready' && contract !== undefined
+  const policy = useEvidencePolicy(contract)
+  const policyReady = policy.isSuccess && !policy.isError && policy.data !== undefined
+  const live = cap.state === 'ready' && contract !== undefined && policyReady
+  const [cohortId,setCohortId] = useState(()=>bytesToHex(crypto.getRandomValues(new Uint8Array(32))))
   const freshNow = useFreshChainTime()
   const [compensation, setCompensation] = useState(formatUsdc(EXAMPLE.compensation))
   const [escrow, setEscrow] = useState(formatUsdc(EXAMPLE.escrowAmount))
@@ -71,13 +75,14 @@ export function CreateCard({ cap, chain, onCreated }: Props) {
   const maxEscrow = esc !== undefined && size !== undefined ? esc * size : undefined
   const valid = comp !== undefined && esc !== undefined && size !== undefined && join !== undefined && delay !== undefined
 
-  const approval = useUsdcApproval(valid ? bond : undefined)
+  const approval = useUsdcApproval(valid && live ? bond : undefined)
   const tx = useTxFlow({
     label: 'Create and fund guarantee',
     onConfirmed: (receipt) => {
       const logs = parseEventLogs({ abi: microCoverAbi, eventName: 'GuaranteeCreated', logs: receipt.logs })
       const mine = logs.find((log) => log.address.toLowerCase() === contract?.toLowerCase())
       if (mine) onCreated(mine.args.id)
+      setCohortId(bytesToHex(crypto.getRandomValues(new Uint8Array(32))))
       approval.refetch()
     },
   })
@@ -96,17 +101,19 @@ export function CreateCard({ cap, chain, onCreated }: Props) {
       try {
         // Deadlines come from the chain's own latest block, never from this device's clock.
         const ts = await freshNow()
+        const currentPolicy = validatePublicPolicy(await evidenceGet('policy'), contract)
+        if (currentPolicy.policyHash !== policy.data?.policyHash) throw Error('The displayed evidence policy changed. Review it again before purchase.')
         const joinDeadline = ts + join * 60n
         const settlementTime = joinDeadline + delay * 60n
         tx.writeContract({
           address: contract,
           abi: microCoverAbi,
-          functionName: 'createGuarantee',
-          args: [comp, esc, Number(size), joinDeadline, settlementTime, PRESET_TERMS_HASH],
+          functionName: 'createGuaranteeWithPolicy',
+          args: [comp, esc, Number(size), joinDeadline, settlementTime, PRESET_TERMS_HASH, currentPolicy.policyHash, cohortId],
           chainId: TARGET_CHAIN_ID,
         })
       } catch {
-        setPrepareError('Could not read the latest block time, so nothing was sent. Check your connection and try again.')
+        setPrepareError('Latest chain time or the displayed evidence policy is unavailable or changed. Nothing was sent; refresh and review before trying again.')
       } finally {
         setPreparing(false)
       }
@@ -139,6 +146,7 @@ export function CreateCard({ cap, chain, onCreated }: Props) {
         <Row label="Join cutoff">{previewJoin !== undefined ? `${fmtTime(previewJoin)} (about)` : '-'}</Row>
         <Row label="Outcome deadline">{previewOutcome !== undefined ? `${fmtTime(previewOutcome)} (about)` : '-'}</Row>
         <Row label="Review duration">{reviewWindow !== undefined ? fmtDuration(reviewWindow) : 'Fixed by the deployment'}</Row>
+        <Row label="Separate uncertainty timeout">{cap.state==='ready'?fmtDuration(cap.uncertaintyTimeout):'120 s required by this demo, separate from review'}</Row>
         <Row label="Claim end">{previewClaimEnd !== undefined ? `${fmtTime(previewClaimEnd)} (about)` : '-'}</Row>
       </Dl>
       <p className="mc-hint">
@@ -151,6 +159,11 @@ export function CreateCard({ cap, chain, onCreated }: Props) {
         <br />
         <span className="mc-mono">Terms hash {PRESET_TERMS_HASH}</span>
       </Callout>
+
+      <h3 className="mc-sub-h">Evidence policy frozen before purchase</h3>
+      <Callout tone="warn">{EVIDENCE_DISCLOSURE} Both synthetic-status-a and synthetic-status-b must provide fresh matching explicit statuses. Collection every 10 s; freshness 60 s at the outcome deadline. Missing, invalid, stale or conflicting evidence means offchain UNCERTAIN and opens no dispute automatically. Once explicitly onchain UNCERTAIN, the first 120 s deadline never resets. Unresolved fallback refunds full escrow, pays no compensation, and returns the bond only after all refunds. This can refund a delivered service if evidence is inconclusive.</Callout>
+      <p className="mc-hint">Preserved dispute timing permits early onchain uncertainty. Its first timeout can therefore become eligible before the service outcome deadline.</p>
+      <Dl><Row label="Policy hash"><span className="mc-mono">{policyReady?policy.data.policyHash:'Unavailable: start the configured evidence service before creating'}</span></Row><Row label="Cohort ID"><span className="mc-mono">{cohortId}</span></Row></Dl>
 
       <div className="mc-mt-4">
         {!live ? (

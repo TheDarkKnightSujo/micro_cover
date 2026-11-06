@@ -1,0 +1,3 @@
+# Exact source bytes are checked against the reviewed Foundry metadata.
+# Preserve the LF bytes used for the existing MicroCover deployment.
+contracts/MicroCover.sol text eol=lf

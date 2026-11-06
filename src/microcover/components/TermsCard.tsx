@@ -66,16 +66,17 @@ export function TermsCard({ g }: { g: GuaranteeView }) {
 
       <h3 className="mc-sub-h">Where the money goes</h3>
       <Dl>
-        <Row label="If the provider admits failure">
+        <Row label="If evidence establishes failure or the provider admits it">
           Each enrolled beneficiary receives their escrow plus the compensation: {formatUsdc(each)} USDC. The provider can then withdraw any unused bond.
         </Row>
         <Row label="If success is finalized">
           No beneficiary payout. All beneficiary escrow is released to the provider, then the provider withdraws the whole bond.
         </Row>
-        <Row label="If a dispute freezes it">Nothing moves. Only the provider can resolve it, by admitting failure. Phase 2 has no way to approve success afterward.</Row>
+        <Row label="If an explicit dispute freezes it">Nothing moves during uncertainty. Timely authorized evidence or provider admission may resolve it strictly before the first uncertainty deadline. Retries do not reset it.</Row>
+        <Row label="Separate frozen uncertainty timeout">{fmtDuration(g.uncertaintyTimeout)} from first onchain uncertainty. If still unresolved: full escrow refunds in bounded batches, zero compensation, then bond return after all refunds. A later dispute reuses the first deadline.</Row>
       </Dl>
       <Callout tone="warn">
-        A dispute only asks for review and is not proof of failure. It locks funds, and if the provider never responds they stay locked. Success is irreversible once finalized.
+        A request for evaluation alone does not open an onchain dispute. Offchain uncertainty never automatically locks settlement. The unresolved refund fallback can refund a delivered service when evidence is inconclusive. Success is irreversible once finalized.
       </Callout>
     </Card>
   )

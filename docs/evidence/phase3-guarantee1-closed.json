@@ -1,0 +1,100 @@
+{
+  "chainId": 5042002,
+  "address": "0xdcd11bb347f063b5a876c8816f5a02b8ea0f11e0",
+  "guaranteeId": 1,
+  "transactionHash": "0x3cd77739ff23f6f1f4528ea2bd291fea96b24224300c2ca9f4c997c48d6822b3",
+  "receiptStatus": "success",
+  "receiptBlock": "71042117",
+  "receiptBlockHash": "0xe1f1196412e56e527c29b67ff16d5fbeb54ad8a302f2afa4fd133cb458ee9a0c",
+  "pinnedBlock": "71042217",
+  "pinnedBlockHash": "0xb30a16283db2793fd3c11729c46dfc9d87d40e58a2dcddec7ced843b1af2ac7e",
+  "call": {
+    "functionName": "withdrawRemainingBond",
+    "args": [
+      "1"
+    ]
+  },
+  "events": [
+    {
+      "eventName": "RemainingBondWithdrawn",
+      "args": {
+        "id": "1",
+        "provider": "0x1d39fc0e5293AB949D63217fFB375357ADf3933f",
+        "amount": "10000000"
+      }
+    },
+    {
+      "eventName": "GuaranteeClosed",
+      "args": {
+        "id": "1"
+      }
+    }
+  ],
+  "transfers": [
+    {
+      "from": "0xDcD11bb347F063B5a876C8816F5a02b8eA0F11E0",
+      "to": "0x1d39fc0e5293AB949D63217fFB375357ADf3933f",
+      "value": "10000000"
+    }
+  ],
+  "state": {
+    "status": 2,
+    "outcome": 1,
+    "enrolled": 1,
+    "paidCount": 1,
+    "openSlots": 0,
+    "failureAdmittedAt": "0",
+    "bondHeld": "0",
+    "reservedCompensation": "0",
+    "escrowHeld": "0",
+    "paidCompensation": "5000000",
+    "paidEscrow": "2000000",
+    "withdrawableBond": "0",
+    "remainingOwed": "0"
+  },
+  "evidence": {
+    "evidenceBound": true,
+    "policyHash": "0x390c151a55ce5c1e9861f5781528a38864fdc389edaee853de2fdb6f4d8e9d3d",
+    "cohortId": "0x1e376c945b31daa9f971311ed13159f4646275169090d72278957336bc1993cc",
+    "createdAt": "1793972891",
+    "uncertaintyTimeout": "120",
+    "uncertaintyStarted": false,
+    "uncertainSince": "0",
+    "uncertainReadyAt": "0",
+    "refundedCount": 0,
+    "refundedEscrow": "0",
+    "releasedUnresolvedReservation": "0",
+    "latestEvidenceRoot": "0x4a0b9812ea0dbb00fe6a2387d0fde5232f7ccb90be2b026c535ea72bef5421ce",
+    "anchorNonce": "1",
+    "nextAnchorNonce": "2",
+    "verdictNonce": "1",
+    "nextVerdictNonce": "2",
+    "failureOrigin": 2,
+    "lastReportOutcome": 1,
+    "lastReportEvaluatedAt": "1793974610",
+    "lastReportValidUntil": "1793974670"
+  },
+  "lifecycle": {
+    "status": 2,
+    "outcome": 1,
+    "joinDeadline": "1793973488",
+    "settlementTime": "1793973488",
+    "claimEndsAt": "1793973608",
+    "successProposedAt": "0",
+    "successReadyAt": "0",
+    "successFinalizedAt": "0",
+    "uncertainAt": "0",
+    "uncertainBy": "0x0000000000000000000000000000000000000000",
+    "successEscrowReleased": false,
+    "releasedSuccessReservation": "0",
+    "releasedSuccessEscrow": "0",
+    "withdrawnBond": "10000000",
+    "demoOperator": "0x1d39fc0e5293AB949D63217fFB375357ADf3933f",
+    "reviewWindow": "120"
+  },
+  "actualContractBalance": "0",
+  "nextGuaranteeId": "2",
+  "repeatWithdrawalRejected": "NothingToWithdraw",
+  "providerOperatorSeparate": false,
+  "studioReconciled": false
+}

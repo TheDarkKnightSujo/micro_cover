@@ -1,0 +1,6 @@
+{
+  "schedule": "*/10 * * * * *",
+  "consumer": "0xdcd11bb347f063b5a876c8816f5a02b8ea0f11e0",
+  "guaranteeId": "2",
+  "evidenceUrl": "http://127.0.0.1:8787/api/evidence/v1/guarantees/2/snapshot"
+}

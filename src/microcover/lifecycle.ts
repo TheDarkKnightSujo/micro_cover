@@ -1,5 +1,5 @@
 /**
- * Pure eligibility rules mirroring contracts/MicroCover.sol (protocol version 2). They only decide
+ * Pure eligibility rules mirroring contracts/MicroCover.sol (protocol version 3). They only decide
  * whether a button is OFFERED; the contract re-checks everything, so hiding a button is not
  * authorization. Every time comparison uses CHAIN time (latest block timestamp), never the
  * browser clock.
@@ -47,6 +47,7 @@ export function canEnroll(g: GuaranteeView, c: Ctx): Verdict {
 }
 
 export function canPropose(g: GuaranteeView, c: Ctx): Verdict {
+  if (g.evidenceBound) return no('Use the authenticated evidence verdict route for this guarantee.')
   if (!isOperator(c)) return no('Only the demo operator address can propose success.')
   if (g.status !== STATUS.OPEN) return no('Success can be proposed only while the guarantee is open.')
   const earliest = earliestProposal(g)
@@ -83,6 +84,7 @@ export function canFinalize(g: GuaranteeView, c: Ctx): Verdict {
 
 export function canAdmitFailure(g: GuaranteeView, c: Ctx): Verdict {
   if (!isProvider(g, c)) return no('Only the provider can admit failure.')
+  if (g.status === STATUS.UNCERTAIN && c.now >= g.uncertainReadyAt) return no('The unresolved timeout is eligible; resolution is now closed.')
   if (g.status === STATUS.OPEN || g.status === STATUS.SUCCESS_PENDING || g.status === STATUS.UNCERTAIN) return OK
   if (g.status === STATUS.SUCCEEDED || (g.status === STATUS.CLOSED && g.outcome === 2)) {
     return no('Success is finalized, so failure can no longer be admitted.')
@@ -104,6 +106,7 @@ export function canReleaseEscrow(g: GuaranteeView): Verdict {
 
 export function canWithdraw(g: GuaranteeView, c: Ctx): Verdict {
   if (!isProvider(g, c)) return no('Only the provider can withdraw the remaining bond.')
+  if (g.status === STATUS.REFUNDING) return g.refundedCount === g.cohortSize ? OK : no('Refund every beneficiary escrow before returning the bond.')
   if (g.status === STATUS.FAILED) {
     if (g.paidCount < g.cohortSize) return no(`${g.cohortSize - g.paidCount} beneficiaries are still unpaid. Settle them first.`)
     return g.bondHeld > 0n ? OK : no('No bond remains.')
@@ -127,7 +130,9 @@ export function nextStep(g: GuaranteeView, c: Ctx): string {
         ? `Success is proposed and in review until ${fmtTime(g.successReadyAt)}. A beneficiary can still dispute, and the provider can still admit failure.`
         : 'The review window has ended. Anyone can finalize success now, but the provider can still admit failure until someone does.'
     case STATUS.UNCERTAIN:
-      return 'Frozen. In this phase only the provider can resolve it, by admitting failure; there is no route to success. Funds stay locked until then.'
+      return c.now >= g.uncertainReadyAt ? 'Still unresolved and timeout eligible. Anyone may finalize escrow-only refunds; no compensation is paid.' : `Onchain uncertainty until ${fmtTime(g.uncertainReadyAt)}. Timely evidence or provider admission may resolve it; retries cannot extend this deadline.`
+    case STATUS.REFUNDING:
+      return `${g.refundedCount} of ${g.cohortSize} full escrow refunds settled. No compensation. Bond return requires all refunds first.`
     case STATUS.FAILED:
       return g.paidCount < g.cohortSize
         ? `Failure admitted. ${g.cohortSize - g.paidCount} of ${g.cohortSize} beneficiaries still need to be paid; anyone can continue settlement.`
@@ -137,6 +142,7 @@ export function nextStep(g: GuaranteeView, c: Ctx): string {
         ? 'Escrow released to the provider. The provider can now withdraw the whole bond.'
         : 'Success finalized and irreversible. Anyone can release the escrow to the provider; then the provider withdraws the bond.'
     default:
+      if (g.outcome === 3) return 'Closed: UNRESOLVED_REFUNDED. Full escrow refunded, no compensation, bond returned.'
       return g.outcome === 2 ? 'Closed after success. Escrow and bond were returned to the provider.' : 'Closed after failure. Every obligation is settled.'
   }
 }

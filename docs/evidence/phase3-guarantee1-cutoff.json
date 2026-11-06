@@ -1,0 +1,183 @@
+{
+  "chainId": 5042002,
+  "address": "0xdcd11bb347f063b5a876c8816f5a02b8ea0f11e0",
+  "guaranteeId": 1,
+  "blockNumber": "71039609",
+  "blockHash": "0x2df494724ac2702aeb7fd10443cae8ceb88265c56ced2caa3cef4c8ea27ed293",
+  "chainTimestamp": "1793973659",
+  "terms": {
+    "provider": "0x1d39fc0e5293AB949D63217fFB375357ADf3933f",
+    "compensation": "5000000",
+    "escrowAmount": "2000000",
+    "maxCohort": 3,
+    "cohortSize": 1,
+    "joinDeadline": "1793973488",
+    "settlementTime": "1793973488",
+    "termsHash": "0xec9dd851bb14d1b6e86acb7ce293c0f127e89c81f2222860c3a0858a2ef58522"
+  },
+  "state": {
+    "status": 0,
+    "outcome": 0,
+    "enrolled": 1,
+    "paidCount": 0,
+    "openSlots": 2,
+    "failureAdmittedAt": "0",
+    "bondHeld": "15000000",
+    "reservedCompensation": "5000000",
+    "escrowHeld": "2000000",
+    "paidCompensation": "0",
+    "paidEscrow": "0",
+    "withdrawableBond": "0",
+    "remainingOwed": "7000000"
+  },
+  "evidence": {
+    "evidenceBound": true,
+    "policyHash": "0x390c151a55ce5c1e9861f5781528a38864fdc389edaee853de2fdb6f4d8e9d3d",
+    "cohortId": "0x1e376c945b31daa9f971311ed13159f4646275169090d72278957336bc1993cc",
+    "createdAt": "1793972891",
+    "uncertaintyTimeout": "120",
+    "uncertaintyStarted": false,
+    "uncertainSince": "0",
+    "uncertainReadyAt": "0",
+    "refundedCount": 0,
+    "refundedEscrow": "0",
+    "releasedUnresolvedReservation": "0",
+    "latestEvidenceRoot": "0x0000000000000000000000000000000000000000000000000000000000000000",
+    "anchorNonce": "0",
+    "nextAnchorNonce": "1",
+    "verdictNonce": "0",
+    "nextVerdictNonce": "1",
+    "failureOrigin": 0,
+    "lastReportOutcome": 0,
+    "lastReportEvaluatedAt": "0",
+    "lastReportValidUntil": "0"
+  },
+  "enrollmentTransaction": "0x82715cadfd717f7dad7a43b08f94402215335dbbee5af8013726a0fdbac7a930",
+  "enrollmentReceiptStatus": "success",
+  "transfers": [
+    {
+      "from": "0x26DD598639E917F32D256B0cAd0408a842af0218",
+      "to": "0xDcD11bb347F063B5a876C8816F5a02b8eA0F11E0",
+      "value": "2000000"
+    }
+  ],
+  "secondsToJoinCutoff": "-171",
+  "collection": {
+    "evaluation": {
+      "domain": {
+        "chainId": "5042002",
+        "cohortId": "0x1e376c945b31daa9f971311ed13159f4646275169090d72278957336bc1993cc",
+        "conditionHash": "0xec9dd851bb14d1b6e86acb7ce293c0f127e89c81f2222860c3a0858a2ef58522",
+        "consumer": "0xdcd11bb347f063b5a876c8816f5a02b8ea0f11e0",
+        "guaranteeId": "1",
+        "policyHash": "0x390c151a55ce5c1e9861f5781528a38864fdc389edaee853de2fdb6f4d8e9d3d",
+        "schema": "microcover-evidence-v1"
+      },
+      "policyVersion": "synthetic-unanimous-v1",
+      "asOf": 1793973488,
+      "outcome": "FAILURE",
+      "reason": "MATCHING_EXPLICIT_CANCELLED",
+      "coveredSources": 2,
+      "requiredSources": 2,
+      "totalWeight": 2,
+      "successSupportBps": 0,
+      "failureSupportBps": 10000,
+      "sourceGroupCount": 1,
+      "independentSourcesClaimed": false,
+      "evidenceRoot": "0x4a0b9812ea0dbb00fe6a2387d0fde5232f7ccb90be2b026c535ea72bef5421ce",
+      "receiptRoot": "0x9163abe402c1309fae4716f1e6b6f42ca5f6ac4a1486684d89666cfccf82f05f",
+      "receiptCount": 120,
+      "sources": [
+        {
+          "id": "synthetic-status-a",
+          "usable": true,
+          "status": "CANCELLED",
+          "reason": "AUTHENTICATED"
+        },
+        {
+          "id": "synthetic-status-b",
+          "usable": true,
+          "status": "CANCELLED",
+          "reason": "AUTHENTICATED"
+        }
+      ]
+    },
+    "receipts": [
+      {
+        "attemptKey": "synthetic-status-a:58",
+        "domainKey": "0xadde576f26475bb44460003ac7a350a16202a2c680091cdcf87809227470adad",
+        "error": null,
+        "group": "team-controlled",
+        "hash": "0x19ac337b0ef39c27ef747edd4d34fe76486862c96842ed8dcc76fdc2da943f71",
+        "keyFingerprint": "0x06719b05cfb8f43e61538a0eaee066c7bb0757b911dfa032d561bf2277716a3d",
+        "kind": "OBSERVATION",
+        "nonce": "58",
+        "payloadHash": "0xf86e1a07808c2b6d8e8711316d8a28177f045d7e0a0d5ef28d6f5f8ed5cce42c",
+        "previousHash": "0x73e8b9020a307c100b3d35eb2a3cc1cc174e0e6905ef160b01f9169f9186a789",
+        "receivedAt": 1793973471,
+        "sequence": 117,
+        "signature": "5c49914d37c825692205e5c08d9ec5c72c3bb45da84cd6a61a2a7a44731fe8c1780b16219772b656bfe2d4aa5b87bc0f0eff4c2ea5eea8a8bbc8548dcaa7e60e",
+        "sourceId": "synthetic-status-a",
+        "sourceTimestamp": 1793973471,
+        "status": "CANCELLED"
+      },
+      {
+        "attemptKey": "synthetic-status-b:58",
+        "domainKey": "0xadde576f26475bb44460003ac7a350a16202a2c680091cdcf87809227470adad",
+        "error": null,
+        "group": "team-controlled",
+        "hash": "0x2fb0c68cb33d81a791c5085df7a6146052be615fba3297164ba0ac2f2ce635ae",
+        "keyFingerprint": "0xa43af6bc1a988f7fed05c34948ddf0cfc5f144b3308d014daecf455c1f81a713",
+        "kind": "OBSERVATION",
+        "nonce": "58",
+        "payloadHash": "0xdafdb930408c1a81515d1050386b8b4e6bdf408302ce8ca6cd586d26a49af21e",
+        "previousHash": "0x19ac337b0ef39c27ef747edd4d34fe76486862c96842ed8dcc76fdc2da943f71",
+        "receivedAt": 1793973471,
+        "sequence": 118,
+        "signature": "3d3e2ea8202933b815dd8514b7bbea3420305774b3c13baf613b811aa6fa8e58dcf073b47f66405ec6e9afb25784810d225ac6d11e5048e410597dc60886aa05",
+        "sourceId": "synthetic-status-b",
+        "sourceTimestamp": 1793973471,
+        "status": "CANCELLED"
+      },
+      {
+        "attemptKey": "synthetic-status-a:59",
+        "domainKey": "0xadde576f26475bb44460003ac7a350a16202a2c680091cdcf87809227470adad",
+        "error": null,
+        "group": "team-controlled",
+        "hash": "0xbc9188deccb03c9eb5841f1610e3a91724c22dab59c68629ee6b874fa32dec36",
+        "keyFingerprint": "0x06719b05cfb8f43e61538a0eaee066c7bb0757b911dfa032d561bf2277716a3d",
+        "kind": "OBSERVATION",
+        "nonce": "59",
+        "payloadHash": "0x2244703d40401217aa5c82a9e05c69cd6ec999e997bc7ff87f99c408c1791ac1",
+        "previousHash": "0x2fb0c68cb33d81a791c5085df7a6146052be615fba3297164ba0ac2f2ce635ae",
+        "receivedAt": 1793973481,
+        "sequence": 119,
+        "signature": "3c3e5d8d02c01d6e4be2b94c396f890c29cb9157d811bb5b0a19629d1654b9f26b6fdbb34e2b36272118bec4f4ffe37f9040f4834043edd5838b33fad6162d0a",
+        "sourceId": "synthetic-status-a",
+        "sourceTimestamp": 1793973481,
+        "status": "CANCELLED"
+      },
+      {
+        "attemptKey": "synthetic-status-b:59",
+        "domainKey": "0xadde576f26475bb44460003ac7a350a16202a2c680091cdcf87809227470adad",
+        "error": null,
+        "group": "team-controlled",
+        "hash": "0x9163abe402c1309fae4716f1e6b6f42ca5f6ac4a1486684d89666cfccf82f05f",
+        "keyFingerprint": "0xa43af6bc1a988f7fed05c34948ddf0cfc5f144b3308d014daecf455c1f81a713",
+        "kind": "OBSERVATION",
+        "nonce": "59",
+        "payloadHash": "0x61c26b192865fa1657624030e6fa80be14c3cad224606546a617ba05984442e6",
+        "previousHash": "0xbc9188deccb03c9eb5841f1610e3a91724c22dab59c68629ee6b874fa32dec36",
+        "receivedAt": 1793973481,
+        "sequence": 120,
+        "signature": "af422be5b31741132bc1316c9a53ac8405160b90797ba1457e51978fcaddc2dc9a3c3498afbb88233c5d970b898e8a9197abaddc873f2042f4cd933a222fe605",
+        "sourceId": "synthetic-status-b",
+        "sourceTimestamp": 1793973481,
+        "status": "CANCELLED"
+      }
+    ],
+    "nextCursor": 120,
+    "disclosure": "Both demo feeds are controlled by the same team; not independent sources."
+  },
+  "providerSeparationCheckPassed": false
+}

@@ -14,6 +14,7 @@ import { HistoryCard } from './HistoryCard'
 import { LookupCard } from './LookupCard'
 import { NetworkCard } from './NetworkCard'
 import { TermsCard } from './TermsCard'
+import { EvidenceCard } from './EvidenceCard'
 
 function parseId(input: string): bigint | undefined {
   if (!/^\d{1,18}$/.test(input)) return undefined
@@ -64,6 +65,7 @@ function ReadyWorkspace({ contract, cap, chain }: ReadyProps) {
     <>
       <LookupCard idInput={idInput} onIdChange={select} latestId={latestId} read={read} account={account} operator={cap.operator} chain={chain} />
       {g && <TermsCard g={g} />}
+      {g&&id!==undefined&&<EvidenceCard key={`${contract}:${id}:${account??'none'}`} contract={contract} id={id} g={g} read={read} account={account} operator={cap.operator} chain={chain} freshNow={freshNow}/>}
       <ActionsCard contract={contract} id={id} read={read} account={account} operator={cap.operator} chain={chain} freshNow={freshNow} />
       <HistoryCard id={id} g={g} chain={chain} />
       <CreateCard
@@ -80,8 +82,7 @@ function ReadyWorkspace({ contract, cap, chain }: ReadyProps) {
 }
 
 /**
- * The Phase 2 flow. Nothing is approved, created, enrolled or sent until the configured
- * contract is verified as a Phase 2 deployment with the official USDC.
+ * Phase 3 capability gate. Writes require the new protocol and official USDC.
  */
 export function Workspace() {
   const cap = useCapability()

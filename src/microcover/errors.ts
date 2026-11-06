@@ -1,6 +1,19 @@
 import { BaseError, ContractFunctionRevertedError, UserRejectedRequestError } from 'viem'
 
 const REVERT_TEXT: Record<string, string> = {
+  EvidenceReportRequired:'This guarantee requires an anchored evidence verdict; manual success is disabled.',
+  UncertaintyTimeoutReached:'The uncertainty deadline has arrived; resolution is closed and unresolved finalization is available.',
+  UncertaintyTimeoutNotReached:'The frozen uncertainty deadline has not arrived.',
+  RefundsPending:'Refund every beneficiary escrow before returning the bond.',
+  NothingToRefund:'No unresolved escrow refund remains.',
+  EvidenceExpired:'The prepared report expired. Prepare a fresh report from the same verified snapshot.',
+  EvidenceBindingMismatch:'Evidence does not match the frozen policy/cohort.',
+  EvidenceRootMismatch:'The report must match the latest onchain anchor.',
+  InvalidNonce:'This report or anchor nonce is outdated. Refresh the guarantee and prepare again.',
+  WrongChain:'Evidence targets a different chain.',
+  WrongConsumer:'Evidence targets a different contract.',
+  NotEvidenceBound:'This legacy manual guarantee has no evidence policy.',
+  UnresolvedAlreadyFinalized:'Escrow-only refunds were already selected; failure cannot replace that outcome.',
   NotProvider: 'Only this guarantee\u2019s provider can do that.',
   AlreadyAdmitted: 'Failure was already admitted for this guarantee.',
   EnrollmentClosed: 'Enrollment is closed for this guarantee.',

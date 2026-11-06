@@ -120,7 +120,7 @@ function Details({ g, account, operator, chain }: { g: GuaranteeView; account: A
                 {i === myIndex ? ' (you)' : ''}
               </span>
               <span>
-                {success ? 'No payout' : failure ? `${formatUsdc(each)} USDC: ${b.paid ? 'paid' : 'pending'}` : `${formatUsdc(each)} USDC if failure is admitted`}
+                {g.outcome===OUTCOME.UNRESOLVED_REFUNDED?`${formatUsdc(g.escrowAmount)} USDC escrow refund: ${i<g.refundedCount?'settled':'pending'}; no compensation`:success ? 'No payout' : failure ? `${formatUsdc(each)} USDC: ${b.paid ? 'paid' : 'pending'}` : `${formatUsdc(each)} USDC if failure is established`}
               </span>
             </li>
           ))}
