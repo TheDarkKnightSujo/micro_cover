@@ -38,9 +38,18 @@ export function EvidenceCard({contract,id,g,read,account,operator,chain,freshNow
     if(report.outcome===2&&(g.status===STATUS.SUCCESS_PENDING||now<earliestProposal(g)))return {ok:false,reason:'Success timing/review protections do not permit this proposal.'}
     return {ok:true}
   }
-  const prepare=async()=>{
+  const [creNote,setCreNote]=useState<string>()
+  const prepare=async(fromCre=false)=>{
     setPreparing(true);setError(undefined);setReport(undefined)
-    try{setReport(validatePrepared(await evidenceGet(`guarantees/${id}/prepare`),g,contract))}
+    try{
+      const prepared=validatePrepared(await evidenceGet(`guarantees/${id}/prepare`),g,contract)
+      if(fromCre){
+        const run=await evidenceGet(`guarantees/${id}/cre`) as {mode?:string;outcome?:string;evidenceRoot?:string;verifiedNetworkReport?:boolean;chainWrites?:boolean}
+        if(run.mode!=='LOCAL_CLI_SIMULATION'||run.verifiedNetworkReport!==false||run.chainWrites!==false||run.evidenceRoot!==prepared.evidenceRoot||run.outcome!==(prepared.outcome===1?'FAILURE':'SUCCESS'))throw Error('No matching established CRE simulation. Run the CLI first.')
+        setCreNote('Prepared against the matching local CRE simulation. This is a human demo-operator relay, not verified CRE network delivery. Current onchain nonce and expiry were refreshed.')
+      }else setCreNote(undefined)
+      setReport(prepared)
+    }
     catch(e){setError(e instanceof Error?e.message:'Evidence unavailable; nothing sent.')}
     finally{setPreparing(false)}
   }
@@ -99,7 +108,7 @@ export function EvidenceCard({contract,id,g,read,account,operator,chain,freshNow
         <div className="mc-btn-row"><button className={ghostButton} disabled={cursor===0} onClick={()=>setCursor(Math.max(0,cursor-100))}>Previous receipts</button><button className={ghostButton} disabled={(snapshot.data?.receipts.length??0)<100} onClick={()=>setCursor(snapshot.data?.nextCursor??cursor)}>Next receipts</button></div>
       </>}
       <GuardedAction {...common} title="Request evaluation" role="Enrolled beneficiary" description="Request collection review without choosing a verdict, opening a dispute or moving funds." eligible={()=>g.isMember&&g.outcome===0?{ok:true}:{ok:false,reason:'Only an enrolled beneficiary with an unresolved guarantee can request evaluation.'}} label="Request evaluation only" workingLabel="Requesting..." successText="Evaluation requested. No dispute or funds movement." receiptLabel="Request evaluation" send={write=>write({address:contract,abi:microCoverAbi,functionName:'requestEvaluation',args:[id],chainId:TARGET_CHAIN_ID})}/>
-      {isOperator({account,operator})&&<div className="mc-mt-4"><button className={ghostButton} disabled={preparing||g.outcome!==0} onClick={()=>void prepare()}>{preparing?'Preparing...':'Prepare fresh evidence verdict'}</button>{error&&<p className="mc-bad" role="alert">{error}</p>}{report&&<p className="mc-p">Prepared {report.outcome===1?'FAILURE':'SUCCESS review'}; expires {fmtTime(report.validUntil)}. Anchor first, then prepare again for a fresh submission.</p>}</div>}
+      {isOperator({account,operator})&&<div className="mc-mt-4"><button className={ghostButton} disabled={preparing||g.outcome!==0} onClick={()=>void prepare()}>{preparing?'Preparing...':'Prepare fresh evidence verdict'}</button><details className="mc-mt-4"><summary>CRE simulation comparison</summary><p className="mc-p">Uses the last captured local CLI outcome and root, with fresh onchain nonce/expiry. Both feeds are ours. No CRE network delivery or automatic settlement is claimed.</p><button className={ghostButton} disabled={preparing||g.outcome!==0} onClick={()=>void prepare(true)}>Prepare matching simulated result</button>{creNote&&<p className="mc-p">{creNote}</p>}</details>{error&&<p className="mc-bad" role="alert">{error}</p>}{report&&<p className="mc-p">Prepared {report.outcome===1?'FAILURE':'SUCCESS review'}; expires {fmtTime(report.validUntil)}. Anchor first, then prepare again for a fresh submission.</p>}</div>}
       <GuardedAction {...common} title="Anchor evidence commitment" role="Demo operator" description="Anchor the verified deadline snapshot root. This records a fingerprint, selects no outcome and does not reset uncertainty." eligible={now=>{const v=allowed(now);return v.ok&&report?.evidenceRoot===g.latestEvidenceRoot?{ok:false,reason:'This root is already anchored. Submit the fresh verdict below.'}:v}} label="Anchor root" workingLabel="Anchoring..." successText="Commitment anchored. Prepare again before submitting." receiptLabel="Anchor evidence" send={write=>{if(report)write({address:contract,abi:microCoverAbi,functionName:'anchorEvidence',args:[id,report.evidenceRoot,g.policyHash,g.cohortId,g.nextAnchorNonce],chainId:TARGET_CHAIN_ID})}}/>
       <GuardedAction {...common} title="Submit evidence verdict" role="Demo operator" description="FAILURE establishes beneficiary compensation without provider cooperation. SUCCESS starts a full review window; it releases no money immediately." warning="This submits the trusted operator's evidence verdict. An established failure cannot be undone." eligible={now=>{if(estimating)return {ok:false,reason:'Simulating the verdict and estimating gas; nothing has been signed.'};const v=allowed(now);return v.ok&&report?.evidenceRoot!==g.latestEvidenceRoot?{ok:false,reason:'Anchor this root first.'}:v}} label="Submit prepared verdict" workingLabel="Submitting..." successText="Evidence verdict recorded onchain." receiptLabel="Submit evidence verdict" send={submit}/>
       {gasNote&&<p className="mc-p" role="status">{gasNote}</p>}
