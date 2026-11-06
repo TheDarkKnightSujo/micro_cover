@@ -4,13 +4,15 @@ Workflow clarified by the user on 6 November 2026: the current user handles all 
 
 | Member | Suggested ownership | Work actually completed | Evidence: files/checks/commit/PR |
 |---|---|---|---|
-| Abhiraj Kochale (current operator; GitHub handle not explicitly mapped) | Contracts/Studio, frontend, evidence, CRE, Arkiv and integration; first public snapshot publisher | Human Studio setup/deployment requests, private foundation commits/push, wallet/faucet/CRE/Arkiv setup and all Phase 1 reference/partial-cohort test transactions | Phase 0 records, Phase 1 receipt evidence and PASSED checkpoint; foundation commit `91b692fd0a6192fc0ab031e6befa4389ae336faf`; Arc Studio/Codex source assistance disclosed; public commit pending |
+| Abhiraj Kochale (current operator; GitHub commit author association: abhirajkochale) | Contracts/Studio, frontend, evidence, CRE, Arkiv and integration; first public snapshot publisher | Human Studio setup/deployment requests, private foundation commits/push, wallet/faucet/CRE/Arkiv setup and all Phase 1 reference/partial-cohort test transactions; first public publication explicitly delegated to Codex | Phase 1 PASSED; private source `c6bd973`; public `5324538`; Arc Studio/Codex source assistance disclosed; original Git identity retained |
 | thedarkknightsujo | Assigned publisher | No separate implementation/review contribution recorded | Publication pending |
 | Atharva7406 | Assigned publisher | No separate implementation/review contribution recorded | Publication pending |
 | Vedanto28 | Assigned publisher | No separate implementation/review contribution recorded | Publication pending |
 | NamanN-Creator | Assigned publisher | No separate implementation/review contribution recorded | Publication pending |
 
 ## Publication rotation
+
+First publication completed via Codex on the current user's explicit request: public commit `53245388788d3194efbfcd031d9b2120c93d6007`, existing Git author Abhiraj Kochale. GitHub API author association is `abhirajkochale`; repository ownership `TheDarkKnightSujo` is distinct and does not replace author attribution. Other members' implementation/publication entries remain pending unless separately evidenced.
 
 Each row is a planned handoff of an entire verified phase snapshot. Do not divide interdependent files between publishers or manufacture contribution counts. Publish only after the human has reviewed the phase, committed the source privately and selected the exact release SHA.
 
