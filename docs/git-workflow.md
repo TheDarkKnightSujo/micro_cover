@@ -2,6 +2,8 @@
 
 Authoritative detailed commands are in section 2 of MicroCover_Implementation_Plan.md. Inspect current history before running any branch/bootstrap command. This document is a checklist, not permission to rewrite repository history.
 
+User update, 6 November 2026: Codex is authorized to stage, make coherent local commits and verify them without repeated approval. Use the existing operator identity, disclose AI assistance, and exclude unrelated work. Pushes, merges, tags, public publication, deployment and wallet signing remain human steps unless separately authorized. This update supersedes the original plans' human-only local commit guidance.
+
 ## Folders
 
 - MicroCover-Private/: canonical working checkout with its own GitHub origin.

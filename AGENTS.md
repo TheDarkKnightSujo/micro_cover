@@ -44,7 +44,7 @@ Keep raw/private evidence off public storage. Hash canonical payloads, append ne
 
 Do not request private keys in chat or print secrets. Use local/host environment settings; commit only placeholder examples after the actual config names are known. Never embed secrets in NEXT_PUBLIC_/VITE_ or similar browser-exposed variables.
 
-For this team's current workflow, prepare deployment, commit and publication steps for humans. Do not automatically commit, push, merge, tag, publish or sign wallet transactions. Local inspection, implementation and necessary tests are authorized within the requested phase. Do not modify the separate public checkout as a side effect.
+User workflow update, 6 November 2026: agents may stage, create coherent local task commits and verify them without asking again, using the operator's existing Git author identity and accurate AI-use disclosure. This supersedes older planning instructions reserving commits for humans. Do not automatically push, merge, tag, publish, deploy or sign wallet transactions; prepare those steps for humans unless separately authorized. Local inspection, implementation and necessary tests are authorized within the requested phase. Do not modify the separate public checkout as a side effect. Preserve unrelated changes and inspect the staged diff before each commit.
 
 ## Git and contributions
 
