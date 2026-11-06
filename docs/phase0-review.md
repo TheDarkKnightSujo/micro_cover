@@ -30,6 +30,6 @@ Selected 6 November 2026 under the user's instruction to choose the better optio
 - Demo amount decision is resolved. Human review/acceptance of the final foundation remains pending; delegated choice of demo amounts does not itself certify Phase 0.
 - The Studio project URL is recorded; judge access remains unverified. Share currently offers external hosting. Preserve this as an explicit sharing limitation rather than publishing during Phase 0.
 - Future success finality, evidence policy and CRE receiver/Arkiv receipt designs remain deferred to their requested phases; do not implement them to close Phase 0.
-- Local Git has a configured author identity consistent with the operator name shown in the supplied screenshots. The human should verify it before running the commands in first-private-commits.md. The agent will not commit or push.
+- Human verified the Git author identity and made/pushed the first two commits. User subsequently authorized agent local commits and their verification; remote publication remains a human step unless separately authorized.
 
 Status: IN_PROGRESS, not PASSED. Proposed commit groups after review: Studio foundation/safe configuration, then planning and verified checkpoint documentation. Next phase requires an explicit Phase 1 request.

@@ -1,6 +1,6 @@
 # MicroCover verified progress
 
-Local private checkout reconciled with the Studio export on 6 November 2026. The Studio app, contract, tests, manifests and Bun lockfile are present. Local checks and Studio sync evidence are recorded below. Human created root commit `91b692fd0a6192fc0ab031e6befa4389ae336faf` for the foundation; planning/evidence documentation remains uncommitted. No phase checkpoint is passed solely by these notes.
+Local private checkout reconciled with the Studio export on 6 November 2026. The Studio app, contract, tests, manifests and Bun lockfile are present. Human created foundation commit `91b692fd0a6192fc0ab031e6befa4389ae336faf` and documentation commit `3d01d41c209132d32b9b542fe087db5fb1c156c1`, then pushed both to private main. Agent verified the remote main SHA matched the second commit. No phase checkpoint is passed solely by committing or pushing.
 
 | Phase | Scope | Status | Human owner | Evidence / next action |
 |---|---|---|---|---|
@@ -21,9 +21,9 @@ Phase 0 only. CRE and Arkiv smoke checks have run. The current user owns all imp
 
 Concrete checkpoint review is in `docs/phase0-review.md`. Under the user's delegated choice, Studio's 2 USDC escrow / 5 USDC compensation example was retained and conflicting demo notes reconciled. Observed Phase 0 ABI is recorded separately from future proposals in interfaces.md. Manual first-commit commands are in `docs/first-private-commits.md`.
 
-Human staged the foundation. Cached whitespace check found five EOF blank lines; agent fixed those working files and synced them back to Studio with verified parity. Human must re-stage the five files and rerun `git diff --cached --check` before committing. No agent Git mutation performed.
+Human staged the foundation. Cached whitespace check found five EOF blank lines; agent fixed those working files and synced them back to Studio with verified parity. Human re-staged and committed the correction with the foundation.
 
-Human then committed the corrected foundation: `91b692fd0a6192fc0ab031e6befa4389ae336faf` (`chore: import tested Arc Studio foundation`), author Abhiraj Kochale. Agent verified the commit and that only planning/evidence files remain untracked. No private push or public snapshot is recorded. Next action: human reviews and commits documentation as the second group.
+Human committed the corrected foundation and documentation under author Abhiraj Kochale, then pushed private main. On 6 November 2026, user authorized agents to make and verify subsequent local task commits without repeated approval. Public publication remains pending; remote actions are not included in this local-commit authorization.
 
 ## Phase 0 checkpoint record — 6 November 2026
 

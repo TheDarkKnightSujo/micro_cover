@@ -1,6 +1,6 @@
 # Private-to-public snapshot record
 
-No release or publication has occurred. The first local private foundation commit is `91b692fd0a6192fc0ab031e6befa4389ae336faf`; the planning/evidence documentation commit and checkpoint review remain pending. Do not publish the foundation alone as a completed phase.
+No public release or publication has occurred. Private foundation commit `91b692fd0a6192fc0ab031e6befa4389ae336faf` and planning/evidence commit `3d01d41c209132d32b9b542fe087db5fb1c156c1` were pushed by the human; remote main was independently verified at the latter SHA. Phase 0 checkpoint review remains pending. Do not label the private push as a passed phase or public release.
 
 For each human-approved release, record:
 

@@ -1,6 +1,6 @@
 # First private commits — human commands
 
-Originally prepared for unborn private main. The human completed section 1 as commit `91b692fd0a6192fc0ab031e6befa4389ae336faf`; section 2 is next. These commands have not been run by the agent. They save Phase 0 work; they do not certify its checkpoint as PASSED. Inspect the working tree again before staging, as it may have changed since preparation.
+Historical instructions: human completed section 1 as `91b692fd0a6192fc0ab031e6befa4389ae336faf` and section 2 as `3d01d41c209132d32b9b542fe087db5fb1c156c1`, then pushed private main. Do not rerun these initial-commit steps. User now authorizes agents to make and verify subsequent local task commits; see AGENTS.md. These commits do not certify Phase 0 as PASSED.
 
 ## 1. Review and save the Studio foundation
 
