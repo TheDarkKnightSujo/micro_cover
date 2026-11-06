@@ -80,3 +80,6 @@ The separate local deployment helper is outside the main app entry. Current cons
 Phase5 live write/query, reload, no-wallet InPrivate and outage-display checks are recorded. Phase6 is final local verification, not completed publication. Public hosting/persistent service, Studio reconciliation/judge access, teammate reproduction, licence choice, public-source promotion, video and dashboard submission remain pending. Localhost works only on this laptop; a frontend-only static host cannot expose the loopback API.
 
 See [architecture](docs/architecture.md), [release checkpoint](docs/phase6-checkpoint.md), [demo script](docs/demo-script.md), [AI use](docs/ai-usage.md), [actual contributions](docs/contributions.md), and [Arkiv schema/query](arkiv/schema.md). Original-code licence selection is pending; dependencies retain their own licences/notices.
+
+
+Render hosting preparation and human dashboard/storage steps: [docs/render-deployment.md](docs/render-deployment.md). Prepared locally; hosted readiness still pending.

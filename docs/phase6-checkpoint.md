@@ -64,3 +64,6 @@ Official Mumbai guide https://ethglobal.com/events/mumbai/info/details currently
 - Phase6 audit, corrected README/architecture, demo/checkpoint guides and actual check records.
 
 Private stage/commit/push explicitly authorized by the latest user; actual first3commit release recorded in private-phase5-phase6-release.md. Stop at Phase6 checkpoint until required external/human gates are recorded. Do not mark deferred earlier checkpoints passed based only on local checks.
+
+
+7 November2026 Render preparation: see render-deployment.md and latest progress entry for actual parity/check results. Deployment candidate is local and uncommitted in final public clone; Docker build, secure persistent-store transfer, readiness and public host verification are pending. Earlier no-host choice is superseded by user's existing Render account. No checkpoint pass or deployment asserted.
