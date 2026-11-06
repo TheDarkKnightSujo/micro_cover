@@ -7,6 +7,10 @@ import { Collector } from './collector'
 import { evaluate } from './evaluator'
 import { fixtureResponse, loadPolicy } from './demo'
 import { ChainObserver } from './chain'
+import { queuedHistory } from './arkiv-outbox'
+import { forwardArkivRead, readArkiv } from './arkiv-reader'
+import type { HistoryKind } from '../../src/microcover/arkivRecords'
+import type { Hex } from 'viem'
 
 const json=(data:unknown,status=200,headers:Record<string,string>={})=>new Response(JSON.stringify(data,(_,v)=>typeof v==='bigint'?v.toString():v),{status,headers:{'content-type':'application/json','cache-control':'no-store',...headers}})
 export function serveEvidence(directory:string,consumer:Address|undefined,port=8787){
@@ -27,8 +31,28 @@ export function serveEvidence(directory:string,consumer:Address|undefined,port=8
     const origin=request.headers.get('origin')
     if(origin && !['http://127.0.0.1:5173','http://localhost:5173'].includes(origin))return json({error:'ORIGIN_NOT_ALLOWED'},403)
     const headers:Record<string,string>=origin?{'access-control-allow-origin':origin,'vary':'Origin'}:{}
+    if(url.pathname==='/api/arkiv/v1/rpc'&&request.method==='OPTIONS'){
+      if(!origin||request.headers.get('access-control-request-method')!=='POST'||
+        (request.headers.get('access-control-request-headers')??'').split(',').some(h=>h.trim()&&h.trim().toLowerCase()!=='content-type'))return json({error:'PREFLIGHT_NOT_ALLOWED'},403,headers)
+      return new Response(null,{status:204,headers:{...headers,'access-control-allow-methods':'POST','access-control-allow-headers':'content-type'}})
+    }
+    if(url.pathname==='/api/arkiv/v1/rpc'&&request.method==='POST'){
+      try{
+        if(!request.headers.get('content-type')?.startsWith('application/json'))throw Error('JSON_REQUIRED')
+        const raw=await request.text()
+        if(raw.length>2000000)throw Error('REQUEST_TOO_LARGE')
+        return json(await forwardArkivRead(JSON.parse(raw) as unknown),200,headers)
+      }catch{return json({jsonrpc:'2.0',id:null,error:{code:-32000,message:'Arkiv read unavailable or method not permitted'}},200,headers)}
+    }
     if(request.method!=='GET')return json({error:'READ_ONLY_API'},405,headers)
     try{
+      const history=url.pathname.match(/^\/api\/arkiv\/v1\/guarantees\/([1-9]\d{0,17})(\/queue)?$/)
+      if(history){
+        if(!consumer)return json({error:'CONTRACT_NOT_CONFIGURED'},503,headers)
+        if(history[2])return json({records:queuedHistory(store,consumer.toLowerCase(),history[1])},200,headers)
+        try{return json(await readArkiv(consumer.toLowerCase(),history[1],url.searchParams.get('type') as HistoryKind|null??undefined,url.searchParams.get('after') as Hex|null??undefined),200,headers)}
+        catch{return json({error:'ARKIV_HISTORY_UNAVAILABLE',source:'ARKIV_RABDI_LIVE_RPC',moneyAuthority:'ARC_UNCHANGED'},503,headers)}
+      }
       if(url.pathname==='/api/evidence/v1/policy')return json({policy,policyHash:hash(policy),disclosure:policy.disclosure,chainError,consumer:consumer??null},200,headers)
       if(url.pathname==='/api/evidence/v1/health')return json({service:'microcover-evidence-demo',chainError,activeGuarantees:store.activations().length},200,headers)
       const fixture=url.pathname.match(/^\/demo-feed\/(synthetic-status-[ab])\/(0x[0-9a-f]{64})\/(\d{1,12})$/)

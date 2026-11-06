@@ -26,7 +26,7 @@ export interface Evaluation {
 export function evaluateSnapshot(a:Activation, input:readonly Receipt[], now:number, integrity=true):Evaluation {
   if(!Number.isSafeInteger(now)||now<0)throw Error('INVALID_EVALUATION_TIME')
   const receipts=input.filter(r=>r.receivedAt<=a.outcomeDeadline)
-  const receiptRoot=receipts.at(-1)?.hash??ZERO
+  const receiptRoot=receipts[receipts.length-1]?.hash??ZERO
   const evidenceRoot=integrity ? hash({schema:'microcover-log-root-v1',activationHash:hash(a),receiptRoot,receiptCount:receipts.length}) : ZERO
   const sources=a.policy.sources.map(source=>{
     const latest=[...receipts].reverse().find(r=>r.sourceId===source.id)

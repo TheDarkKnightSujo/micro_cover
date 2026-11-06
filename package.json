@@ -16,9 +16,11 @@
     "contracts:test": "forge test",
     "evidence:test": "bun test services/evidence",
     "evidence:check": "tsc --noEmit -p tsconfig.services.json",
-    "evidence": "bun run services/evidence/cli.ts"
+    "evidence": "bun run services/evidence/cli.ts",
+    "arkiv": "bun run services/evidence/arkiv-cli.ts"
   },
   "dependencies": {
+    "@arkiv-network/sdk": "1.0.1",
     "@circle-fin/adapter-viem-v2": "^1.19.2",
     "@circle-fin/app-kit": "^1.18.0",
     "@circle-fin/developer-controlled-wallets": "^10.8.1",

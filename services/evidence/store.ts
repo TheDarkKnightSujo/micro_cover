@@ -39,6 +39,9 @@ export class EvidenceStore {
     this.db.exec('CREATE TABLE IF NOT EXISTS settings (key TEXT PRIMARY KEY, value TEXT NOT NULL)')
   }
   setting(key:string):string|undefined { return this.db.query<{value:string},[string]>('SELECT value FROM settings WHERE key=?').get(key)?.value }
+  settingsWithPrefix(prefix:string):string[] {
+    return this.db.query<{value:string},[string]>('SELECT value FROM settings WHERE substr(key,1,length(?1))=?1 ORDER BY key').all(prefix).map(r=>r.value)
+  }
   setSetting(key:string,value:string):void { this.db.query('INSERT INTO settings VALUES (?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value').run(key,value) }
   close() { this.db.close() }
   activate(a: Activation): Hex {
