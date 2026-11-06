@@ -38,8 +38,8 @@ function Actions({ contract, id, g, read, account, operator, chain, freshNow }: 
         {...common}
         title="Request review (dispute)"
         role="Enrolled beneficiary"
-        description="A dispute asks for review. It is not proof of failure, it does not choose any payout, and no funds move. It freezes the guarantee, and in this phase only the provider can resolve it (by admitting failure). There is no way back to success."
-        warning="This freezes the guarantee for everyone and cannot be undone. If the provider never responds, funds stay locked."
+        description="An explicit onchain dispute freezes settlement and starts the first uncertainty timeout. It is not proof of failure. Request evaluation above to ask for evidence review without opening a dispute. Timely authorized evidence or provider admission may resolve uncertainty."
+        warning="This starts or reuses the first non-resetting deadline. Early disputes may make refunds eligible before the service deadline. If still unresolved when eligible, anyone may select full escrow refunds with no compensation. A later dispute may be immediately eligible."
         eligible={(now) => canDispute(g, ctxFor(now))}
         label="Raise dispute"
         workingLabel="Submitting dispute..."
@@ -79,8 +79,8 @@ function Actions({ contract, id, g, read, account, operator, chain, freshNow }: 
         {...common}
         title="Mark uncertain"
         role="Demo operator only"
-        description="The demo operator freezes an open guarantee, or one with success in review. This is a trusted blocking power: it moves no money and, in this phase, only the provider's failure admission can resolve it."
-        warning="This freezes the guarantee and cannot be undone. Funds stay locked until the provider admits failure."
+        description="Explicitly enter onchain uncertainty. An unavailable offchain snapshot never calls this automatically. Timely evidence or provider admission can resolve it; otherwise the fixed timeout enables escrow-only refunds."
+        warning="This starts or reuses the first uncertainty deadline, which cannot be extended. No compensation is paid by the unresolved fallback."
         eligible={() => canMarkUncertain(g, ctxFor(0n))}
         label="Mark uncertain"
         workingLabel="Marking uncertain..."
@@ -119,7 +119,7 @@ function Actions({ contract, id, g, read, account, operator, chain, freshNow }: 
       <GuardedAction
         {...common}
         title="Settle failure payouts"
-        role="Anyone, after failure is admitted"
+        role="Anyone, after failure is established"
         description={`Pays the next enrolled beneficiaries their escrow plus compensation, in enrollment order, at most ${g.maxBatch} per transaction. Recipients and amounts come only from enrollment and the guarantee terms.`}
         eligible={() => canSettle(g)}
         preview={

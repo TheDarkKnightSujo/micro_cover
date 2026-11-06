@@ -43,11 +43,13 @@ export function HistoryCard({ id, g, chain }: Props) {
               <span className="mc-muted">{g.uncertainBy.toLowerCase() === g.demoOperator.toLowerCase() ? ' (the demo operator)' : ' (an enrolled beneficiary)'}</span>
             </Row>
           )}
-          {g.outcome === OUTCOME.FAILURE && (g.failureAdmittedAt !== 0n ? at('Failure admitted', g.failureAdmittedAt) : <Row label="Failure admitted">Yes (time recorded as 0)</Row>)}
+          {g.outcome === OUTCOME.FAILURE && (g.failureOrigin===2?<Row label="Failure established">Evidence verdict; no provider admission</Row>:g.failureAdmittedAt !== 0n ? at('Provider admitted failure', g.failureAdmittedAt) : <Row label="Provider admitted failure">Time recorded as 0</Row>)}
+          {g.uncertaintyStarted&&at('First uncertainty deadline (never reset)',g.uncertainReadyAt)}
+          {g.outcome===OUTCOME.UNRESOLVED_REFUNDED&&<Row label="Distinct unresolved outcome">UNRESOLVED_REFUNDED; {g.refundedCount}/{g.cohortSize} escrow refunds; {formatUsdc(g.refundedEscrow)} USDC, zero compensation</Row>}
           {g.successFinalizedAt !== 0n && at('Success finalized', g.successFinalizedAt)}
           {g.outcome === OUTCOME.SUCCESS && <Row label="Success escrow released">{g.successEscrowReleased ? `${formatUsdc(g.releasedSuccessEscrow)} USDC` : 'Not yet'}</Row>}
           {g.withdrawnBond > 0n && <Row label="Remaining bond withdrawn">{formatUsdc(g.withdrawnBond)} USDC</Row>}
-          {g.status === STATUS.CLOSED && <Row label="Closed">Yes, outcome {g.outcome === OUTCOME.SUCCESS ? 'success' : 'failure'}</Row>}
+          {g.status === STATUS.CLOSED && <Row label="Closed">Yes, outcome {g.outcome === OUTCOME.SUCCESS ? 'success' : g.outcome===OUTCOME.UNRESOLVED_REFUNDED?'UNRESOLVED_REFUNDED':'failure'}</Row>}
         </Dl>
       ) : (
         <p className="mc-p mc-muted mc-mt-3">Select a guarantee to see its stored timeline.</p>

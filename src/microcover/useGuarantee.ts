@@ -6,6 +6,26 @@ const REFRESH_MS = 5_000
 const NO_ACCOUNT = '0x0000000000000000000000000000000000000000'
 
 export interface GuaranteeView {
+  evidenceBound: boolean
+  policyHash: Hex
+  cohortId: Hex
+  createdAt: bigint
+  uncertaintyTimeout: bigint
+  uncertaintyStarted: boolean
+  uncertainSince: bigint
+  uncertainReadyAt: bigint
+  refundedCount: number
+  refundedEscrow: bigint
+  releasedUnresolvedReservation: bigint
+  latestEvidenceRoot: Hex
+  anchorNonce: bigint
+  nextAnchorNonce: bigint
+  verdictNonce: bigint
+  nextVerdictNonce: bigint
+  failureOrigin: number
+  lastReportOutcome: number
+  lastReportEvaluatedAt: bigint
+  lastReportValidUntil: bigint
   /** The selection this snapshot belongs to; actions must never reuse it for another one. */
   forId: bigint
   forAccount: Address | undefined
@@ -89,6 +109,7 @@ export function useGuarantee(contract: Address, id: bigint | undefined, account:
       { ...base, functionName: 'getBeneficiaries', args },
       { ...base, functionName: 'isJoinable', args },
       { ...base, functionName: 'MAX_SETTLEMENT_BATCH' },
+      { ...base, functionName: 'getEvidenceState', args },
     ],
     query: { enabled, refetchInterval: REFRESH_MS },
   })
@@ -99,7 +120,7 @@ export function useGuarantee(contract: Address, id: bigint | undefined, account:
     query: { enabled: enabled && account !== undefined, refetchInterval: REFRESH_MS },
   })
 
-  const [terms, state, lifecycle, beneficiaries, joinable, maxBatch] = main.data ?? []
+  const [terms, state, lifecycle, beneficiaries, joinable, maxBatch, evidence] = main.data ?? []
   const addresses = beneficiaries?.status === 'success' ? beneficiaries.result : []
 
   const paid = useReadContracts({
@@ -139,6 +160,7 @@ export function useGuarantee(contract: Address, id: bigint | undefined, account:
   if (beneficiaries?.status === 'failure') failed.push('beneficiary list')
   if (joinable?.status === 'failure') failed.push('enrollment status')
   if (maxBatch?.status === 'failure') failed.push('settlement batch limit')
+  if (evidence?.status === 'failure') failed.push('evidence and timeout state')
   if (account !== undefined && member.isError) failed.push('your membership')
   const paidFlags = paid.data ?? []
   if (addresses.length > 0 && (paid.isError || paidFlags.some((flag) => flag.status === 'failure'))) {
@@ -154,6 +176,7 @@ export function useGuarantee(contract: Address, id: bigint | undefined, account:
     beneficiaries?.status !== 'success' ||
     joinable?.status !== 'success' ||
     maxBatch?.status !== 'success' ||
+    evidence?.status !== 'success' ||
     (account !== undefined && member.data === undefined)
   ) {
     return { state: 'loading', failed: [], data: undefined, refetch }
@@ -168,6 +191,7 @@ export function useGuarantee(contract: Address, id: bigint | undefined, account:
     failed: [],
     refetch,
     data: {
+      ...evidence.result,
       forId: id,
       forAccount: account,
       provider: t.provider,

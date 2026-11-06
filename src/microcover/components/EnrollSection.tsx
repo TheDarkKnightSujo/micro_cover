@@ -11,6 +11,7 @@ import { ApprovalStep, approvalReady } from './ApprovalStep'
 import { Callout } from './Card'
 import { ChainGate, primaryButton } from './ChainGate'
 import { TxStatus } from './TxStatus'
+import { useEvidencePolicy, EVIDENCE_DISCLOSURE, evidenceGet, validatePublicPolicy } from '../evidenceClient'
 
 interface Props {
   contract: Address
@@ -24,6 +25,8 @@ interface Props {
 }
 
 export function EnrollSection({ contract, id, g, read, account, operator, chain, freshNow }: Props) {
+  const policy=useEvidencePolicy(contract)
+  const policyReady=!g.evidenceBound||(policy.isSuccess&&!policy.isError&&policy.data?.policyHash===g.policyHash)
   const headingId = useId()
   const approval = useUsdcApproval(g.escrowAmount)
   const [guard, setGuard] = useState<string>()
@@ -37,19 +40,21 @@ export function EnrollSection({ contract, id, g, read, account, operator, chain,
     },
   })
   const ctxFor = (now: bigint): Ctx => ({ now, account, operator })
-  const verdict = chain.now === undefined ? { ok: false as const, reason: chain.failed ? 'Chain time is unavailable, so enrollment is disabled.' : 'Reading chain time...' } : canEnroll(g, ctxFor(chain.now))
+  const verdict = !policyReady ? {ok:false as const,reason:'Evidence policy is unavailable or does not match the frozen guarantee. Enrollment is disabled.'} : chain.now === undefined ? { ok: false as const, reason: chain.failed ? 'Chain time is unavailable, so enrollment is disabled.' : 'Reading chain time...' } : canEnroll(g, ctxFor(chain.now))
 
   const enroll = () => {
+    if(!policyReady)return
     void (async () => {
       setGuard(undefined)
       try {
+        if(g.evidenceBound && validatePublicPolicy(await evidenceGet('policy'),contract).policyHash!==g.policyHash) throw Error('POLICY_CHANGED')
         const recheck = canEnroll(g, ctxFor(await freshNow()))
         if (!recheck.ok) {
           setGuard(recheck.reason)
           return
         }
       } catch {
-        setGuard('Could not read the latest block time, so nothing was sent. Try again.')
+        setGuard('Latest chain time or the frozen evidence policy could not be verified. Nothing was sent. Refresh and review before trying again.')
         return
       }
       tx.writeContract({ address: contract, abi: microCoverAbi, functionName: 'joinCohort', args: [id], chainId: TARGET_CHAIN_ID })
@@ -58,6 +63,7 @@ export function EnrollSection({ contract, id, g, read, account, operator, chain,
 
   return (
     <section aria-labelledby={headingId}>
+      {g.evidenceBound&&<Callout tone="warn">{EVIDENCE_DISCLOSURE} Both feeds must agree with fresh explicit statuses; polling 10 s, freshness 60 s at the outcome deadline. Policy {g.policyHash}. A separately frozen {g.uncertaintyTimeout.toString()} s timeout starts only on first onchain uncertainty. Unresolved refunds return your full escrow, pay no compensation, and return the bond after all refunds. Later disputes reuse the first deadline. Early disputes can make refunds eligible before the outcome deadline. A delivered service may be refunded when evidence is inconclusive.</Callout>}
       <span className="mc-role-tag">Beneficiary</span>
       <h3 className="mc-h3" id={headingId}>
         Enroll in this guarantee

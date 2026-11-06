@@ -16,7 +16,7 @@ export function DeploymentCard({ cap }: { cap: Capability }) {
       title="Deployment and authority"
       aside={
         cap.state === 'ready' ? (
-          <Badge tone="ok">Phase 2 contract verified</Badge>
+          <Badge tone="ok">Phase 3 contract detected</Badge>
         ) : cap.state === 'none' ? (
           <Badge>Preview only</Badge>
         ) : cap.state === 'unsupported' ? (
@@ -54,7 +54,7 @@ export function DeploymentCard({ cap }: { cap: Capability }) {
       {cap.state === 'unsupported' && contract && (
         <div className="mc-actions" role="alert">
           <Callout tone="danger">
-            <strong>Phase 2 deployment required.</strong> {cap.reason} The contract this app is pointed at cannot be upgraded, so approvals, creating guarantees, enrolling and every other action are disabled. The app does not change the address by itself.
+            <strong>Phase 3 deployment required.</strong> {cap.reason} The contract this app is pointed at cannot be upgraded, so approvals, creating guarantees, enrolling and every other action are disabled. The app does not change the address by itself. The verified Phase 2 deployment remains unchanged.
           </Callout>
           <Dl>
             <Row label="Configured contract">
@@ -70,7 +70,7 @@ export function DeploymentCard({ cap }: { cap: Capability }) {
       {cap.state === 'ready' && contract && (
         <>
           <Callout tone="warn">
-            <strong>Restricted demo authority.</strong> One fixed address, the demo operator, can propose success or mark a guarantee uncertain, within the contract&apos;s timing. It cannot decide failure, move funds or shorten a review window. This is a trusted demo role, not decentralized evidence and not an automated oracle. It is separate from the provider role, even if the same wallet holds both.
+            <strong>Restricted demo authority.</strong> The fixed demo operator anchors evidence and submits a trusted verdict, including evidence failure without provider cooperation. Success gets a full review. It can explicitly mark uncertainty but cannot change payout recipients, amounts or frozen durations. Both authenticated demo feeds are controlled by us; this is not decentralized evidence or a deployed CRE workflow. Provider admission remains a separate path.
           </Callout>
           <Dl>
             <Row label="MicroCover contract">
@@ -82,7 +82,8 @@ export function DeploymentCard({ cap }: { cap: Capability }) {
             <Row label="Review duration (immutable)">
               {fmtDuration(cap.reviewWindow)} ({cap.reviewWindow.toString()} s). A short synthetic test value, not a production safety claim.
             </Row>
-            <Row label="Protocol version">2</Row>
+            <Row label="Uncertainty timeout (separate immutable)">{fmtDuration(cap.uncertaintyTimeout)} from first onchain uncertainty, never reset. Escrow-only refunds if still unresolved.</Row>
+            <Row label="Protocol version">3</Row>
           </Dl>
         </>
       )}
