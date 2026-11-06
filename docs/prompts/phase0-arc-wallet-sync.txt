@@ -1,0 +1,1 @@
+Phase 0 source sync only. Preserve the uploaded src/config.ts exactly: it removes the unused mainnet chain/transport and ENS-resolution comment from MicroCover's wallet config, retaining only Arc Testnet. The user requires an Arc-only core with no ENS feature. Do not change other files, deploy, sign, broadcast, commit or publish. Confirm the supplied file is present.
