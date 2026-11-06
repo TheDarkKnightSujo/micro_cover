@@ -1,0 +1,20 @@
+{
+  "date": "2026-11-06",
+  "network": "Rabdi testnet",
+  "scope": "Human-signed Arkiv Hub sample entity; Phase 0 feasibility only",
+  "entityKey": "0x948b565d57bc65cd125a5e8457dfc34ab1b020bb8fa88de20a2c5ffa37c0fccf",
+  "owner": "0x1d39fc0e5293ab949d63217ffb375357adf3933f",
+  "schema": "arkiv-hub.forum-posts",
+  "board": "microcover-phase0",
+  "title": "MicroCover Phase 0 smoke test",
+  "body": "Synthetic setup test only. No guarantee, private evidence, verdict or settlement is represented.",
+  "createdAtBlock": "0x43e3d",
+  "expiresAtBlock": "0x4e6fd",
+  "creationFlags": { "readonly": false, "permissionlessExtension": false, "raw": 0 },
+  "readMethod": "arkiv_getEntity",
+  "queryMethod": "arkiv_query",
+  "queryBlock": "0x43e63",
+  "queryMatchCount": 1,
+  "transactionHash": null,
+  "limitations": "Public RPC read and query verified live. Entity expires and owner can mutate it. This saved summary does not prove source truth, immutable storage, or MicroCover integration. Full creation transaction hash not supplied."
+}
