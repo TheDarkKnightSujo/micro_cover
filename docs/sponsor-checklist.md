@@ -7,7 +7,7 @@ Planning requirements are based on the full implementation plan's official refer
 Official: https://ethglobal.com/events/mumbai/prizes/arc
 
 - [ ] Studio project created as build starting point; shareable URL recorded.
-- [ ] Supported external-edit/source-sync workflow confirmed.
+- [x] Supported external-edit/source-sync workflow confirmed.
 - [ ] Required contract testing/deployment and app connection demonstrated in Studio.
 - [ ] Real official testnet USDC bond, escrow and settlement transactions linked.
 - [ ] Working frontend/backend, architecture and source links prepared.
@@ -21,6 +21,8 @@ Phase 0 Studio update: human supplied `https://studio.arc.io/app/c47658be-4463-4
 
 Human Preview screenshot shows the undeployed illustrative app. Studio's Share menu offers hosting deployment via Netlify, Hugging Face or Vercel; it did not show a public read-only project link. No hosting account was connected or app published. The Studio project URL must not be described as judge-accessible until sharing is verified.
 
+Independent account test: teammate's screenshots at the exact project URL show `New Project` and an empty Code file list. Project access not demonstrated. Arc staff clarification is required; unsent question is prepared in `docs/arc-sharing-question.md`.
+
 ## Chainlink — CRE workflow
 
 Official: https://ethglobal.com/events/mumbai/prizes/chainlink
@@ -33,7 +35,7 @@ Official: https://ethglobal.com/events/mumbai/prizes/chainlink
 
 Evidence URL/commit/owner: pending. CCIP/Functions are not substitute integrations for this selected workflow.
 
-Phase 0 feasibility: official Chainlink documentation lists Arc Testnet for CRE simulation. The local `cre` command is absent, so no simulation was run. See `docs/runbook.md`.
+Phase 0 feasibility: authenticated CLI lists Arc Testnet, and isolated Hello World CLI simulation succeeded. This is not yet the meaningful MicroCover workflow required by this track. See `docs/runbook.md`.
 
 ## Arkiv — build from scratch
 
@@ -47,7 +49,7 @@ Official: https://ethglobal.com/events/mumbai/prizes/arkiv
 
 Evidence URL/commit/owner: pending. No Swarm bonus is selected in the core plan.
 
-Phase 0 feasibility: the current official first-entity guide uses Rabdi with a funded test wallet and access key. No funded writer or source scaffold is present, so no write/query was run. See `docs/runbook.md`.
+Phase 0 feasibility: human funded Rabdi wallet and saved an access key; Hub synthetic entity write and public-RPC read/query succeeded. Creation receipt also verified in the final audit. This is not yet the Phase 5 MicroCover feature. See `docs/runbook.md`.
 
 Subsequent Phase 0 smoke evidence: human created the labelled synthetic Hub sample, key `0x948b565d57bc65cd125a5e8457dfc34ab1b020bb8fa88de20a2c5ffa37c0fccf`. Agent public-RPC get/query returned the expected values and exactly one matching entity. Summary: `docs/evidence/phase0-arkiv-smoke.json`. Owner mutation and expiry apply. This Hub test does not satisfy the Phase 5 visible MicroCover history integration checklist.
 

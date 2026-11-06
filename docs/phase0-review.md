@@ -9,7 +9,7 @@ Prepared from observed source and actual checks on 6 November 2026. No approval 
 - Human Preview and Arc wallet screenshots recorded; 20 USDC faucet transfer independently verified by RPC.
 - CRE authenticated CLI and Hello World simulation verified outside the repo; tenant registry lists Arc Testnet. No MicroCover workflow/report integration claimed.
 - Human signed labelled Arkiv Hub sample; public RPC read and owner/board/schema query verified. No Phase 5 app feature claimed.
-- Separate private/public checkouts verified. No secrets copied from export. No deployment or Git commit performed.
+- Separate private/public checkouts verified. No secrets copied from export. Foundation/docs committed and human-pushed; subsequent local workflow commit recorded. No deployment performed.
 
 ## Selected demo amounts
 
@@ -27,9 +27,9 @@ Selected 6 November 2026 under the user's instruction to choose the better optio
 
 ## Remaining checkpoint record
 
-- Demo amount decision is resolved. Human review/acceptance of the final foundation remains pending; delegated choice of demo amounts does not itself certify Phase 0.
-- The Studio project URL is recorded; judge access remains unverified. Share currently offers external hosting. Preserve this as an explicit sharing limitation rather than publishing during Phase 0.
+- Demo amounts and foundation technical review are resolved; fresh agent audit is in `docs/evidence/phase0-audit.md`. Existing human Preview/wallet/network/faucet and Arkiv signing evidence is recorded. A repeated blanket approval of the code review is not requested.
+- Independent Studio project access remains unverified. Anonymous browser access redirected to sign-in. One teammate must test the exact project URL using their own Studio account; if denied, obtain Arc staff's supported judge-access method. Share's hosting menu does not establish project access.
 - Future success finality, evidence policy and CRE receiver/Arkiv receipt designs remain deferred to their requested phases; do not implement them to close Phase 0.
 - Human verified the Git author identity and made/pushed the first two commits. User subsequently authorized agent local commits and their verification; remote publication remains a human step unless separately authorized.
 
-Status: IN_PROGRESS, not PASSED. Proposed commit groups after review: Studio foundation/safe configuration, then planning and verified checkpoint documentation. Next phase requires an explicit Phase 1 request.
+Status: BLOCKED on independent Studio-access verification. Technical setup audit complete; no Phase 1 work performed. The audit correction and records are a coherent authorized local commit; no agent push or publication is authorized.

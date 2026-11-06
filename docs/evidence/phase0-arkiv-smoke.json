@@ -15,6 +15,7 @@
   "queryMethod": "arkiv_query",
   "queryBlock": "0x43e63",
   "queryMatchCount": 1,
-  "transactionHash": null,
-  "limitations": "Public RPC read and query verified live. Entity expires and owner can mutate it. This saved summary does not prove source truth, immutable storage, or MicroCover integration. Full creation transaction hash not supplied."
+  "transactionHash": "0xb74fc5ae65d98a6bc416e913eb7c341082aac43d4c3183acad0fb88b90078ebf",
+  "receiptStatus": "0x1",
+  "limitations": "Public RPC read/query and creation receipt verified live; full transaction hash obtained from explorer UI during agent audit. Entity expires and owner can mutate it. This saved summary does not prove source truth, immutable storage, or MicroCover integration."
 }
