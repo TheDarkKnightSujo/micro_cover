@@ -1,0 +1,24 @@
+{
+  "cli": "1.39.0",
+  "sdk": "1.23.0",
+  "exitCode": 0,
+  "config": {
+    "schedule": "*/10 * * * * *",
+    "consumer": "0xdcd11bb347f063b5a876c8816f5a02b8ea0f11e0",
+    "guaranteeId": "2",
+    "evidenceUrl": "http://127.0.0.1:8787/api/evidence/v1/guarantees/2/deliberately-unavailable"
+  },
+  "output": {
+    "schema": "microcover-cre-simulation-v1",
+    "mode": "READ_ONLY_SIMULATION",
+    "chainId": "5042002",
+    "consumer": "0xdcd11bb347f063b5a876c8816f5a02b8ea0f11e0",
+    "guaranteeId": "2",
+    "outcome": "UNCERTAIN",
+    "reason": "EVIDENCE_UNAVAILABLE_OR_INVALID",
+    "report": null
+  },
+  "matchingPhase3Root": null,
+  "broadcast": false,
+  "chainWrites": false
+}

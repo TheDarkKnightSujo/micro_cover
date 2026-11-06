@@ -1,0 +1,64 @@
+{
+  "cli": "1.39.0",
+  "sdk": "1.23.0",
+  "exitCode": 0,
+  "config": {
+    "schedule": "*/10 * * * * *",
+    "consumer": "0xdcd11bb347f063b5a876c8816f5a02b8ea0f11e0",
+    "guaranteeId": "3",
+    "evidenceUrl": "http://127.0.0.1:8787/api/evidence/v1/guarantees/3/snapshot"
+  },
+  "output": {
+    "schema": "microcover-cre-simulation-v1",
+    "mode": "READ_ONLY_SIMULATION",
+    "evaluation": {
+      "domain": {
+        "chainId": "5042002",
+        "cohortId": "0xca37177055b10f2bf5e24a98dfc81710367db12161dc06ea98ff02bd72dd8605",
+        "conditionHash": "0xec9dd851bb14d1b6e86acb7ce293c0f127e89c81f2222860c3a0858a2ef58522",
+        "consumer": "0xdcd11bb347f063b5a876c8816f5a02b8ea0f11e0",
+        "guaranteeId": "3",
+        "policyHash": "0x390c151a55ce5c1e9861f5781528a38864fdc389edaee853de2fdb6f4d8e9d3d",
+        "schema": "microcover-evidence-v1"
+      },
+      "policyVersion": "synthetic-unanimous-v1",
+      "asOf": 1793976389,
+      "outcome": "UNCERTAIN",
+      "reason": "CONFLICTING_STATUSES",
+      "coveredSources": 2,
+      "requiredSources": 2,
+      "totalWeight": 2,
+      "successSupportBps": 5000,
+      "failureSupportBps": 5000,
+      "sourceGroupCount": 1,
+      "independentSourcesClaimed": false,
+      "evidenceRoot": "0x20196993c0a85e74eec324be95f7486ab4194284820911710d48a5a8bb1b08b2",
+      "receiptRoot": "0x37af99e2d0e1f714dd98bb0b88f8098e62b4ca89f950ea31b6d5579573b42825",
+      "receiptCount": 114,
+      "sources": [
+        {
+          "id": "synthetic-status-a",
+          "usable": true,
+          "status": "FULFILLED",
+          "reason": "AUTHENTICATED"
+        },
+        {
+          "id": "synthetic-status-b",
+          "usable": true,
+          "status": "CANCELLED",
+          "reason": "AUTHENTICATED"
+        }
+      ]
+    },
+    "report": null,
+    "receiverPayload": null,
+    "simulationReport": null,
+    "nextVerdictNonce": "1",
+    "evaluatedAt": 1793977284,
+    "validUntil": 1793977344,
+    "authority": "Simulation report only, not production DON authentication. No onchain write. Existing human demo operator must separately review and sign."
+  },
+  "matchingPhase3Root": true,
+  "broadcast": false,
+  "chainWrites": false
+}

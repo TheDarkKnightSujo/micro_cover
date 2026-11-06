@@ -1,0 +1,75 @@
+{
+  "cli": "1.39.0",
+  "sdk": "1.23.0",
+  "exitCode": 0,
+  "config": {
+    "schedule": "*/10 * * * * *",
+    "consumer": "0xdcd11bb347f063b5a876c8816f5a02b8ea0f11e0",
+    "guaranteeId": "2",
+    "evidenceUrl": "http://127.0.0.1:8787/api/evidence/v1/guarantees/2/snapshot"
+  },
+  "output": {
+    "schema": "microcover-cre-simulation-v1",
+    "mode": "READ_ONLY_SIMULATION",
+    "evaluation": {
+      "domain": {
+        "chainId": "5042002",
+        "cohortId": "0x8f66a6fe28647441a94a3e36d1cdf4c05af20f90f148f18bc6750a3bb81c3450",
+        "conditionHash": "0xec9dd851bb14d1b6e86acb7ce293c0f127e89c81f2222860c3a0858a2ef58522",
+        "consumer": "0xdcd11bb347f063b5a876c8816f5a02b8ea0f11e0",
+        "guaranteeId": "2",
+        "policyHash": "0x390c151a55ce5c1e9861f5781528a38864fdc389edaee853de2fdb6f4d8e9d3d",
+        "schema": "microcover-evidence-v1"
+      },
+      "policyVersion": "synthetic-unanimous-v1",
+      "asOf": 1793976399,
+      "outcome": "SUCCESS",
+      "reason": "MATCHING_EXPLICIT_FULFILLED",
+      "coveredSources": 2,
+      "requiredSources": 2,
+      "totalWeight": 2,
+      "successSupportBps": 10000,
+      "failureSupportBps": 0,
+      "sourceGroupCount": 1,
+      "independentSourcesClaimed": false,
+      "evidenceRoot": "0x7eb49481714b7dc172d7256d83f0f51fff75bf51e34c556d4c59b7a8e9835d7c",
+      "receiptRoot": "0x2f4cbe22b748074b97ee2f3a01ab9209e5f25cde3fd50db2d83a1f3cb5088f6c",
+      "receiptCount": 238,
+      "sources": [
+        {
+          "id": "synthetic-status-a",
+          "usable": true,
+          "status": "FULFILLED",
+          "reason": "AUTHENTICATED"
+        },
+        {
+          "id": "synthetic-status-b",
+          "usable": true,
+          "status": "FULFILLED",
+          "reason": "AUTHENTICATED"
+        }
+      ]
+    },
+    "report": {
+      "chainId": "5042002",
+      "consumer": "0xdcd11bb347f063b5a876c8816f5a02b8ea0f11e0",
+      "guaranteeId": "2",
+      "cohortId": "0x8f66a6fe28647441a94a3e36d1cdf4c05af20f90f148f18bc6750a3bb81c3450",
+      "policyHash": "0x390c151a55ce5c1e9861f5781528a38864fdc389edaee853de2fdb6f4d8e9d3d",
+      "evidenceRoot": "0x7eb49481714b7dc172d7256d83f0f51fff75bf51e34c556d4c59b7a8e9835d7c",
+      "outcome": 2,
+      "evaluatedAt": "1793977258",
+      "validUntil": "1793977318",
+      "nonce": "1"
+    },
+    "receiverPayload": "0x00000000000000000000000000000000000000000000000000000000004cef52000000000000000000000000dcd11bb347f063b5a876c8816f5a02b8ea0f11e000000000000000000000000000000000000000000000000000000000000000028f66a6fe28647441a94a3e36d1cdf4c05af20f90f148f18bc6750a3bb81c3450390c151a55ce5c1e9861f5781528a38864fdc389edaee853de2fdb6f4d8e9d3d7eb49481714b7dc172d7256d83f0f51fff75bf51e34c556d4c59b7a8e9835d7c0000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000006aedebaa000000000000000000000000000000000000000000000000000000006aedebe60000000000000000000000000000000000000000000000000000000000000001",
+    "simulationReport": "0x01bf0835a7147a594415f56074901442cad35549441b0a234c92bb4d0080aeb09c000000640000000100000001111111111111111111111111111111111111111111111111111111111111111131613738616339323134aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa000100000000000000000000000000000000000000000000000000000000004cef52000000000000000000000000dcd11bb347f063b5a876c8816f5a02b8ea0f11e000000000000000000000000000000000000000000000000000000000000000028f66a6fe28647441a94a3e36d1cdf4c05af20f90f148f18bc6750a3bb81c3450390c151a55ce5c1e9861f5781528a38864fdc389edaee853de2fdb6f4d8e9d3d7eb49481714b7dc172d7256d83f0f51fff75bf51e34c556d4c59b7a8e9835d7c0000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000006aedebaa000000000000000000000000000000000000000000000000000000006aedebe60000000000000000000000000000000000000000000000000000000000000001",
+    "nextVerdictNonce": "1",
+    "evaluatedAt": 1793977258,
+    "validUntil": 1793977318,
+    "authority": "Simulation report only, not production DON authentication. No onchain write. Existing human demo operator must separately review and sign."
+  },
+  "matchingPhase3Root": true,
+  "broadcast": false,
+  "chainWrites": false
+}

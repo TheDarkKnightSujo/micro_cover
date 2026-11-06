@@ -1,0 +1,5 @@
+Reconcile the supplied reviewed Phase3 and Phase4 sources into this SAME MicroCover Studio project. Preserve unrelated Studio work; inspect source differences before changing anything. No deployment, signing, token actions, credentials, commit, publication or unrelated features.
+
+Phase3 main contract/economics are frozen. Phase4 adds actual CRE read-only simulation, public snapshot export and explicit human demo relay comparison. Separate MicroCoverCREReceiver is prepared/tested but not deployed/connected; do not invent a receiver address or workflow identity. Arc's documented mock forwarder is simulation-only. No deployed DON/network authentication claim. Both feeds are team controlled. Current EOA operator contract remains unchanged.
+
+Use the existing Bun/Foundry/Vite setup. Check app, evidence and isolated workflows/cre types/tests. Report actual differences/checks and any inability to run the local evidence service or Windows-only scripts in Studio. Do not mark checkpoint passed. Ask no wallet/deployment action. Return actual source-parity details so the local agent can selectively compare/pull; do not overwrite private .env or source keys.

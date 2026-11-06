@@ -1,0 +1,26 @@
+✓ Workflow compiled
+✓ Simulation limits enabled
+  HTTP: req=120kb resp=250kb timeout=10s | ConfHTTP: req=125kb resp=500kb timeout=1m30s | Consensus obs=25kb | ChainWrite evm_report=50kb evm_gas=10000000 solana_report=265b solana_cu=300000 | WASM binary=100mb compressed=20mb
+  Binary hash: 6f2e90ff0ffc3faf2187660e37ff252798ecd6ea7b005ffdfa09519c22e50fae
+  Config hash: dd0c3504ba165abad597af2ecf1a0d9af7cb62807d5c7df11f42f3de22a5be00
+2026-11-06T20:31:35Z [SIMULATION] Simulator Initialized
+
+2026-11-06T20:31:35Z [SIMULATION] Running trigger trigger=cron-trigger@1.0.0
+2026-11-06T20:31:35Z [USER LOG] {"schema":"microcover-cre-simulation-v1","mode":"READ_ONLY_SIMULATION","chainId":"5042002","consumer":"0xdcd11bb347f063b5a876c8816f5a02b8ea0f11e0","guaranteeId":"2","outcome":"UNCERTAIN","reason":"EVIDENCE_UNAVAILABLE_OR_INVALID","report":null}
+
+✓ Workflow Simulation Result:
+"{\"schema\":\"microcover-cre-simulation-v1\",\"mode\":\"READ_ONLY_SIMULATION\",\"chainId\":\"5042002\",\"consumer\":\"0xdcd11bb347f063b5a876c8816f5a02b8ea0f11e0\",\"guaranteeId\":\"2\",\"outcome\":\"UNCERTAIN\",\"reason\":\"EVIDENCE_UNAVAILABLE_OR_INVALID\",\"report\":null}"
+
+2026-11-06T20:31:35Z [SIMULATION] Execution finished signal received
+2026-11-06T20:31:35Z [SIMULATION] Skipping WorkflowEngineV2
+
+╭──────────────────────────────────────────────────────╮
+│ Simulation complete! Ready to deploy your workflow?  │
+│                                                      │
+│ Run cre account access to request deployment access. │
+╰──────────────────────────────────────────────────────╯
+Initializing...
+Loading settings...
+! Using default private key for chain write simulation. To use your own key, set CRE_ETH_PRIVATE_KEY in your .env file or system environment.
+Checking RPC connectivity...
+Compiling workflow...

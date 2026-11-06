@@ -1,0 +1,163 @@
+{
+  "chainId": 5042002,
+  "address": "0xdcd11bb347f063b5a876c8816f5a02b8ea0f11e0",
+  "guaranteeId": 3,
+  "pinnedBlock": "71049971",
+  "state": {
+    "status": 2,
+    "outcome": 3,
+    "enrolled": 1,
+    "paidCount": 0,
+    "openSlots": 0,
+    "failureAdmittedAt": "0",
+    "bondHeld": "0",
+    "reservedCompensation": "0",
+    "escrowHeld": "0",
+    "paidCompensation": "0",
+    "paidEscrow": "0",
+    "withdrawableBond": "0",
+    "remainingOwed": "0"
+  },
+  "evidence": {
+    "evidenceBound": true,
+    "policyHash": "0x390c151a55ce5c1e9861f5781528a38864fdc389edaee853de2fdb6f4d8e9d3d",
+    "cohortId": "0xca37177055b10f2bf5e24a98dfc81710367db12161dc06ea98ff02bd72dd8605",
+    "createdAt": "1793975793",
+    "uncertaintyTimeout": "120",
+    "uncertaintyStarted": true,
+    "uncertainSince": "1793978591",
+    "uncertainReadyAt": "1793978711",
+    "refundedCount": 1,
+    "refundedEscrow": "100000",
+    "releasedUnresolvedReservation": "100000",
+    "latestEvidenceRoot": "0x0000000000000000000000000000000000000000000000000000000000000000",
+    "anchorNonce": "0",
+    "nextAnchorNonce": "1",
+    "verdictNonce": "0",
+    "nextVerdictNonce": "1",
+    "failureOrigin": 0,
+    "lastReportOutcome": 0,
+    "lastReportEvaluatedAt": "0",
+    "lastReportValidUntil": "0"
+  },
+  "terms": {
+    "provider": "0x0967c9e2561e6965d874AA05F638A571Cdc22e9e",
+    "compensation": "100000",
+    "escrowAmount": "100000",
+    "maxCohort": 2,
+    "cohortSize": 1,
+    "joinDeadline": "1793976389",
+    "settlementTime": "1793976389",
+    "termsHash": "0xec9dd851bb14d1b6e86acb7ce293c0f127e89c81f2222860c3a0858a2ef58522"
+  },
+  "members": [
+    "0x26DD598639E917F32D256B0cAd0408a842af0218"
+  ],
+  "proofs": [
+    {
+      "event": "UncertaintyMarked",
+      "method": "markUncertain",
+      "transaction": "0x6f90ad96759bf905bd052ed1d071c3c20a4313a6e9621316fff367de7e155fd5",
+      "block": "71049156",
+      "timestamp": "1793978591",
+      "transfers": []
+    },
+    {
+      "event": "UnresolvedFinalized",
+      "method": "finalizeUnresolved",
+      "transaction": "0xb8b3af71850a28f895845afecdb97fd2c0b9fafeda2e1a419516e2db01ea5f90",
+      "block": "71049447",
+      "timestamp": "1793978739",
+      "transfers": []
+    },
+    {
+      "event": "BeneficiaryRefunded",
+      "method": "refundUnresolved",
+      "transaction": "0xb1ccfaf0c93b98401cc77cd64ad73f40e50b7faf15b7bcf6743ffc3fcaf72b97",
+      "block": "71049627",
+      "timestamp": "1793978831",
+      "transfers": [
+        {
+          "from": "0xDcD11bb347F063B5a876C8816F5a02b8eA0F11E0",
+          "to": "0x26DD598639E917F32D256B0cAd0408a842af0218",
+          "value": "100000"
+        }
+      ]
+    },
+    {
+      "event": "RemainingBondWithdrawn",
+      "method": "withdrawRemainingBond",
+      "transaction": "0x3f42e8f0ba96811709536e8d93782b7aa7ffc76e21fc23a13f8747f76879ca16",
+      "block": "71049778",
+      "timestamp": "1793978908",
+      "transfers": [
+        {
+          "from": "0xDcD11bb347F063B5a876C8816F5a02b8eA0F11E0",
+          "to": "0x0967c9e2561e6965d874AA05F638A571Cdc22e9e",
+          "value": "200000"
+        }
+      ]
+    }
+  ],
+  "wholeContractBalance": "0",
+  "allGuarantees": [
+    {
+      "id": "1",
+      "state": {
+        "status": 2,
+        "outcome": 1,
+        "enrolled": 1,
+        "paidCount": 1,
+        "openSlots": 0,
+        "failureAdmittedAt": "0",
+        "bondHeld": "0",
+        "reservedCompensation": "0",
+        "escrowHeld": "0",
+        "paidCompensation": "5000000",
+        "paidEscrow": "2000000",
+        "withdrawableBond": "0",
+        "remainingOwed": "0"
+      }
+    },
+    {
+      "id": "2",
+      "state": {
+        "status": 2,
+        "outcome": 2,
+        "enrolled": 1,
+        "paidCount": 0,
+        "openSlots": 0,
+        "failureAdmittedAt": "0",
+        "bondHeld": "0",
+        "reservedCompensation": "0",
+        "escrowHeld": "0",
+        "paidCompensation": "0",
+        "paidEscrow": "0",
+        "withdrawableBond": "0",
+        "remainingOwed": "0"
+      }
+    },
+    {
+      "id": "3",
+      "state": {
+        "status": 2,
+        "outcome": 3,
+        "enrolled": 1,
+        "paidCount": 0,
+        "openSlots": 0,
+        "failureAdmittedAt": "0",
+        "bondHeld": "0",
+        "reservedCompensation": "0",
+        "escrowHeld": "0",
+        "paidCompensation": "0",
+        "paidEscrow": "0",
+        "withdrawableBond": "0",
+        "remainingOwed": "0"
+      }
+    }
+  ],
+  "duplicateRefundRejected": true,
+  "compensationPaid": "0",
+  "studioReconciled": false,
+  "productionCREAuthentication": false
+}
