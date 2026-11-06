@@ -1,24 +1,30 @@
-# Architecture — proposed boundaries
+# Actual prototype architecture
 
-No component below is claimed deployed or implemented. Reconcile with Studio output and update the actual architecture diagram during Phase 0/implementation.
+6November2026. Deployed protocol v3 is on Arc Testnet. Frontend/service run locally; no public hosted candidate is verified.
 
-| Component | Owns | Does not own |
-|---|---|---|
-| Studio-connected frontend | Provider/beneficiary workflows, chain reads, transaction/history feedback | Secrets, trusted browser-only verdicts |
-| Arc guarantee contracts | Terms, membership, bond/escrow liabilities, settlement authorization and payouts | Truth of arbitrary webpages |
-| Evidence service | Authenticated collection, private payloads, append receipts, deterministic evaluation | Arbitrary recipients/payout amounts |
-| CRE workflow | Blockchain/API orchestration and supported report delivery | Unstated production deployment or automatic source independence |
-| Arkiv adapter/read model | Public receipts/metadata and searchable visible history | Authoritative token balances or raw private evidence |
+```mermaid
+flowchart LR
+  H[Human wallet] -->|explicit transactions| A[Arc guarantee contract]
+  F[React frontend] -->|money and lifecycle reads| A
+  S[Two authenticated synthetic feeds] --> C[Bun collector and external SQLite]
+  C --> E[Deterministic evaluator]
+  E -->|public snapshot| W[CRE CLI simulation]
+  W -->|captured comparison| F
+  F -->|human operator relay| H
+  C --> Q[Persistent public outbox]
+  Q -->|human MetaMask publication| R[Arkiv Rabdi]
+  R -->|live read proxy| F
+  A -->|actual event references| Q
+```
 
-## Trust boundaries to document
+Arc enforces frozen terms, cohort liability, verdict domain/nonce/expiry, full review, separate non-resetting uncertainty timeout and bounded payouts/refunds. Provider admission is distinct. Offchain feed failure cannot automatically open an onchain dispute. Unresolved finalization refunds escrow only, then unlocks bond. Terminal outcomes cannot be overwritten.
 
-- Provider admission authority is restricted to its guarantees.
-- Early demo operator power is explicit; final CRE path follows actual supported verification.
-- Evidence source independence is separate from transport/integrity.
-- Hash commitments detect inconsistent history but cannot prove unreported events.
-- Arkiv ownership/expiry and offchain collector/hosting availability remain dependencies.
-- UNCERTAIN has no automatic fund release; document any restricted prototype recovery policy.
+The collector authenticates two same-team sources and retains private envelopes/keys outside Git. Public receipts are hash-linked; the fixed deadline snapshot cannot be rewritten by late arrivals. Integrity is not truth, completeness or source independence.
 
-## Operational details pending
+CRE reuses the evaluator with actual chain/API reads. The app compares captured CLI results for an explicit trusted human relay. No live CRE network, DON authentication or continuous CRE execution is claimed. The receiver is tested but undeployed; current immutable EOA operator cannot be changed in place.
 
-Actual framework, API paths, persistent store, background scheduling, ports, CORS, secrets, deployed URLs and source-sync method must be observed/chosen in Phase 0. Preserve source evidence and idempotent collection through restarts. Do not fabricate health checks or claim continuous monitoring on a sleeping host.
+Arkiv holds evidence pages, manifest and Arc references. Reads check creator/owner, body/domain hashes, complete chain, outcome and Arc anchor. Attribute immutability does not prevent deletion/transfer/expiry. Local queue/locks protect ordinary retries, not cross-device onchain uniqueness.
+
+Service127.0.0.1:8787 permits local app origins and keeps the access key server-side. RPC proxy refuses signing/broadcast and restricts call/estimate targets. Frontend5173. Public hosting requires reviewed HTTPS routing, persistent external storage and process supervision. Uploading only dist is insufficient; a sleeping laptop is not continuous monitoring.
+
+Deployment helper is separate/local-only. Financial/version guards stay enabled. Studio parity and sponsor/judge access remain unresolved until actually verified.

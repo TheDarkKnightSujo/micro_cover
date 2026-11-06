@@ -1,0 +1,11 @@
+{
+  "checkedAt": "2026-11-06T17:21:14.723Z",
+  "scope": "current Git candidate and built JS/HTML only; not full reachable-history audit",
+  "candidateFiles": 323,
+  "privateKeyPatternHitFiles": [],
+  "trackedEnvFiles": [
+    ".env.example"
+  ],
+  "builtFiles": 83,
+  "localDeploymentHelperMarkersFound": false
+}
