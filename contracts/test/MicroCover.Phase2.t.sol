@@ -19,7 +19,7 @@ import {FeeFromAliceUSDC} from "./MicroCover.t.sol";
 /// Shared Phase 2 helpers: lifecycle stepping, exact revert helpers, accounting identities.
 abstract contract Phase2Base is Phase1Base {
     // ------------------------------------------------------------ actions
-    function _propose(uint256 id) internal {
+    function _propose(uint256 id) internal virtual {
         vm.prank(operator);
         cover.proposeSuccess(id);
     }
@@ -900,6 +900,9 @@ contract Phase2DisputeTest is Phase2Base {
         assertFalse(cover.isPaid(id, bob), "dispute does not pay the disputer");
         _assertFrozen(id, "before settlement");
         vm.warp(uint256(settlementTime) + 1000 days);
+        // Phase 3: 1000 days is far past uncertaintyTimeout (30 days); the success/payout paths below stay
+        // frozen, but the bounded refund fallback (finalizeUnresolved) is now the one route out (see Phase 3 suite).
+        assertTrue(block.timestamp >= cover.getEvidenceState(id).uncertainReadyAt, "timeout reached");
         _assertFrozen(id, "long after");
     }
 
@@ -924,6 +927,7 @@ contract Phase2DisputeTest is Phase2Base {
         assertEq(usdc.balanceOf(address(cover)), 21e6);
         _assertFrozen(id, "pending-disputed");
         vm.warp(block.timestamp + 365 days);
+        assertTrue(block.timestamp >= cover.getEvidenceState(id).uncertainReadyAt, "timeout reached (Phase 3)");
         _assertFrozen(id, "pending-disputed-later");
     }
 
@@ -1614,7 +1618,7 @@ contract Phase2InboundFeeTest is Phase2Base {
 
     function test_FullFeeOnTransferToken_CannotEvenCreate() public {
         FeeOnTransferUSDC fee = new FeeOnTransferUSDC();
-        MicroCover c = new MicroCover(IERC20(address(fee)), operator, WINDOW);
+        MicroCover c = new MicroCover(IERC20(address(fee)), operator, WINDOW, UNCERTAINTY);
         fee.mint(provider, 1_000e6);
         vm.startPrank(provider);
         fee.approve(address(c), type(uint256).max);

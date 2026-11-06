@@ -247,7 +247,9 @@ contract MicroCoverHandler is Test {
             || (p.s.status == MicroCover.Status.CLOSED && p.s.outcome == MicroCover.Outcome.FAILURE);
         bool terminalSuccess = p.s.status == MicroCover.Status.SUCCEEDED
             || (p.s.status == MicroCover.Status.CLOSED && p.s.outcome == MicroCover.Outcome.SUCCESS);
-        bool shouldWork = caller == p.g.provider && !terminalFail && !terminalSuccess;
+        bool timedOut = p.s.status == MicroCover.Status.UNCERTAIN
+            && block.timestamp >= cover.getEvidenceState(id).uncertainReadyAt;
+        bool shouldWork = caller == p.g.provider && !terminalFail && !terminalSuccess && !timedOut;
         vm.prank(caller);
         try cover.admitFailure(id) {
             nAdmit++;
@@ -265,7 +267,8 @@ contract MicroCoverHandler is Test {
             if (shouldWork) _violate("admit reverted unexpectedly");
             bytes4 want = caller != p.g.provider
                 ? MicroCover.NotProvider.selector
-                : terminalFail ? MicroCover.AlreadyAdmitted.selector : MicroCover.SuccessAlreadyFinalized.selector;
+                : terminalFail ? MicroCover.AlreadyAdmitted.selector
+                : timedOut ? MicroCover.UncertaintyTimeoutReached.selector : MicroCover.SuccessAlreadyFinalized.selector;
             if (_sel(ret) != want) _violate("admit wrong revert reason");
             if (_ledger(id) != p.ledger) _violate("reverted admit moved funds");
         }
@@ -635,10 +638,11 @@ contract MicroCoverInvariantTest is Test {
     MicroCoverHandler internal handler;
     address internal operator = makeAddr("demoOperator");
     uint64 internal constant WINDOW = 120;
+    uint64 internal constant UNCERTAINTY = 300;
 
     function setUp() public {
         usdc = new MockUSDC();
-        cover = new MicroCover(IERC20(address(usdc)), operator, WINDOW);
+        cover = new MicroCover(IERC20(address(usdc)), operator, WINDOW, UNCERTAINTY);
         handler = new MicroCoverHandler(cover, usdc);
         targetContract(address(handler));
         bytes4[] memory sels = new bytes4[](17);

@@ -1,0 +1,108 @@
+{
+  "address": "0xa1e621497040d845fe4dc952dc524b88231ade16",
+  "id": 1,
+  "observedBlock": "0x43b8566",
+  "chainTimestamp": "1793958402",
+  "reads": {
+    "getGuarantee": {
+      "provider": "0x1d39fc0e5293AB949D63217fFB375357ADf3933f",
+      "compensation": "5000000",
+      "escrowAmount": "2000000",
+      "maxCohort": 3,
+      "cohortSize": 3,
+      "joinDeadline": "1793958217",
+      "settlementTime": "1793958217",
+      "termsHash": "0xec9dd851bb14d1b6e86acb7ce293c0f127e89c81f2222860c3a0858a2ef58522"
+    },
+    "getState": {
+      "status": 4,
+      "outcome": 2,
+      "enrolled": 3,
+      "paidCount": 0,
+      "openSlots": 0,
+      "failureAdmittedAt": "0",
+      "bondHeld": "15000000",
+      "reservedCompensation": "0",
+      "escrowHeld": "6000000",
+      "paidCompensation": "0",
+      "paidEscrow": "0",
+      "withdrawableBond": "0",
+      "remainingOwed": "0"
+    },
+    "getLifecycle": {
+      "status": 4,
+      "outcome": 2,
+      "joinDeadline": "1793958217",
+      "settlementTime": "1793958217",
+      "claimEndsAt": "1793958337",
+      "successProposedAt": "1793958231",
+      "successReadyAt": "1793958351",
+      "successFinalizedAt": "1793958382",
+      "uncertainAt": "0",
+      "uncertainBy": "0x0000000000000000000000000000000000000000",
+      "successEscrowReleased": false,
+      "releasedSuccessReservation": "15000000",
+      "releasedSuccessEscrow": "0",
+      "withdrawnBond": "0",
+      "demoOperator": "0x1d39fc0e5293AB949D63217fFB375357ADf3933f",
+      "reviewWindow": "120"
+    },
+    "getBeneficiaries": [
+      "0x26DD598639E917F32D256B0cAd0408a842af0218",
+      "0x0967c9e2561e6965d874AA05F638A571Cdc22e9e",
+      "0x2d436EBe81bd9067Fa6739d527Eaa75dfB876c50"
+    ]
+  },
+  "creations": [
+    {
+      "hash": "0x02e1c0c772f8d05e2c667430b3f35af2a597b975cdad01435d56e44482a082db",
+      "status": "0x1",
+      "event": {
+        "id": "1",
+        "provider": "0x1d39fc0e5293AB949D63217fFB375357ADf3933f",
+        "compensation": "5000000",
+        "escrowAmount": "2000000",
+        "maxCohort": 3,
+        "joinDeadline": "1793958217",
+        "settlementTime": "1793958217",
+        "termsHash": "0xec9dd851bb14d1b6e86acb7ce293c0f127e89c81f2222860c3a0858a2ef58522",
+        "bond": "15000000"
+      },
+      "tokenTransferLogs": [
+        {
+          "address": "0x3600000000000000000000000000000000000000",
+          "topics": [
+            "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef",
+            "0x0000000000000000000000001d39fc0e5293ab949d63217ffb375357adf3933f",
+            "0x000000000000000000000000a1e621497040d845fe4dc952dc524b88231ade16"
+          ],
+          "data": "0x0000000000000000000000000000000000000000000000000000000000e4e1c0",
+          "blockHash": "0x42655762c89beb94d360c43d6285bc3d14cb00769d9386f50212c53463390b96",
+          "blockNumber": "0x43b7f5e",
+          "blockTimestamp": "0x6aed9ef5",
+          "transactionHash": "0x02e1c0c772f8d05e2c667430b3f35af2a597b975cdad01435d56e44482a082db",
+          "transactionIndex": "0x6",
+          "logIndex": "0x7",
+          "removed": false
+        }
+      ]
+    }
+  ],
+  "finalizationReceipts": [
+    {
+      "hash": "0x765d43c52751011d63ca68922fbc8cadda60ff412370a1833c9c35b42b8a5059",
+      "status": "0x1",
+      "event": {
+        "id": "1",
+        "releasedReservation": "15000000"
+      },
+      "officialTokenLogs": []
+    }
+  ],
+  "failureAfterSuccessReadOnlyRejection": {
+    "error": "SuccessAlreadyFinalized",
+    "args": [
+      "1"
+    ]
+  }
+}

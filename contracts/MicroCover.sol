@@ -6,36 +6,35 @@ import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol
 import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
 /// @title MicroCover
-/// @notice Phase 2 prototype only: provider-admitted failure and reviewed success lifecycle.
-/// @dev Not upgradeable; no owner/admin/role rotation. demoOperator is a trusted, immutable,
-/// human-controlled demo authority: it cannot decide failure, move funds, or shorten a review
-/// window. It can only propose success or mark uncertain (trusted blocking power, without a
-/// time bound). Any enrolled beneficiary can freeze an OPEN or SUCCESS_PENDING guarantee
-/// into UNCERTAIN within its dispute window: this creates a griefing risk. Only provider
-/// admitFailure resolves UNCERTAIN; provider nonresponse can lock funds indefinitely.
-/// There is no reviewer/evidence policy and no route from UNCERTAIN back to success.
-/// The provider can still admit failure until finalizeSuccess is actually called, even after
-/// the review window elapsed. reviewWindow is a short synthetic test value, not a production
-/// safety claim. An OPEN guarantee without a verdict can also keep its funds locked.
-/// A beneficiary the token refuses to pay (e.g. a blocklisted address) makes failure settlement
-/// revert atomically for that guarantee; there is no skip or alternate recipient path.
-/// Direct token donations are unaccounted, cannot be withdrawn, and never create capacity.
-/// Every outgoing transfer requires the contract to be debited exactly the amount AND the
-/// recipient to gain exactly that amount, else the whole call reverts. Official USDC is the
-/// supported asset; this does not claim safety for arbitrary rebasing, fee-charging or
-/// malicious ERC-20s. All success accounting and releases are guarantee-local.
-/// Verdict (Outcome), lifecycle (Status), and payout progress (counters) are distinct.
-/// Outcome is explicitly stored, never inferred from time, and survives terminal CLOSED.
-/// paidCompensation, paidEscrow, isPaid and paidCount track FAILURE payouts only;
-/// releasedSuccessReservation and releasedSuccessEscrow are separate success counters.
-/// Per-guarantee invariants (amounts in USDC base units):
+/// @notice Phase 3 prototype: provider admission, trusted evidence reports and reviewed success.
+/// @dev Not upgradeable; no owner/admin/role rotation. Immutable demoOperator is a trusted
+/// demo authority: it can establish evidence-origin FAILURE or start a success review without
+/// provider cooperation. Onchain code verifies neither offchain signatures nor evidence truth.
+/// An anchor proves a matching submitted commitment, not truth or completeness. Legacy
+/// createGuarantee is explicitly manual demo with no evidence policy. reviewWindow and
+/// uncertaintyTimeout are separate synthetic test durations, not production safety claims.
+/// Phase 2's indefinite-lock rule is superseded only by the bounded uncertaintyTimeout refund
+/// fallback. OPEN without a verdict can still lock funds. Only explicit onchain disputes/marks
+/// start uncertainty; temporary offchain uncertainty never starts it automatically. A later
+/// dispute reuses the FIRST uncertainty deadline and may be immediately timeout-eligible.
+/// Beneficiary disputes retain griefing risk. While UNCERTAIN, resolution must precede the
+/// timeout; at equality only refund finalization is eligible. Otherwise provider admission
+/// remains possible until success is actually finalized, even after its review deadline.
+/// A blocklisted recipient still blocks a failure or refund batch for that guarantee atomically;
+/// there is no skip, alternate recipient or arbitrary withdrawal. Donations are unaccounted,
+/// never withdrawable and never create capacity. Every outgoing transfer requires exact
+/// contract debit AND exact recipient credit. Official USDC is supported, not arbitrary
+/// rebasing, fee-charging or malicious tokens. All releases affect only their own guarantee.
+/// Outcome, Status and payout progress are distinct; explicit outcomes survive CLOSED.
+/// paidCount/isPaid/paidCompensation/paidEscrow are FAILURE-only; refunds and success releases
+/// have separate counters. Per-guarantee invariants (USDC base units):
 /// bondOf + paidCompensation + withdrawnBond == compensation * maxCohort;
-/// escrowedOf + paidEscrow + releasedSuccessEscrow == escrowAmount * cohortSize;
-/// reservedOf + paidCompensation + releasedSuccessReservation == compensation * cohortSize;
-/// reservedOf <= bondOf; paidCount <= cohortSize <= maxCohort <= 100;
-/// _beneficiaries.length == cohortSize. The sum over guarantees of bondOf + escrowedOf
-/// equals usdc.balanceOf(address(this)) minus unaccounted donations. Reserved compensation
-/// is a subset of bondOf and is never added separately to the accounted token balance.
+/// escrowedOf + paidEscrow + releasedSuccessEscrow + refundedEscrow == escrowAmount * cohortSize;
+/// reservedOf + paidCompensation + releasedSuccessReservation + releasedUnresolvedReservation
+/// == compensation * cohortSize; reservedOf <= bondOf;
+/// paidCount <= cohortSize <= maxCohort <= 100; _beneficiaries.length == cohortSize.
+/// Sum over guarantees of (bondOf + escrowedOf) <= usdc.balanceOf(address(this)); reserved
+/// compensation is a subset of bondOf, never an additional token liability.
 contract MicroCover is ReentrancyGuard {
     using SafeERC20 for IERC20;
 
@@ -57,12 +56,81 @@ contract MicroCover is ReentrancyGuard {
     /// available. CLOSED (2): terminal for either outcome, with no remaining obligation.
     /// SUCCESS_PENDING (3): enrollment closed, success under review, no verdict yet.
     /// SUCCEEDED (4): finalized success, escrow release and bond withdrawal remain.
-    /// UNCERTAIN (5): frozen; only provider failure admission can resolve it in Phase 2.
-    enum Status { OPEN, FAILED, CLOSED, SUCCESS_PENDING, SUCCEEDED, UNCERTAIN }
+    /// UNCERTAIN (5): frozen until timely resolution or timeout refund finalization.
+    /// REFUNDING (6): unresolved escrow refunds; bond locked until every refund is paid.
+    enum Status { OPEN, FAILED, CLOSED, SUCCESS_PENDING, SUCCEEDED, UNCERTAIN, REFUNDING }
 
-    /// @notice Explicit verdict: NONE (0) means no final verdict; FAILURE (1) means provider
-    /// admitted failure; SUCCESS (2) means reviewed success finalized. Survives closure.
-    enum Outcome { NONE, FAILURE, SUCCESS }
+    /// @notice Explicit verdict, preserved on closure: NONE (0), FAILURE (1), SUCCESS (2),
+    /// UNRESOLVED_REFUNDED (3). The last selects escrow-only refunds, not compensation.
+    enum Outcome { NONE, FAILURE, SUCCESS, UNRESOLVED_REFUNDED }
+
+    /// @notice Failure authority: NONE (0), provider admission (1), trusted evidence (2).
+    enum FailureOrigin { NONE, PROVIDER, EVIDENCE }
+
+    /// @notice Submitted report commitment; field order is the stable evidence domain ABI.
+    /// @dev No offchain signatures or truth are verified by this contract.
+    struct EvidenceReport {
+        uint256 chainId;
+        address consumer;
+        uint256 guaranteeId;
+        bytes32 cohortId;
+        bytes32 policyHash;
+        bytes32 evidenceRoot;
+        uint8 outcome;
+        uint64 evaluatedAt;
+        uint64 validUntil;
+        uint256 nonce;
+    }
+
+    /// @notice Fixed-order evidence/timeout snapshot; separate from legacy tuples.
+    /// @dev evidenceBound means policyHash != 0; policyHash/cohortId/createdAt are frozen.
+    /// uncertaintyStarted distinguishes timestamp zero from no timer. Since/readyAt keep the
+    /// FIRST uncertainty. Refund counters and released reservation are unresolved-only.
+    /// Root/anchorNonce describe the latest submitted commitment, not verified evidence.
+    /// Next nonces are current + 1; failureOrigin uses FailureOrigin's numeric values.
+    /// Last report fields describe only the latest accepted verdict, not a final success.
+    struct EvidenceState {
+        bool evidenceBound;
+        bytes32 policyHash;
+        bytes32 cohortId;
+        uint64 createdAt;
+        uint64 uncertaintyTimeout;
+        bool uncertaintyStarted;
+        uint64 uncertainSince;
+        uint64 uncertainReadyAt;
+        uint32 refundedCount;
+        uint256 refundedEscrow;
+        uint256 releasedUnresolvedReservation;
+        bytes32 latestEvidenceRoot;
+        uint256 anchorNonce;
+        uint256 nextAnchorNonce;
+        uint256 verdictNonce;
+        uint256 nextVerdictNonce;
+        uint8 failureOrigin;
+        uint8 lastReportOutcome;
+        uint64 lastReportEvaluatedAt;
+        uint64 lastReportValidUntil;
+    }
+
+    /// @dev Only actual per-guarantee fields; derived evidence view fields are not stored.
+    struct Evidence {
+        bytes32 policyHash;
+        bytes32 cohortId;
+        uint64 createdAt;
+        bool uncertaintyStarted;
+        uint64 uncertainSince;
+        uint64 uncertainReadyAt;
+        uint32 refundedCount;
+        uint256 refundedEscrow;
+        uint256 releasedUnresolvedReservation;
+        bytes32 latestEvidenceRoot;
+        uint256 anchorNonce;
+        uint256 verdictNonce;
+        FailureOrigin failureOrigin;
+        uint8 lastReportOutcome;
+        uint64 lastReportEvaluatedAt;
+        uint64 lastReportValidUntil;
+    }
 
     /// @notice Separate lifecycle history and success release accounting.
     struct Lifecycle {
@@ -132,10 +200,17 @@ contract MicroCover is ReentrancyGuard {
 
     /// @notice USDC used for all bonds and escrow; amounts use its 6-decimal ERC-20 view.
     IERC20 public immutable usdc;
-    /// @notice Trusted immutable demo authority; may only propose success or block it.
+    /// @notice Trusted immutable demo authority for proposals, uncertainty and bound evidence.
     address public immutable demoOperator;
     /// @notice Synthetic review duration in seconds; not a production safety claim.
     uint64 public immutable reviewWindow;
+    /// @notice Separate positive synthetic timeout measured from FIRST onchain uncertainty.
+    uint64 public immutable uncertaintyTimeout;
+    /// @notice Maximum report validity span in seconds, not a proof of evidence freshness.
+    uint64 public constant EVIDENCE_FRESHNESS = 60;
+
+    mapping(uint256 id => Evidence) private _evidence;
+    mapping(uint256 id => mapping(address beneficiary => bool)) private _refunded;
 
     /// @notice The identifier assigned to the next guarantee, starting at 1.
     uint256 public nextGuaranteeId = 1;
@@ -264,24 +339,97 @@ contract MicroCover is ReentrancyGuard {
     /// @notice This guarantee's success escrow was released once to its provider.
     event SuccessEscrowReleased(uint256 indexed id, address indexed provider, uint256 amount);
 
+    /// @notice The independent uncertainty duration must be positive.
+    error ZeroUncertaintyTimeout();
+    error EvidenceReportRequired(uint256 id);
+    /// @notice Evidence-bound creation requires a nonzero policy commitment.
+    error ZeroPolicyHash();
+    /// @notice Evidence-bound creation requires a nonzero cohort domain.
+    error ZeroCohortId();
+    /// @notice Manual-demo guarantees cannot accept evidence operations.
+    error NotEvidenceBound(uint256 id);
+    /// @notice An anchor commitment cannot be zero.
+    error ZeroEvidenceRoot();
+    /// @notice Report/anchor policy or cohort differs from frozen creation terms.
+    error EvidenceBindingMismatch(uint256 id);
+    /// @notice Each independent nonce stream must advance exactly once.
+    error InvalidNonce(uint256 expected, uint256 got);
+    /// @notice The report targets a different chain.
+    error WrongChain(uint256 expected, uint256 got);
+    /// @notice The report targets a different consumer contract.
+    error WrongConsumer(address got);
+    /// @notice The report must match the latest nonzero submitted commitment.
+    error EvidenceRootMismatch(uint256 id, bytes32 expected, bytes32 got);
+    /// @notice Only FAILURE (1) or SUCCESS (2) reports are accepted.
+    error InvalidEvidenceOutcome(uint8 outcome);
+    /// @notice Evaluation precedes the guarantee's settlement time.
+    error EvidenceTooEarly(uint64 evaluatedAt, uint64 settlementTime);
+    /// @notice Evaluation cannot be in the future.
+    error EvidenceFromFuture(uint64 evaluatedAt, uint256 currentTime);
+    /// @notice Report validity has already expired.
+    error EvidenceExpired(uint64 validUntil, uint256 currentTime);
+    /// @notice Validity must span evaluation through at most EVIDENCE_FRESHNESS seconds.
+    error InvalidValidity(uint64 evaluatedAt, uint64 validUntil);
+    /// @notice UNCERTAIN resolution is forbidden at or after the first timeout.
+    error UncertaintyTimeoutReached(uint256 id, uint64 readyAt);
+    /// @notice Unresolved finalization requires reaching the first timeout.
+    error UncertaintyTimeoutNotReached(uint256 id, uint64 readyAt);
+    /// @notice Unresolved refund outcome cannot be replaced with provider failure.
+    error UnresolvedAlreadyFinalized(uint256 id);
+    /// @notice No unresolved escrow refunds remain.
+    error NothingToRefund(uint256 id);
+    /// @notice Defensive rejection of a duplicate refund in the enrollment cursor.
+    error AlreadyRefunded(uint256 id, address beneficiary);
+    /// @notice Bond stays locked until all unresolved escrow refunds are paid.
+    error RefundsPending(uint256 id, uint32 remaining);
+
+    /// @notice Creation froze the evidence policy and cohort domain.
+    event EvidencePolicyBound(uint256 indexed id, bytes32 policyHash, bytes32 cohortId);
+    /// @notice First explicit onchain uncertainty started the nonextendable timeout.
+    event UncertaintyStarted(uint256 indexed id, address indexed by, uint64 since, uint64 readyAt);
+    /// @notice Operator submitted a commitment; this does not prove evidence truth/completeness.
+    event EvidenceAnchored(uint256 indexed id, bytes32 indexed root, uint256 nonce);
+    /// @notice An accepted trusted report started a full review, not a final success outcome.
+    event EvidenceSuccessReported(
+        uint256 indexed id, bytes32 indexed root, uint256 nonce, uint64 evaluatedAt, uint64 readyAt
+    );
+    /// @notice Operator established evidence-origin failure without provider admission.
+    event EvidenceFailureEstablished(
+        uint256 indexed id, bytes32 indexed root, uint256 nonce, uint64 evaluatedAt,
+        uint32 enrolled, uint256 totalOwed
+    );
+    /// @notice An enrolled member requested evaluation only; no outcome or dispute is chosen.
+    event EvaluationRequested(uint256 indexed id, address indexed requester);
+    /// @notice Timeout selected escrow-only refunds and released compensation reservation.
+    event UnresolvedFinalized(uint256 indexed id, uint256 releasedReservation, uint32 enrolled);
+    /// @notice An enrolled beneficiary's full escrow was accounted for refund.
+    event BeneficiaryRefunded(uint256 indexed id, address indexed beneficiary, uint256 escrow);
+    /// @notice A bounded enrollment-order escrow refund batch was processed atomically.
+    event RefundBatchProcessed(
+        uint256 indexed id, address indexed caller, uint32 refunded, uint32 refundedCount, uint32 enrolled
+    );
+
     /// @param usdc_ USDC address supplied by the deployer; not hardcoded.
     /// @param demoOperator_ Trusted immutable human-controlled demo authority.
     /// @param reviewWindow_ Positive synthetic review duration in seconds.
-    constructor(IERC20 usdc_, address demoOperator_, uint64 reviewWindow_) {
+    /// @param uncertaintyTimeout_ Independent positive synthetic uncertainty duration.
+    constructor(IERC20 usdc_, address demoOperator_, uint64 reviewWindow_, uint64 uncertaintyTimeout_) {
         if (address(usdc_) == address(0)) revert ZeroUsdcAddress();
         if (demoOperator_ == address(0)) revert ZeroOperatorAddress();
         if (reviewWindow_ == 0) revert ZeroReviewWindow();
+        if (uncertaintyTimeout_ == 0) revert ZeroUncertaintyTimeout();
         usdc = usdc_;
         demoOperator = demoOperator_;
         reviewWindow = reviewWindow_;
+        uncertaintyTimeout = uncertaintyTimeout_;
     }
 
     /// @notice Return the contract lifecycle protocol version.
     function protocolVersion() external pure returns (uint256) {
-        return 2;
+        return 3;
     }
 
-    /// @notice Create a guarantee and lock compensation times maxCohort as its bond.
+    /// @notice Create an explicitly manual-demo guarantee with no evidence policy and lock its bond.
     /// @param compensation USDC base units of compensation per beneficiary on failure.
     /// @param escrowAmount USDC base units each beneficiary must lock.
     /// @param maxCohort Maximum beneficiary count, between 1 and MAX_COHORT.
@@ -298,6 +446,28 @@ contract MicroCover is ReentrancyGuard {
         uint64 settlementTime,
         bytes32 termsHash
     ) external nonReentrant returns (uint256 id) {
+        return _create(compensation, escrowAmount, maxCohort, joinDeadline, settlementTime, termsHash, 0, 0);
+    }
+
+    /// @notice Atomically create/fund a guarantee with frozen nonzero evidence policy/cohort.
+    /// @dev Same terms/bond rules as manual creation; no policy mutation or external self-call.
+    function createGuaranteeWithPolicy(
+        uint128 compensation, uint128 escrowAmount, uint32 maxCohort,
+        uint64 joinDeadline, uint64 settlementTime, bytes32 termsHash,
+        bytes32 policyHash, bytes32 cohortId
+    ) external nonReentrant returns (uint256 id) {
+        if (policyHash == 0) revert ZeroPolicyHash();
+        if (cohortId == 0) revert ZeroCohortId();
+        return _create(compensation, escrowAmount, maxCohort, joinDeadline, settlementTime, termsHash,
+            policyHash, cohortId);
+    }
+
+    /// @dev Shared atomic creation for manual-demo and evidence-bound guarantees.
+    function _create(
+        uint128 compensation, uint128 escrowAmount, uint32 maxCohort,
+        uint64 joinDeadline, uint64 settlementTime, bytes32 termsHash,
+        bytes32 policyHash, bytes32 cohortId
+    ) private returns (uint256 id) {
         if (compensation == 0) revert InvalidCompensation();
         if (escrowAmount == 0) revert InvalidEscrowAmount();
         if (maxCohort == 0 || maxCohort > MAX_COHORT) revert InvalidMaxCohort();
@@ -321,6 +491,12 @@ contract MicroCover is ReentrancyGuard {
         bondOf[id] = bond;
         escrowedOf[id] = 0;
         _lifecycle[id].claimEndsAt = claimEndsAt;
+        {
+            Evidence storage evidence = _evidence[id];
+            evidence.policyHash = policyHash;
+            evidence.cohortId = cohortId;
+            evidence.createdAt = _timestamp64(block.timestamp);
+        }
 
         _pullUsdc(msg.sender, bond);
 
@@ -328,6 +504,7 @@ contract MicroCover is ReentrancyGuard {
             id, msg.sender, compensation, escrowAmount, maxCohort,
             joinDeadline, settlementTime, termsHash, bond
         );
+        if (policyHash != 0) emit EvidencePolicyBound(id, policyHash, cohortId);
     }
 
     /// @notice Join a guarantee's cohort by locking its required escrow.
@@ -370,22 +547,14 @@ contract MicroCover is ReentrancyGuard {
         if (msg.sender != demoOperator) revert NotDemoOperator(msg.sender);
         Progress storage progress = _progress[id];
         if (progress.status != Status.OPEN) revert InvalidStatus(id, progress.status);
-        uint256 earliest = uint256(guarantee.joinDeadline) + 1;
-        if (guarantee.settlementTime > earliest) earliest = guarantee.settlementTime;
-        if (block.timestamp < earliest) revert ProposalTooEarly(id, earliest);
-        Lifecycle storage lifecycle = _lifecycle[id];
-        uint256 readyAt = block.timestamp + uint256(reviewWindow);
-        if (lifecycle.claimEndsAt > readyAt) readyAt = lifecycle.claimEndsAt;
-        uint64 ready = _timestamp64(readyAt);
-        progress.status = Status.SUCCESS_PENDING;
-        lifecycle.successProposedAt = _timestamp64(block.timestamp);
-        lifecycle.successReadyAt = ready;
-        emit SuccessProposed(id, msg.sender, ready);
+        _requireProposalTime(id, guarantee);
+        if (_evidence[id].policyHash != 0) revert EvidenceReportRequired(id);
+        _proposeSuccess(id);
     }
 
     /// @notice Freeze an OPEN or pending guarantee within its inclusive dispute window.
     /// @dev Only enrolled beneficiaries; no payout is selected and no tokens move.
-    /// UNCERTAIN has no path back to success; only provider failure admission resolves it.
+    /// Starts the FIRST timeout only once; subsequent disputes preserve its original deadline.
     function raiseDispute(uint256 id) external nonReentrant {
         if (_guarantees[id].provider == address(0)) revert UnknownGuarantee(id);
         if (!_members[id][msg.sender]) revert NotBeneficiary(id, msg.sender);
@@ -395,20 +564,154 @@ contract MicroCover is ReentrancyGuard {
         else if (status == Status.SUCCESS_PENDING) deadline = _lifecycle[id].successReadyAt;
         else revert InvalidStatus(id, status);
         if (block.timestamp > deadline) revert DisputeWindowClosed(id, deadline);
-        _markUncertain(id);
+        _startUncertainty(id);
         emit DisputeRaised(id, msg.sender);
     }
 
     /// @notice Exercise trusted operator blocking power on an OPEN or pending guarantee.
-    /// @dev No time bound, token movement or payout selection. Only provider failure
-    /// admission resolves UNCERTAIN; no route from UNCERTAIN to success exists in Phase 2.
+    /// @dev No marking-window limit, token movement or payout selection. Starts the FIRST
+    /// uncertainty timeout once; timely bound evidence can resolve back to a full success review.
     function markUncertain(uint256 id) external nonReentrant {
         if (_guarantees[id].provider == address(0)) revert UnknownGuarantee(id);
         if (msg.sender != demoOperator) revert NotDemoOperator(msg.sender);
         Status status = _progress[id].status;
         if (status != Status.OPEN && status != Status.SUCCESS_PENDING) revert InvalidStatus(id, status);
-        _markUncertain(id);
+        _startUncertainty(id);
         emit UncertaintyMarked(id, msg.sender);
+    }
+
+    /// @notice Submit a latest evidence commitment for a policy-bound guarantee.
+    /// @dev Operator only; validates binding/strict anchor nonce, not signatures or truth.
+    /// No uncertainty timer, lifecycle or report clock is changed.
+    function anchorEvidence(uint256 id, bytes32 root, bytes32 policyHash, bytes32 cohortId, uint256 nonce)
+        external nonReentrant
+    {
+        Evidence storage evidence = _requireBound(id, true);
+        if (root == 0) revert ZeroEvidenceRoot();
+        if (policyHash != evidence.policyHash || cohortId != evidence.cohortId) {
+            revert EvidenceBindingMismatch(id);
+        }
+        uint256 expected = evidence.anchorNonce + 1;
+        if (nonce != expected) revert InvalidNonce(expected, nonce);
+        _requireEvidenceStatus(id);
+        evidence.latestEvidenceRoot = root;
+        evidence.anchorNonce = nonce;
+        emit EvidenceAnchored(id, root, nonce);
+    }
+
+    /// @notice Accept an operator's bound submitted commitment as a FAILURE or success review.
+    /// @dev Trusted demo authority, NOT offchain signature/truth verification. The operator can
+    /// establish evidence-origin failure without provider cooperation; it never calls admitFailure
+    /// or emits FailureAdmitted. Only a matching latest submitted anchor is accepted.
+    function submitEvidenceVerdict(EvidenceReport calldata r) external nonReentrant {
+        uint256 id = r.guaranteeId;
+        Evidence storage evidence = _requireBound(id, true);
+        if (r.chainId != block.chainid) revert WrongChain(block.chainid, r.chainId);
+        if (r.consumer != address(this)) revert WrongConsumer(r.consumer);
+        if (r.cohortId != evidence.cohortId || r.policyHash != evidence.policyHash) {
+            revert EvidenceBindingMismatch(id);
+        }
+        if (r.evidenceRoot == 0 || r.evidenceRoot != evidence.latestEvidenceRoot) {
+            revert EvidenceRootMismatch(id, evidence.latestEvidenceRoot, r.evidenceRoot);
+        }
+        if (r.outcome != 1 && r.outcome != 2) revert InvalidEvidenceOutcome(r.outcome);
+        uint256 expected = evidence.verdictNonce + 1;
+        if (r.nonce != expected) revert InvalidNonce(expected, r.nonce);
+        Guarantee storage guarantee = _guarantees[id];
+        if (r.evaluatedAt < guarantee.settlementTime) {
+            revert EvidenceTooEarly(r.evaluatedAt, guarantee.settlementTime);
+        }
+        if (r.evaluatedAt > block.timestamp) revert EvidenceFromFuture(r.evaluatedAt, block.timestamp);
+        if (r.validUntil < block.timestamp) revert EvidenceExpired(r.validUntil, block.timestamp);
+        uint64 latest = _timestamp64(uint256(r.evaluatedAt) + EVIDENCE_FRESHNESS);
+        if (r.validUntil < r.evaluatedAt || r.validUntil > latest) {
+            revert InvalidValidity(r.evaluatedAt, r.validUntil);
+        }
+        Status status = _requireEvidenceStatus(id);
+        if (status == Status.UNCERTAIN) _requireBeforeTimeout(id);
+        evidence.verdictNonce = r.nonce;
+        evidence.lastReportOutcome = r.outcome;
+        evidence.lastReportEvaluatedAt = r.evaluatedAt;
+        evidence.lastReportValidUntil = r.validUntil;
+        if (r.outcome == 2) {
+            if (status == Status.SUCCESS_PENDING) revert InvalidStatus(id, status);
+            _requireProposalTime(id, guarantee);
+            uint64 ready = _proposeSuccess(id);
+            emit EvidenceSuccessReported(id, r.evidenceRoot, r.nonce, r.evaluatedAt, ready);
+        } else {
+            _progress[id].status = Status.FAILED;
+            _progress[id].outcome = Outcome.FAILURE;
+            evidence.failureOrigin = FailureOrigin.EVIDENCE;
+            _lifecycle[id].successReadyAt = 0;
+            emit EvidenceFailureEstablished(id, r.evidenceRoot, r.nonce, r.evaluatedAt,
+                guarantee.cohortSize,
+                (uint256(guarantee.escrowAmount) + guarantee.compensation) * guarantee.cohortSize);
+        }
+    }
+
+    /// @notice Request evaluation only; no dispute, state mutation, chosen outcome or fund move.
+    /// @dev Enrolled members only, for a bound OPEN, SUCCESS_PENDING or UNCERTAIN guarantee.
+    function requestEvaluation(uint256 id) external nonReentrant {
+        if (_guarantees[id].provider == address(0)) revert UnknownGuarantee(id);
+        if (!_members[id][msg.sender]) revert NotBeneficiary(id, msg.sender);
+        _requireBound(id, false);
+        _requireEvidenceStatus(id);
+        emit EvaluationRequested(id, msg.sender);
+    }
+
+    /// @notice Permissionlessly select escrow-only refunds after the FIRST uncertainty timeout.
+    /// @dev No token movement or compensation payout; bond remains locked and escrow owed.
+    function finalizeUnresolved(uint256 id) external nonReentrant {
+        Guarantee storage guarantee = _guarantees[id];
+        if (guarantee.provider == address(0)) revert UnknownGuarantee(id);
+        Progress storage progress = _progress[id];
+        if (progress.status != Status.UNCERTAIN) revert InvalidStatus(id, progress.status);
+        Evidence storage evidence = _evidence[id];
+        if (block.timestamp < evidence.uncertainReadyAt) {
+            revert UncertaintyTimeoutNotReached(id, evidence.uncertainReadyAt);
+        }
+        progress.outcome = Outcome.UNRESOLVED_REFUNDED;
+        progress.status = Status.REFUNDING;
+        uint256 released = reservedOf[id];
+        evidence.releasedUnresolvedReservation = released;
+        reservedOf[id] = 0;
+        _lifecycle[id].successReadyAt = 0;
+        emit UnresolvedFinalized(id, released, guarantee.cohortSize);
+    }
+
+    /// @notice Permissionlessly refund the next bounded enrollment-order batch of full escrows.
+    /// @dev Refund-only counters; all effects precede exact-debit/exact-credit transfers.
+    /// A rejected recipient rolls back the whole batch; no skipping or alternate wallet.
+    function refundUnresolved(uint256 id, uint32 maxBeneficiaries)
+        external nonReentrant returns (uint32 refunded)
+    {
+        if (maxBeneficiaries == 0 || maxBeneficiaries > MAX_SETTLEMENT_BATCH) {
+            revert InvalidBatchSize(maxBeneficiaries, MAX_SETTLEMENT_BATCH);
+        }
+        Guarantee storage guarantee = _guarantees[id];
+        if (guarantee.provider == address(0)) revert UnknownGuarantee(id);
+        Progress storage progress = _progress[id];
+        if (progress.status == Status.CLOSED && progress.outcome == Outcome.UNRESOLVED_REFUNDED) {
+            revert NothingToRefund(id);
+        }
+        if (progress.status != Status.REFUNDING) revert InvalidStatus(id, progress.status);
+        Evidence storage evidence = _evidence[id];
+        uint32 start = evidence.refundedCount;
+        if (start == guarantee.cohortSize) revert NothingToRefund(id);
+        refunded = guarantee.cohortSize - start;
+        if (refunded > maxBeneficiaries) refunded = maxBeneficiaries;
+        uint256 escrow = guarantee.escrowAmount;
+        for (uint32 i = 0; i < refunded; ++i) {
+            address beneficiary = _beneficiaries[id][start + i];
+            if (_refunded[id][beneficiary]) revert AlreadyRefunded(id, beneficiary);
+            _refunded[id][beneficiary] = true;
+            emit BeneficiaryRefunded(id, beneficiary, escrow);
+        }
+        escrowedOf[id] -= escrow * refunded;
+        evidence.refundedEscrow += escrow * refunded;
+        evidence.refundedCount = start + refunded;
+        emit RefundBatchProcessed(id, msg.sender, refunded, evidence.refundedCount, guarantee.cohortSize);
+        _transferBatch(id, start, refunded, escrow);
     }
 
     /// @notice Finalize reviewed success permissionlessly, releasing only its reservation.
@@ -465,8 +768,14 @@ contract MicroCover is ReentrancyGuard {
             || (progress.status == Status.CLOSED && progress.outcome == Outcome.SUCCESS)) {
             revert SuccessAlreadyFinalized(id);
         }
+        if (progress.status == Status.REFUNDING
+            || (progress.status == Status.CLOSED && progress.outcome == Outcome.UNRESOLVED_REFUNDED)) {
+            revert UnresolvedAlreadyFinalized(id);
+        }
         if (progress.status != Status.OPEN && progress.status != Status.SUCCESS_PENDING
             && progress.status != Status.UNCERTAIN) revert InvalidStatus(id, progress.status);
+        if (progress.status == Status.UNCERTAIN) _requireBeforeTimeout(id);
+        _evidence[id].failureOrigin = FailureOrigin.PROVIDER;
 
         _lifecycle[id].successReadyAt = 0;
         progress.status = Status.FAILED;
@@ -526,8 +835,8 @@ contract MicroCover is ReentrancyGuard {
     }
 
     /// @notice Withdraw only this guarantee's leftover bond to its own provider.
-    /// @dev Requires failure admission and all beneficiaries paid, or finalized success
-    /// with success escrow already released. The amount is derived from bondOf, never
+    /// @dev Requires established failure and all beneficiaries paid, finalized success with
+    /// escrow released, or unresolved finalization with all escrows refunded. Amount is bondOf, never
     /// supplied by the caller. A fully paid full failure cohort is already CLOSED.
     /// @return amount Leftover bond withdrawn.
     function withdrawRemainingBond(uint256 id) external nonReentrant returns (uint256 amount) {
@@ -539,6 +848,9 @@ contract MicroCover is ReentrancyGuard {
         if (progress.status == Status.CLOSED) revert NothingToWithdraw(id);
         if (progress.status == Status.SUCCEEDED) {
             if (!_lifecycle[id].successEscrowReleased) revert SuccessEscrowNotReleased(id);
+        } else if (progress.status == Status.REFUNDING) {
+            uint32 remaining = guarantee.cohortSize - _evidence[id].refundedCount;
+            if (remaining != 0) revert RefundsPending(id, remaining);
         } else {
             if (progress.status != Status.FAILED) revert InvalidStatus(id, progress.status);
             if (progress.paidCount < guarantee.cohortSize) {
@@ -620,10 +932,14 @@ contract MicroCover is ReentrancyGuard {
             state.openSlots = capacity < slots ? uint32(capacity) : slots;
         }
         if ((progress.status == Status.FAILED && progress.paidCount == guarantee.cohortSize)
-            || (progress.status == Status.SUCCEEDED && _lifecycle[id].successEscrowReleased)) {
+            || (progress.status == Status.SUCCEEDED && _lifecycle[id].successEscrowReleased)
+            || (progress.status == Status.REFUNDING && _evidence[id].refundedCount == guarantee.cohortSize)) {
             state.withdrawableBond = state.bondHeld;
         }
-        if (progress.outcome != Outcome.SUCCESS) {
+        if (progress.outcome == Outcome.UNRESOLVED_REFUNDED) {
+            state.remainingOwed = uint256(guarantee.escrowAmount)
+                * (guarantee.cohortSize - _evidence[id].refundedCount);
+        } else if (progress.outcome != Outcome.SUCCESS) {
             state.remainingOwed = (uint256(guarantee.escrowAmount) + uint256(guarantee.compensation))
                 * (guarantee.cohortSize - progress.paidCount);
         }
@@ -652,6 +968,38 @@ contract MicroCover is ReentrancyGuard {
         state.withdrawnBond = progress.withdrawnBond;
         state.demoOperator = demoOperator;
         state.reviewWindow = reviewWindow;
+    }
+
+    /// @notice Return the documented fixed-order evidence, FIRST timeout and refund snapshot.
+    /// @dev Unknown identifiers revert; this view leaves all legacy tuples unchanged.
+    function getEvidenceState(uint256 id) external view returns (EvidenceState memory state) {
+        if (_guarantees[id].provider == address(0)) revert UnknownGuarantee(id);
+        Evidence storage evidence = _evidence[id];
+        state.evidenceBound = evidence.policyHash != 0;
+        state.policyHash = evidence.policyHash;
+        state.cohortId = evidence.cohortId;
+        state.createdAt = evidence.createdAt;
+        state.uncertaintyTimeout = uncertaintyTimeout;
+        state.uncertaintyStarted = evidence.uncertaintyStarted;
+        state.uncertainSince = evidence.uncertainSince;
+        state.uncertainReadyAt = evidence.uncertainReadyAt;
+        state.refundedCount = evidence.refundedCount;
+        state.refundedEscrow = evidence.refundedEscrow;
+        state.releasedUnresolvedReservation = evidence.releasedUnresolvedReservation;
+        state.latestEvidenceRoot = evidence.latestEvidenceRoot;
+        state.anchorNonce = evidence.anchorNonce;
+        state.nextAnchorNonce = evidence.anchorNonce + 1;
+        state.verdictNonce = evidence.verdictNonce;
+        state.nextVerdictNonce = evidence.verdictNonce + 1;
+        state.failureOrigin = uint8(evidence.failureOrigin);
+        state.lastReportOutcome = evidence.lastReportOutcome;
+        state.lastReportEvaluatedAt = evidence.lastReportEvaluatedAt;
+        state.lastReportValidUntil = evidence.lastReportValidUntil;
+    }
+
+    /// @notice Return unresolved-only refund progress; unknown ids/accounts return false.
+    function isRefunded(uint256 id, address account) external view returns (bool) {
+        return _refunded[id][account];
     }
 
     /// @notice Return enrolled beneficiary count; unknown identifiers return zero.
@@ -683,13 +1031,65 @@ contract MicroCover is ReentrancyGuard {
         return uint64(value);
     }
 
-    /// @dev Cancel pending eligibility while preserving proposal history; never moves funds.
-    function _markUncertain(uint256 id) private {
+    /// @dev Cancel pending eligibility; initialize the FIRST timer/history only once.
+    function _startUncertainty(uint256 id) private {
         _progress[id].status = Status.UNCERTAIN;
         Lifecycle storage lifecycle = _lifecycle[id];
-        lifecycle.uncertainAt = _timestamp64(block.timestamp);
-        lifecycle.uncertainBy = msg.sender;
         lifecycle.successReadyAt = 0;
+        Evidence storage evidence = _evidence[id];
+        if (!evidence.uncertaintyStarted) {
+            uint64 since = _timestamp64(block.timestamp);
+            uint64 ready = _timestamp64(block.timestamp + uint256(uncertaintyTimeout));
+            evidence.uncertaintyStarted = true;
+            evidence.uncertainSince = since;
+            evidence.uncertainReadyAt = ready;
+            lifecycle.uncertainAt = since;
+            lifecycle.uncertainBy = msg.sender;
+            emit UncertaintyStarted(id, msg.sender, since, ready);
+        }
+    }
+
+    /// @dev Used only for resolutions while UNCERTAIN; equality belongs to timeout.
+    function _requireBeforeTimeout(uint256 id) private view {
+        uint64 ready = _evidence[id].uncertainReadyAt;
+        if (block.timestamp >= ready) revert UncertaintyTimeoutReached(id, ready);
+    }
+
+    /// @dev Shared manual/evidence proposal cutoff, preserving Phase 2 precedence.
+    function _requireProposalTime(uint256 id, Guarantee storage guarantee) private view {
+        uint256 earliest = uint256(guarantee.joinDeadline) + 1;
+        if (guarantee.settlementTime > earliest) earliest = guarantee.settlementTime;
+        if (block.timestamp < earliest) revert ProposalTooEarly(id, earliest);
+    }
+
+    /// @dev Full success review without changing uncertainty history or final outcome.
+    function _proposeSuccess(uint256 id) private returns (uint64 ready) {
+        Lifecycle storage lifecycle = _lifecycle[id];
+        uint256 readyAt = block.timestamp + uint256(reviewWindow);
+        if (lifecycle.claimEndsAt > readyAt) readyAt = lifecycle.claimEndsAt;
+        ready = _timestamp64(readyAt);
+        _progress[id].status = Status.SUCCESS_PENDING;
+        lifecycle.successProposedAt = _timestamp64(block.timestamp);
+        lifecycle.successReadyAt = ready;
+        emit SuccessProposed(id, msg.sender, ready);
+    }
+
+    /// @dev Unknown, operator and evidence binding precedence shared by evidence writes.
+    function _requireBound(uint256 id, bool operatorOnly) private view returns (Evidence storage evidence) {
+        if (_guarantees[id].provider == address(0)) revert UnknownGuarantee(id);
+        if (operatorOnly && msg.sender != demoOperator) revert NotDemoOperator(msg.sender);
+        evidence = _evidence[id];
+        if (evidence.policyHash == 0) revert NotEvidenceBound(id);
+    }
+
+    /// @dev Evidence operations cannot overwrite any terminal verdict.
+    function _requireEvidenceStatus(uint256 id) private view returns (Status status) {
+        Progress storage progress = _progress[id];
+        status = progress.status;
+        if (progress.outcome != Outcome.NONE || (status != Status.OPEN
+            && status != Status.SUCCESS_PENDING && status != Status.UNCERTAIN)) {
+            revert InvalidStatus(id, status);
+        }
     }
 
     /// @dev Every outgoing transfer checks both exact contract debit and recipient credit.

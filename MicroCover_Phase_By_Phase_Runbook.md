@@ -231,15 +231,18 @@ Do not modify contracts or add future integrations. Run build and browser checks
 
 ### Checkpoint 2
 
-- [ ] Both failure and success are usable from the UI.
-- [ ] Policy and funds are visible before purchase.
-- [ ] Success finality and unlock timing are enforced by contracts.
-- [ ] Operator powers are labeled; UI visibility is not the only access control.
-- [ ] Fresh browser session loads actual chain data.
+- [x] Both failure and success are usable from the UI.
+- [x] Policy and funds are visible before purchase.
+- [x] Success finality and unlock timing are enforced by contracts.
+- [x] Operator powers are labeled; UI visibility is not the only access control.
+- [x] Fresh browser session loads actual chain data.
 
 **Commits:** `feat: finalize successful guarantees safely`; `feat: connect provider and beneficiary screens`; `fix: handle wallet and transaction errors`.
 
 **Handoff:** record ABI/config/commit after contract review; Antigravity starts from that state and changes only its assigned UI files.
+
+
+Phase 2 PASSED 6 November 2026. Existing Studio lifecycle/UI source reconciled; 210 tests, check/build and 77 ABI entries pass. Fresh deployment and both financial flows verified; wallet cancellation, actual wrong-network blocking and no-wallet Edge InPrivate chain read recorded. Evidence/checkpoint: docs/phase2-checkpoint.md and docs/evidence/phase2-final.json. UI was actually implemented in Studio because no Antigravity tool was available. No Phase3 authorization, commit/push or public update is implied.
 
 ## Phase 3 — Make evidence produce a reproducible verdict
 
