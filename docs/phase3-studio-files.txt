@@ -1,5 +1,4 @@
 # Reviewed Phase 3 in-place source mappings. No .env, keys, storage or generated outputs.
-.env.example
 .gitignore
 AGENTS.md
 MicroCover_Implementation_Plan.md

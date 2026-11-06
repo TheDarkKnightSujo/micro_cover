@@ -1,0 +1,16 @@
+{
+  "verifiedAt": "2026-11-06T17:00:10.534Z",
+  "result": {
+    "written": 0,
+    "remaining": 0
+  },
+  "transactionRequests": 0,
+  "providerCalls": [
+    "eth_accounts",
+    "wallet_switchEthereumChain",
+    "eth_chainId"
+  ],
+  "walletProvider": "test double; no real wallet contacted",
+  "historySource": "live local read proxy to Rabdi",
+  "humanReloadConfirmed": true
+}

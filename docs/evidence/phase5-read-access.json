@@ -1,0 +1,20 @@
+{
+  "checkedAt": "2026-11-06T16:34:41.448Z",
+  "network": "Rabdi",
+  "chainId": 7794095,
+  "history": {
+    "source": "ARKIV_RABDI_LIVE_RPC",
+    "query": "arkiv.schema = str('microcover.public-history.v1') AND $creator = addr(0x1d39fc0e5293ab949d63217ffb375357adf3933f) AND $owner = addr(0x1d39fc0e5293ab949d63217ffb375357adf3933f) AND consumer = str('0xdcd11bb347f063b5a876c8816f5a02b8ea0f11e0') AND guaranteeId = str('2') ORDER BY $key ASC",
+    "block": "0x48e3c",
+    "writer": "0x1d39fc0e5293ab949d63217ffb375357adf3933f",
+    "records": [],
+    "next": null,
+    "readAt": 1793982880893
+  },
+  "historyHttpStatus": 200,
+  "queuedRecords": 19,
+  "writerBalanceBaseUnits": "9999840899000000000",
+  "liveWritePerformed": false,
+  "signatures": 0,
+  "browserRenderVerified": false
+}

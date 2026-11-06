@@ -1,0 +1,24 @@
+{
+  "recordedAt": "2026-11-06T17:08:14.417Z",
+  "guaranteeId": "2",
+  "humanChecks": {
+    "reloadPersistence": true,
+    "inPrivateWithoutWallet": true,
+    "visibleEntities": 19,
+    "integrityMessageMatchesArcAnchor": true,
+    "outageWarning": true,
+    "cachedRecordsStaleWarning": true
+  },
+  "recovery": {
+    "httpStatus": 200,
+    "source": "ARKIV_RABDI_LIVE_RPC",
+    "entities": 19
+  },
+  "limitations": [
+    "Human screenshots observed; no agent browser automation",
+    "Duplicate filtering exercised with live history and test-double wallet; zero send requests",
+    "Studio reconciliation and judge access deferred",
+    "Phase4 human terminal reproduction/review deferred"
+  ],
+  "agentSignedOrBroadcast": false
+}

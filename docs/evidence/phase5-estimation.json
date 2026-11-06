@@ -1,0 +1,11 @@
+{
+  "recordCount": 19,
+  "encoding": "gzip-json-v1",
+  "estimate": "0x488048",
+  "requestBytes": 190883,
+  "dataHash": "0x4b7911deeb2e805fe55f5e1466acc66bf5a3587d1649ef2887b147640646cebb",
+  "stoppedBeforeSend": true,
+  "broadcast": false,
+  "latestNonce": "0x1",
+  "pendingNonce": "0x1"
+}

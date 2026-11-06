@@ -1,6 +1,8 @@
 # Phase 4 — current route and remaining human actions
 
-Phase 4 is IN_PROGRESS. No deployment, wallet signature, commit, push, public export or Studio reconciliation was performed. Phase 3 implementation is frozen at the user's request; its unfinished human checks were deferred, not passed.
+Phase4 is IN_PROGRESS. Current closeout: human relay for guarantee2 and timeout/refund for guarantee3 complete; all3 guarantees CLOSED and whole contract balance0 verified. Six private Phase3/4 commits were pushed under specific authorization, finalSHA9d98930b05679dca5a1ddb2f6d9c980a08e93a6f. No public export or Studio reconciliation is claimed. Native receiver undeployed. User authorized Phase5 while deferring Studio reconciliation and Phase4 human terminal reproduction/review. No more wallet steps are needed on these closed guarantees.
+
+Procedural material below preserves the earlier sequence. References to funded/unresolved guarantees or pending relay are historical, superseded by the closeout and appended verified receipts. Do not repeat completed wallet steps.
 
 ## Reproduce the actual integration
 
