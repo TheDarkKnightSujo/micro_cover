@@ -22,3 +22,6 @@ broadcast/
 .cre_build_tmp.js
 .cre_build_tmp.wasm
 *.wasm
+
+# Local tunnel process IDs, logs and temporary public hostname
+.local-hosting/

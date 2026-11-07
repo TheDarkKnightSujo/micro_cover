@@ -20,8 +20,9 @@ export function gateway(options:{dist:string;upstream?:string;origin?:string;fet
     if(url.pathname.startsWith('/api/')){
       const origin=request.headers.get('origin')
       if(origin&&origin!==(options.origin??url.origin))return reply('Origin not allowed',403)
-      const allowedRead=/^\/api\/evidence\/v1\/(health|policy|guarantees\/[1-9]\d{0,17}(\/(prepare|snapshot|cre))?)$/.test(url.pathname)||/^\/api\/arkiv\/v1\/guarantees\/[1-9]\d{0,17}(\/queue)?$/.test(url.pathname)
-      const allowedPost=url.pathname==='/api/arkiv/v1/rpc'&&request.method==='POST'
+      const presentationPath=/^\/api\/evidence\/v1\/presentations(?:\/[1-9]\d{0,17})?$/.test(url.pathname)
+      const allowedRead=presentationPath||/^\/api\/evidence\/v1\/(health|policy|guarantees\/[1-9]\d{0,17}(\/(prepare|snapshot|cre))?)$/.test(url.pathname)||/^\/api\/arkiv\/v1\/guarantees\/[1-9]\d{0,17}(\/queue)?$/.test(url.pathname)
+      const allowedPost=(url.pathname==='/api/arkiv/v1/rpc'||url.pathname==='/api/evidence/v1/presentations')&&request.method==='POST'
       if(!(allowedRead&&request.method==='GET')&&!allowedPost)return reply('Not permitted',405)
       if(!options.upstream)return reply('Evidence storage restore required',503)
       // Global budget also limits callers that rotate/spoof proxy IP headers.

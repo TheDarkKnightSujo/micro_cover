@@ -1,3 +1,5 @@
+import { savePresentation } from './presentation'
+import type { PresentationRecord } from '../../src/microcover/presentation'
 import type { Address } from 'viem'
 import { readFileSync } from 'node:fs'
 import { publicCreRun } from './cre-run'
@@ -31,7 +33,7 @@ export function serveEvidence(directory:string,consumer:Address|undefined,port=8
     const origin=request.headers.get('origin')
     if(origin && !['http://127.0.0.1:5173','http://localhost:5173'].includes(origin))return json({error:'ORIGIN_NOT_ALLOWED'},403)
     const headers:Record<string,string>=origin?{'access-control-allow-origin':origin,'vary':'Origin'}:{}
-    if(url.pathname==='/api/arkiv/v1/rpc'&&request.method==='OPTIONS'){
+    if((url.pathname==='/api/arkiv/v1/rpc'||url.pathname==='/api/evidence/v1/presentations')&&request.method==='OPTIONS'){
       if(!origin||request.headers.get('access-control-request-method')!=='POST'||
         (request.headers.get('access-control-request-headers')??'').split(',').some(h=>h.trim()&&h.trim().toLowerCase()!=='content-type'))return json({error:'PREFLIGHT_NOT_ALLOWED'},403,headers)
       return new Response(null,{status:204,headers:{...headers,'access-control-allow-methods':'POST','access-control-allow-headers':'content-type'}})
@@ -44,8 +46,30 @@ export function serveEvidence(directory:string,consumer:Address|undefined,port=8
         return json(await forwardArkivRead(JSON.parse(raw) as unknown),200,headers)
       }catch{return json({jsonrpc:'2.0',id:null,error:{code:-32000,message:'Arkiv read unavailable or method not permitted'}},200,headers)}
     }
+    if(url.pathname==='/api/evidence/v1/presentations' && request.method==='POST'){
+      if(!observer||!consumer||chainError)return json({error:'CHAIN_UNAVAILABLE'},503,headers)
+      try{
+        if(!request.headers.get('content-type')?.startsWith('application/json'))throw Error('JSON_REQUIRED')
+        const reader=request.body?.getReader();const parts:Uint8Array[]=[];let size=0
+        if(reader)for(;;){const c=await reader.read();if(c.done)break;size+=c.value.length;if(size>8192){await reader.cancel();return json({error:'TOO_LARGE'},413,headers)}parts.push(c.value)}
+        const record=JSON.parse(await new Blob(parts as BlobPart[]).text()) as PresentationRecord
+        return json(await savePresentation(store,record,consumer,observer),200,headers)
+      }catch{return json({error:'EVENT_DETAILS_NOT_VERIFIED_OR_NOT_COMMITTED'},409,headers)}
+    }
     if(request.method!=='GET')return json({error:'READ_ONLY_API'},405,headers)
     try{
+      const presentation=url.pathname.match(/^\/api\/evidence\/v1\/presentations(?:\/([1-9]\d{0,17}))?$/)
+      if(presentation){
+        if(!consumer)return json({error:'CONTRACT_NOT_CONFIGURED'},503,headers)
+        const prefix=`presentation:${consumer.toLowerCase()}:`
+        if(presentation[1]){
+          const body=store.setting(prefix+presentation[1])
+          return body?json(JSON.parse(body),200,headers):json({error:'NO_CONCERT_CONTEXT'},404,headers)
+        }
+        const provider=url.searchParams.get('provider')?.toLowerCase()
+        if(!provider || !/^0x[0-9a-f]{40}$/.test(provider))return json({error:'PROVIDER_REQUIRED'},400,headers)
+        return json({records:store.settingsWithPrefix(prefix).map(v=>JSON.parse(v) as PresentationRecord).filter(r=>r.presentation.provider===provider).slice(0,100)},200,headers)
+      }
       const history=url.pathname.match(/^\/api\/arkiv\/v1\/guarantees\/([1-9]\d{0,17})(\/queue)?$/)
       if(history){
         if(!consumer)return json({error:'CONTRACT_NOT_CONFIGURED'},503,headers)

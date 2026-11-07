@@ -43,6 +43,13 @@ export class EvidenceStore {
     return this.db.query<{value:string},[string]>('SELECT value FROM settings WHERE substr(key,1,length(?1))=?1 ORDER BY key').all(prefix).map(r=>r.value)
   }
   setSetting(key:string,value:string):void { this.db.query('INSERT INTO settings VALUES (?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value').run(key,value) }
+  freezeSetting(key:string,value:string):void {
+    this.db.transaction(()=>{
+      const existing=this.setting(key)
+      if(existing!==undefined && existing!==value)throw Error('PRESENTATION_FROZEN')
+      this.db.query('INSERT OR IGNORE INTO settings VALUES (?,?)').run(key,value)
+    }).immediate()
+  }
   close() { this.db.close() }
   activate(a: Activation): Hex {
     validateActivation(a)

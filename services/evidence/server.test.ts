@@ -32,6 +32,8 @@ test('loopback API exposes public policy only, has no administrative/raw-payload
     expect((await fetch(base+'/api/evidence/v1/policy',{headers:{origin:'https://untrusted.example'}})).status).toBe(403)
     expect((await fetch(base+'/api/evidence/v1/policy',{method:'POST'})).status).toBe(405)
     expect((await fetch(base+'/api/evidence/v1/raw')).status).toBe(404)
+    expect((await fetch(base+'/api/evidence/v1/presentations',{method:'POST',headers:{'content-type':'application/json'},body:'{}'})).status).toBe(503)
+    expect((await fetch(base+'/api/evidence/v1/presentations/1')).status).toBe(503)
     expect((await fetch(base+'/api/evidence/v1/guarantees/1')).status).toBe(503)
     const privateKey=readFileSync(join(dir,readdirSync(dir).find(n=>n.endsWith('.pem'))!),'utf8')
     expect(text).not.toContain(privateKey)
