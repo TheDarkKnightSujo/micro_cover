@@ -303,3 +303,15 @@ User explicitly requested a clean push of the checked, activated concert demo to
 ## Concert 4 availability investigation
 
 Captured public RPC 429 and stable metadata 200. Corrected retryable outage versus commitment mismatch in the concert UI; financial actions remain blocked on failures. Application checks, 4 presentation tests/38 assertions, frontend build and controlled desktop/mobile role outage-recovery tests passed. Live reads confirmed the metadata commitment and provider admission, but repeated upstream throttling still prevents reliable live loads. No services restarted or evidence/contract/settlement modified; no commit/push. Physical devices and reliable upstream access remain pending before payout. Full evidence: docs/incident-concert4.md.
+
+
+Arc reliability follow-up: shared official-provider failover and unsigned creation gas preflight implemented and locally checked. Existing collector/storage reused after verified backup; local concert-4 read passed. Human funding retry, physical devices and Studio reconciliation remain pending. Details: docs/incident-concert4.md. No commit/push or wallet transaction performed.
+
+
+### Live activation and publication authorized — 7 November 2026
+
+User requested deployment and GitHub push of the latest fix. Normal production build with VITE_EVIDENCE_API_URL=/ passed in 41.07s (existing third-party/chunk warnings). Existing gateway serves the new dist without restart; collector already uses the new transport. Actual tunnel https://potatoes-parameter-mon-programmes.trycloudflare.com serves /assets/index-CoV5F1jJ.js byte-for-byte matching the local build (SHA256 6ed008f386f6bf1809a5288b50bddb71b201d53631e457cae4356bbdbbdda8b2), including the funding preflight.
+
+Four unmocked public loads (two desktop, two mobile-sized) all displayed concert 4, with no deployment/outage warning and HTTP 200 for both /readyz and presentations/4 on every observation. A headless browser funding fixture forced Blockdaemon HTTP 429 and verified dRPC failover, unsigned simulation/estimation, gas 120000 for estimate 100000, exactly one wallet request, and correct cancellation handling. The fixture wallet denies signing; no real wallet request or broadcast occurred. Tests do not establish future RPC uptime or physical-device wallet completion.
+
+Application lint/TypeScript, service TypeScript, 9 focused tests/50 assertions, production build, live asset comparison and git whitespace checks passed. Existing contract/address, event/settlement state, database, policy, keys, gateway and tunnel configuration are preserved. Source and validation records are being published in two scoped commits under the existing genuine identity; final remote SHA and clean status are checked after push. Ignored environment, local QA scripts, dist and evidence storage are excluded. Studio reconciliation and human wallet completion remain pending. Next human action: reload the live page, check wallet Activity before any repeat funding, then personally review and sign only if no funding is already pending/confirmed.
