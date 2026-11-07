@@ -1,8 +1,11 @@
 import type { Address } from 'viem'
 import { erc20Abi } from 'viem'
-import { useAccount, useReadContracts } from 'wagmi'
+import { useAccount, usePublicClient, useReadContracts } from 'wagmi'
+import { useEffect, useRef, useState } from 'react'
 import { MICROCOVER_ADDRESS, TARGET_CHAIN_ID, USDC_ADDRESS } from './contract'
 import { useTxFlow } from './useTxFlow'
+import { checkedEvidenceGas } from './evidenceSubmission'
+import { describeError } from './errors'
 
 /**
  * Exact-amount ERC-20 approval for the MicroCover contract. Approves precisely `required`
@@ -10,6 +13,14 @@ import { useTxFlow } from './useTxFlow'
  */
 export function useUsdcApproval(required: bigint | undefined) {
   const { address } = useAccount()
+  const client = usePublicClient({chainId: TARGET_CHAIN_ID})
+  const lock = useRef(false)
+  const current = useRef({address, required})
+  useEffect(() => { current.current = {address, required} }, [address, required])
+  const active = useRef(true)
+  useEffect(() => { active.current=true; return () => { active.current=false } }, [])
+  const [preparing, setPreparing] = useState(false)
+  const [prepareError, setPrepareError] = useState<string>()
   const owner = address
   const spender = MICROCOVER_ADDRESS
 
@@ -50,20 +61,40 @@ export function useUsdcApproval(required: bigint | undefined) {
         : 'ready'
 
   const approve = (target: Address) => {
-    if (required === undefined) return
-    tx.writeContract({
+    if (required === undefined || !address || !client || target.toLowerCase() !== spender?.toLowerCase() || lock.current || tx.busy) return
+    lock.current=true
+    setPreparing(true)
+    setPrepareError(undefined)
+    tx.reset()
+    const request = {
       address: USDC_ADDRESS,
       abi: erc20Abi,
-      functionName: 'approve',
-      args: [target, required],
-      chainId: TARGET_CHAIN_ID,
-    })
+      functionName: 'approve' as const,
+      args: [target, required] as const,
+      account: address,
+    }
+    void (async () => {
+      try {
+        const gas = await checkedEvidenceGas(
+          () => client.simulateContract(request),
+          () => client.estimateContractGas(request),
+          () => Promise.resolve(active.current && current.current.address === address && current.current.required === required
+            ? {ok:true} : {ok:false, reason:'Wallet or amount changed. Review the approval again.'}),
+        )
+        tx.writeContract({...request, gas, chainId: TARGET_CHAIN_ID})
+      } catch(error) {
+        if(active.current) setPrepareError(`Approval preparation stopped before a wallet request. ${describeError(error).text}`)
+      } finally {
+        lock.current=false
+        if(active.current) setPreparing(false)
+      }
+    })()
   }
 
   return {
     /** idle: no wallet. loading: balance/allowance not read yet. error: a read failed. ready: both read. */
     readState,
-    tx,
+    tx: {...tx, busy: tx.busy || preparing, message: prepareError ?? tx.message, phase: prepareError ? 'error' as const : tx.phase},
     balance,
     allowance,
     approve,

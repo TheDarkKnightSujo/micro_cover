@@ -1,4 +1,8 @@
-import { useId, useState, type ReactNode } from 'react'
+import { useEffect, useId, useRef, useState, type ReactNode } from 'react'
+import { useAccount, usePublicClient } from 'wagmi'
+import { TARGET_CHAIN_ID } from '../contract'
+import { checkedEvidenceGas } from '../evidenceSubmission'
+import { describeError } from '../errors'
 import { type TxWriter, useTxFlow } from '../useTxFlow'
 import type { ChainTime } from '../useChainTime'
 import type { Verdict } from '../lifecycle'
@@ -38,6 +42,12 @@ export function GuardedAction(props: Props) {
   const headingId = useId()
   const [armed, setArmed] = useState(false)
   const [guard, setGuard] = useState<string>()
+  const {address:account}=useAccount()
+  const client=usePublicClient({chainId:TARGET_CHAIN_ID})
+  const lock=useRef(false)
+  const active=useRef(true)
+  useEffect(()=>{active.current=true;return()=>{active.current=false}},[])
+  const [preparing,setPreparing]=useState(false)
   const tx = useTxFlow({
     label: receiptLabel,
     guaranteeId,
@@ -54,11 +64,15 @@ export function GuardedAction(props: Props) {
   const isArmed = armed && verdict.ok
 
   const click = () => {
+    if(lock.current || tx.busy)return
     if (warning && !isArmed) {
       setGuard(undefined)
       setArmed(true)
       return
     }
+    if(!client || !account)return
+    lock.current=true
+    setPreparing(true)
     void (async () => {
       setGuard(undefined)
       try {
@@ -73,8 +87,24 @@ export function GuardedAction(props: Props) {
         setGuard('Could not read the latest block time, so nothing was sent. Try again.')
         return
       }
-      send(tx.writeContract)
-    })()
+      const preparations:Promise<void>[]=[]
+      const checkedWrite:TxWriter=(parameters)=>{
+        preparations.push((async()=>{
+          try{
+            const request={...parameters,account}
+            // Concrete ABI/function/args originate in this action's existing send callback.
+            const gas=await checkedEvidenceGas(
+              ()=>client.simulateContract(request as never),
+              ()=>client.estimateContractGas(request as never),
+              async()=>active.current?eligible(await freshNow()):{ok:false,reason:'Action closed. Nothing sent.'},
+            )
+            if(active.current)tx.writeContract({...parameters,account,gas} as never)
+          }catch(error){if(active.current)setGuard(`Preparation stopped before a wallet request. ${describeError(error).text}`)}
+        })())
+      }
+      send(checkedWrite)
+      await Promise.all(preparations)
+    })().finally(()=>{lock.current=false;if(active.current)setPreparing(false)})
   }
 
   const busyLabel = tx.phase === 'wallet' ? 'Confirm in your wallet...' : workingLabel
@@ -102,12 +132,12 @@ export function GuardedAction(props: Props) {
             {isArmed && warning && <Callout tone="warn">{warning}</Callout>}
             <div className={isArmed ? 'mc-btn-row mc-mt-3' : 'mc-mt-3'}>
               {isArmed && (
-                <button type="button" className={ghostButton} disabled={tx.busy} onClick={() => setArmed(false)}>
+                <button type="button" className={ghostButton} disabled={tx.busy || preparing} onClick={() => setArmed(false)}>
                   Cancel
                 </button>
               )}
-              <button type="button" className={isArmed ? dangerButton : primaryButton} disabled={tx.busy} onClick={click}>
-                {tx.busy ? busyLabel : isArmed ? `Confirm: ${label}` : label}
+              <button type="button" className={isArmed ? dangerButton : primaryButton} disabled={tx.busy || preparing} onClick={click}>
+                {preparing ? 'Checking transaction...' : tx.busy ? busyLabel : isArmed ? `Confirm: ${label}` : label}
               </button>
             </div>
           </ChainGate>
