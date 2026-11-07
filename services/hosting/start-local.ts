@@ -13,7 +13,7 @@ const server=Bun.serve({hostname:'127.0.0.1',port:10000,fetch(request){
     const candidate=readFileSync('.local-hosting/origin.txt','utf8').trim()
     if(/^https:\/\/[a-z0-9-]+\.trycloudflare\.com$/.test(candidate))origin=candidate
   }catch{ /* API browser requests stay closed until the exact tunnel URL is saved. */ }
-  if(!handler||origin!==lastOrigin){lastOrigin=origin;handler=gateway({dist:'dist',upstream:'http://127.0.0.1:8787',origin})}
+  if(!handler||origin!==lastOrigin){lastOrigin=origin;handler=gateway({dist:'dist',upstream:'http://127.0.0.1:8787',origin,localOrigins:['http://127.0.0.1:10000','http://localhost:10000']})}
   return handler(request)
 }})
 console.log('Production gateway listening on http://127.0.0.1:10000; reusing existing collector. Only dist and reviewed public API are served.')

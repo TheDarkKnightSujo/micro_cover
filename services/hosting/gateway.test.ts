@@ -10,6 +10,18 @@ test('hosted ABI is exactly the existing Foundry ABI',async()=>{
   expect(hosted.abi).toEqual(compiled.abi)
 })
 
+test('local launcher allows explicit loopback origins without trusting arbitrary request hosts',async()=>{
+  let calls=0
+  const handler=gateway({dist:'dist',upstream:'http://127.0.0.1:8787',origin:'https://demo.trycloudflare.com',localOrigins:['http://127.0.0.1:10000','http://localhost:10000'],fetchUpstream:(async()=>{calls++;return new Response('{}')}) as unknown as typeof fetch})
+  for(const origin of ['http://127.0.0.1:10000','http://localhost:10000','https://demo.trycloudflare.com']){
+    expect((await handler(new Request('http://127.0.0.1:10000/api/evidence/v1/presentations',{method:'POST',headers:{origin,'content-type':'application/json'},body:'{}'}))).status).toBe(200)
+  }
+  for(const origin of ['https://evil.example','http://127.0.0.1:9999']){
+    expect((await handler(new Request(origin+'/api/evidence/v1/presentations',{method:'POST',headers:{origin,'content-type':'application/json'},body:'{}'}))).status).toBe(403)
+  }
+  expect(calls).toBe(3)
+})
+
 test('host gateway serves only dist and reviewed API, strips credentials and rejects cross-origin requests',async()=>{
   const dir=mkdtempSync(join(tmpdir(),'microcover-host-'))
   writeFileSync(join(dir,'index.html'),'public app')
