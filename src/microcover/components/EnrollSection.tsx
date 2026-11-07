@@ -1,4 +1,4 @@
-import { useId, useState } from 'react'
+import { useEffect, useId, useRef, useState } from 'react'
 import type { Address } from 'viem'
 import { formatUsdc } from '@/onchain-money'
 import { TARGET_CHAIN_ID, microCoverAbi } from '../contract'
@@ -14,6 +14,7 @@ import { TxStatus } from './TxStatus'
 import { useEvidencePolicy, EVIDENCE_DISCLOSURE, evidenceGet, validatePublicPolicy } from '../evidenceClient'
 
 interface Props {
+  concert?: boolean
   contract: Address
   id: bigint
   g: GuaranteeView
@@ -24,7 +25,11 @@ interface Props {
   freshNow: () => Promise<bigint>
 }
 
-export function EnrollSection({ contract, id, g, read, account, operator, chain, freshNow }: Props) {
+export function EnrollSection({ contract, id, g, read, account, operator, chain, freshNow, concert }: Props) {
+  const active=useRef(true)
+  useEffect(()=>{active.current=true;return()=>{active.current=false}},[])
+  const preparing=useRef(false)
+  const [checking,setChecking]=useState(false)
   const policy=useEvidencePolicy(contract)
   const policyReady=!g.evidenceBound||(policy.isSuccess&&!policy.isError&&policy.data?.policyHash===g.policyHash)
   const headingId = useId()
@@ -43,7 +48,9 @@ export function EnrollSection({ contract, id, g, read, account, operator, chain,
   const verdict = !policyReady ? {ok:false as const,reason:'Evidence policy is unavailable or does not match the frozen guarantee. Enrollment is disabled.'} : chain.now === undefined ? { ok: false as const, reason: chain.failed ? 'Chain time is unavailable, so enrollment is disabled.' : 'Reading chain time...' } : canEnroll(g, ctxFor(chain.now))
 
   const enroll = () => {
-    if(!policyReady)return
+    if(!policyReady||preparing.current||tx.busy)return
+    preparing.current=true
+    setChecking(true)
     void (async () => {
       setGuard(undefined)
       try {
@@ -57,30 +64,31 @@ export function EnrollSection({ contract, id, g, read, account, operator, chain,
         setGuard('Latest chain time or the frozen evidence policy could not be verified. Nothing was sent. Refresh and review before trying again.')
         return
       }
+      if(!active.current)return
       tx.writeContract({ address: contract, abi: microCoverAbi, functionName: 'joinCohort', args: [id], chainId: TARGET_CHAIN_ID })
-    })()
+    })().finally(()=>{preparing.current=false;if(active.current)setChecking(false)})
   }
 
   return (
     <section aria-labelledby={headingId}>
-      {g.evidenceBound&&<Callout tone="warn">{EVIDENCE_DISCLOSURE} Both feeds must agree with fresh explicit statuses; polling 10 s, freshness 60 s at the outcome deadline. Policy {g.policyHash}. A separately frozen {g.uncertaintyTimeout.toString()} s timeout starts only on first onchain uncertainty. Unresolved refunds return your full escrow, pay no compensation, and return the bond after all refunds. Later disputes reuse the first deadline. Early disputes can make refunds eligible before the outcome deadline. A delivered service may be refunded when evidence is inconclusive.</Callout>}
+      {g.evidenceBound&&!concert&&<Callout tone="warn">{EVIDENCE_DISCLOSURE} Both feeds must agree with fresh explicit statuses; polling 10 s, freshness 60 s at the outcome deadline. A separately frozen {g.uncertaintyTimeout.toString()} s timeout starts only on first onchain uncertainty. Unresolved refunds return your full escrow, pay no compensation, and return the bond after all refunds. Later disputes reuse the first deadline. Early disputes can make refunds eligible before the outcome deadline. A delivered service may be refunded when evidence is inconclusive.</Callout>}
       <span className="mc-role-tag">Beneficiary</span>
       <h3 className="mc-h3" id={headingId}>
-        Enroll in this guarantee
+        {concert ? "Buy protected ticket" : "Join this guarantee"}
       </h3>
       <p className="mc-p">
-        Lock {formatUsdc(g.escrowAmount)} USDC of escrow. If the provider admits failure you get it back plus {formatUsdc(g.compensation)} USDC compensation. If success is finalized, your escrow goes to the provider and you are not paid. Review the terms above first.
+        Lock {formatUsdc(g.escrowAmount)} USDC of escrow. If failure is established by evidence or provider admission, you get it back plus {formatUsdc(g.compensation)} USDC compensation. If success is finalized, your escrow goes to the provider and you are not paid. Review the terms above first.
       </p>
       <div className="mc-mt-3">
         {!verdict.ok ? (
           <p className="mc-p mc-muted">{verdict.reason}</p>
         ) : (
           <ChainGate>
-            <Callout tone="warn">Enrolling locks your escrow until the guarantee settles. You can leave only through failure payout or a finalized success.</Callout>
+            <Callout tone="warn">Joining locks your payment until settlement: refund plus compensation on established failure, payment to the provider on finalized success, or escrow-only refund after an unresolved timeout.</Callout>
             <div className="mc-actions mc-mt-3">
               <ApprovalStep approval={approval} contract={contract} required={g.escrowAmount} />
-              <button type="button" className={primaryButton} disabled={!approvalReady(approval) || tx.busy} onClick={enroll}>
-                {tx.phase === 'wallet' ? 'Confirm in your wallet...' : tx.phase === 'confirming' ? 'Enrolling...' : '2. Enroll'}
+              <button type="button" className={primaryButton} disabled={!approvalReady(approval) || tx.busy || checking} onClick={enroll}>
+                {checking ? 'Checking the latest terms...' : tx.phase === 'wallet' ? 'Confirm in your wallet...' : tx.phase === 'confirming' ? 'Enrolling...' : concert ? '2. Buy protected ticket' : '2. Join & pay into escrow'}
               </button>
             </div>
           </ChainGate>

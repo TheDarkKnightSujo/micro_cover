@@ -10,6 +10,7 @@ import { AddressValue, Badge, Callout, Card, CopyButton, Dl, Row } from './Card'
 import { ghostButton } from './ChainGate'
 
 interface Props {
+  compact?: boolean
   idInput: string
   onIdChange: (value: string) => void
   /** Highest existing guarantee id, when known. */
@@ -134,13 +135,13 @@ function Details({ g, account, operator, chain }: { g: GuaranteeView; account: A
   )
 }
 
-export function LookupCard({ idInput, onIdChange, latestId, read, account, operator, chain }: Props) {
+export function LookupCard({ idInput, onIdChange, latestId, read, account, operator, chain, compact = false }: Props) {
   const parsed = /^\d{1,18}$/.test(idInput) ? BigInt(idInput) : undefined
   const id = parsed !== undefined && parsed > 0n ? parsed : undefined
   const shareLink = useShareLink(read.state === 'ready' ? id : undefined)
 
   return (
-    <Card title="Guarantee: public detail and your status">
+    <Card title="Find a guarantee">
       <label className="mc-label" htmlFor="guarantee-id">
         Guarantee id
       </label>
@@ -180,11 +181,11 @@ export function LookupCard({ idInput, onIdChange, latestId, read, account, opera
 
       <div className="mc-mt-4" aria-live="polite">
         {idInput === '' ? (
-          <p className="mc-p mc-muted">Enter a guarantee id, or create one below.</p>
+          <p className="mc-p mc-muted">Enter the guarantee number shared by the provider.</p>
         ) : id === undefined ? (
           <p className="mc-bad">Enter a whole number of 1 or more.</p>
         ) : read.state === 'ready' && read.data ? (
-          <Details g={read.data} account={account} operator={operator} chain={chain} />
+          compact ? null : <Details g={read.data} account={account} operator={operator} chain={chain} />
         ) : read.state === 'unknown' ? (
           <Callout>No guarantee exists with this id on this contract.</Callout>
         ) : read.state === 'unavailable' ? (

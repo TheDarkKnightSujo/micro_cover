@@ -1,6 +1,6 @@
 import type { Address } from 'viem'
 import { formatUsdc } from '@/onchain-money'
-import { TARGET_CHAIN_ID, microCoverAbi } from '../contract'
+import { STATUS, TARGET_CHAIN_ID, microCoverAbi } from '../contract'
 import { canAdmitFailure, canDispute, canFinalize, canMarkUncertain, canPropose, canReleaseEscrow, canSettle, canWithdraw, type Ctx } from '../lifecycle'
 import type { ChainTime } from '../useChainTime'
 import type { GuaranteeRead, GuaranteeView } from '../useGuarantee'
@@ -9,6 +9,7 @@ import { EnrollSection } from './EnrollSection'
 import { GuardedAction } from './GuardedAction'
 
 interface Props {
+  audience?: 'all' | 'customer' | 'provider' | 'operator' | 'settlement'
   contract: Address
   id: bigint | undefined
   read: GuaranteeRead
@@ -18,7 +19,7 @@ interface Props {
   freshNow: () => Promise<bigint>
 }
 
-function Actions({ contract, id, g, read, account, operator, chain, freshNow }: Props & { id: bigint; g: GuaranteeView }) {
+function Actions({ contract, id, g, read, account, operator, chain, freshNow, audience = 'all' }: Props & { id: bigint; g: GuaranteeView }) {
   const ctxFor = (now: bigint): Ctx => ({ now, account, operator })
   const done = () => {
     read.refetch()
@@ -32,13 +33,13 @@ function Actions({ contract, id, g, read, account, operator, chain, freshNow }: 
 
   return (
     <div className="mc-sections">
-      <EnrollSection contract={contract} id={id} g={g} read={read} account={account} operator={operator} chain={chain} freshNow={freshNow} />
+      {(audience === 'all' || audience === 'customer') && <EnrollSection contract={contract} id={id} g={g} read={read} account={account} operator={operator} chain={chain} freshNow={freshNow} />}
 
-      <GuardedAction
+      {(audience === 'all' || audience === 'customer') && (<GuardedAction
         {...common}
         title="Request review (dispute)"
         role="Enrolled beneficiary"
-        description="An explicit onchain dispute freezes settlement and starts the first uncertainty timeout. It is not proof of failure. Request evaluation above to ask for evidence review without opening a dispute. Timely authorized evidence or provider admission may resolve uncertainty."
+        description="An explicit onchain dispute freezes settlement and starts the first uncertainty timeout. It is not proof of failure. Evidence can be reviewed from the separate demo controls without opening a dispute. Timely authorized evidence or provider admission may resolve uncertainty."
         warning="This starts or reuses the first non-resetting deadline. Early disputes may make refunds eligible before the service deadline. If still unresolved when eligible, anyone may select full escrow refunds with no compensation. A later dispute may be immediately eligible."
         eligible={(now) => canDispute(g, ctxFor(now))}
         label="Raise dispute"
@@ -46,9 +47,9 @@ function Actions({ contract, id, g, read, account, operator, chain, freshNow }: 
         successText="Dispute recorded onchain. The guarantee is now uncertain and frozen."
         receiptLabel="Raise dispute"
         send={(write) => write({ address: contract, abi: microCoverAbi, functionName: 'raiseDispute', args: [id], chainId: TARGET_CHAIN_ID })}
-      />
+      />)}
 
-      <GuardedAction
+      {(audience === 'all' || audience === 'provider') && (<GuardedAction
         {...common}
         title="Admit failure"
         role="Provider only"
@@ -60,9 +61,9 @@ function Actions({ contract, id, g, read, account, operator, chain, freshNow }: 
         successText="Failure admitted onchain. Enrollment is closed and payouts can start."
         receiptLabel="Admit failure"
         send={(write) => write({ address: contract, abi: microCoverAbi, functionName: 'admitFailure', args: [id], chainId: TARGET_CHAIN_ID })}
-      />
+      />)}
 
-      <GuardedAction
+      {(audience === 'all' || audience === 'operator') && (<GuardedAction
         {...common}
         title="Propose success"
         role="Demo operator only"
@@ -73,9 +74,9 @@ function Actions({ contract, id, g, read, account, operator, chain, freshNow }: 
         successText="Success proposed onchain. The review window has started."
         receiptLabel="Propose success"
         send={(write) => write({ address: contract, abi: microCoverAbi, functionName: 'proposeSuccess', args: [id], chainId: TARGET_CHAIN_ID })}
-      />
+      />)}
 
-      <GuardedAction
+      {(audience === 'all' || audience === 'operator') && (<GuardedAction
         {...common}
         title="Mark uncertain"
         role="Demo operator only"
@@ -87,9 +88,9 @@ function Actions({ contract, id, g, read, account, operator, chain, freshNow }: 
         successText="Marked uncertain onchain. The guarantee is frozen."
         receiptLabel="Mark uncertain"
         send={(write) => write({ address: contract, abi: microCoverAbi, functionName: 'markUncertain', args: [id], chainId: TARGET_CHAIN_ID })}
-      />
+      />)}
 
-      <GuardedAction
+      {(audience === 'all' || audience === 'settlement') && (<GuardedAction
         {...common}
         title="Finalize success"
         role="Anyone, after the review window"
@@ -101,9 +102,9 @@ function Actions({ contract, id, g, read, account, operator, chain, freshNow }: 
         successText="Success finalized onchain."
         receiptLabel="Finalize success"
         send={(write) => write({ address: contract, abi: microCoverAbi, functionName: 'finalizeSuccess', args: [id], chainId: TARGET_CHAIN_ID })}
-      />
+      />)}
 
-      <GuardedAction
+      {(audience === 'all' || audience === 'settlement') && (<GuardedAction
         {...common}
         title="Release success escrow"
         role="Anyone, after success is finalized"
@@ -114,9 +115,9 @@ function Actions({ contract, id, g, read, account, operator, chain, freshNow }: 
         successText="Escrow released to the provider onchain."
         receiptLabel="Release success escrow"
         send={(write) => write({ address: contract, abi: microCoverAbi, functionName: 'releaseSuccessEscrow', args: [id], chainId: TARGET_CHAIN_ID })}
-      />
+      />)}
 
-      <GuardedAction
+      {(audience === 'all' || audience === 'settlement') && (<GuardedAction
         {...common}
         title="Settle failure payouts"
         role="Anyone, after failure is established"
@@ -139,9 +140,9 @@ function Actions({ contract, id, g, read, account, operator, chain, freshNow }: 
         successText="Payouts confirmed onchain."
         receiptLabel="Settle failure payouts"
         send={(write) => write({ address: contract, abi: microCoverAbi, functionName: 'settleFailure', args: [id, batch], chainId: TARGET_CHAIN_ID })}
-      />
+      />)}
 
-      <GuardedAction
+      {(audience === 'all' || audience === 'provider') && (<GuardedAction
         {...common}
         title="Withdraw remaining bond"
         role="Provider only"
@@ -152,7 +153,8 @@ function Actions({ contract, id, g, read, account, operator, chain, freshNow }: 
         successText="Bond withdrawn onchain. The guarantee is closed."
         receiptLabel="Withdraw remaining bond"
         send={(write) => write({ address: contract, abi: microCoverAbi, functionName: 'withdrawRemainingBond', args: [id], chainId: TARGET_CHAIN_ID })}
-      />
+      />)}
+
     </div>
   )
 }
@@ -160,8 +162,9 @@ function Actions({ contract, id, g, read, account, operator, chain, freshNow }: 
 export function ActionsCard(props: Props) {
   const { id, read, account, contract } = props
   const g = read.data
+  if (read.state === 'ready' && g && g.forId === id && g.forAccount === account && g.status === STATUS.CLOSED) return <Card title="All payments settled"><p className="mc-p">This guarantee is complete. No further payment or claim is needed. Open Activity to see what happened.</p></Card>
   return (
-    <Card title="Actions for your role">
+    <Card title={props.audience === 'customer' ? 'Join & manage your protection' : props.audience === 'provider' ? 'Manage your guarantee' : props.audience === 'settlement' ? 'Complete payments' : 'Demo operator controls'}>
       {id === undefined ? (
         <p className="mc-p mc-muted">Select an existing guarantee above to see what you can do with it.</p>
       ) : read.state === 'unavailable' ? (

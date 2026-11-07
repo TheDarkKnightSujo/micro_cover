@@ -73,8 +73,8 @@ export function EvidenceCard({contract,id,g,read,account,operator,chain,freshNow
   const e=snapshot.data?.evaluation
   const refundRemaining=g.cohortSize-g.refundedCount
   return <Card title="Evidence, commitments and unresolved refunds" aside={<Badge>Synthetic feeds</Badge>}>
-    <Callout tone="warn"><strong>{EVIDENCE_DISCLOSURE}</strong> Two authenticated identities are one source group. The trusted operator submits the result; the contract does not verify feed signatures or real-world truth. No CRE or Arkiv integration is active.</Callout>
-    <Dl>
+    <Callout tone="warn"><strong>{EVIDENCE_DISCLOSURE}</strong> Two authenticated identities are one source group. The trusted operator submits the result; the contract does not verify feed signatures or real-world truth. CRE comparison uses a local simulation and human relay; public history is stored on Arkiv. Neither proves real-world truth.</Callout>
+    <details className="mc-disclosure mc-mt-3"><summary>Policy fingerprints & timeout details</summary><Dl>
       <Row label="Frozen policy"><span className="mc-mono">{g.evidenceBound?g.policyHash:'Legacy manual demo: no evidence policy'}</span></Row>
       <Row label="Frozen cohort"><span className="mc-mono">{g.cohortId}</span></Row>
       <Row label="Uncertainty duration (separate)">{fmtDuration(g.uncertaintyTimeout)}</Row>
@@ -84,7 +84,7 @@ export function EvidenceCard({contract,id,g,read,account,operator,chain,freshNow
       {g.status===STATUS.UNCERTAIN&&<Row label="Time remaining">{chain.now===undefined?'Chain time unavailable':chain.now>=g.uncertainReadyAt?'Eligible now':fmtDuration(g.uncertainReadyAt-chain.now)}</Row>}
       <Row label="Failure origin">{g.failureOrigin===2?'Evidence verdict (no provider admission)':g.failureOrigin===1?'Provider admission':'None'}</Row>
       <Row label="Latest Arc anchor"><span className="mc-mono">{g.latestEvidenceRoot}</span></Row>
-    </Dl>
+    </Dl></details>
     {g.evidenceBound&&<>
       <h3 className="mc-sub-h">Deterministic deadline snapshot</h3>
       <p className="mc-p">Poll every 10 seconds. Both feeds must have matching explicit statuses fresh within 60 seconds at the outcome deadline. Later arrivals cannot rewrite that snapshot. Missing, stale, invalid, unknown or conflicting evidence stays UNCERTAIN.</p>
@@ -103,9 +103,9 @@ export function EvidenceCard({contract,id,g,read,account,operator,chain,freshNow
         </Dl>
         <p className="mc-hint">A matching commitment checks integrity against the submitted fingerprint; it proves neither truth nor complete collection. The operator controls both feeds and private storage. Unanchored history can be rewritten by its owner.</p>
         <ul className="mc-list">{e.sources.map(s=><li key={s.id}>{s.id}: {s.status??'unavailable'} / {s.reason}</li>)}</ul>
-        <h3 className="mc-sub-h">Public receipt metadata</h3>
+        <details className="mc-disclosure mc-mt-4"><summary>Inspect collected evidence receipts</summary><h3 className="mc-sub-h">Public receipt metadata</h3>
         <ul className="mc-list">{snapshot.data?.receipts.map(r=><li key={r.sequence}><span>#{r.sequence} {r.sourceId} / {r.kind}<br/>Received {fmtTime(BigInt(r.receivedAt))}; source {r.sourceTimestamp===null?'none':fmtTime(BigInt(r.sourceTimestamp))}</span><span className="mc-mono">Hash {r.hash}<br/>Previous {r.previousHash}<br/>Payload {r.payloadHash??'none'}</span></li>)}</ul>
-        <div className="mc-btn-row"><button className={ghostButton} disabled={cursor===0} onClick={()=>setCursor(Math.max(0,cursor-100))}>Previous receipts</button><button className={ghostButton} disabled={(snapshot.data?.receipts.length??0)<100} onClick={()=>setCursor(snapshot.data?.nextCursor??cursor)}>Next receipts</button></div>
+        <div className="mc-btn-row"><button className={ghostButton} disabled={cursor===0} onClick={()=>setCursor(Math.max(0,cursor-100))}>Previous receipts</button><button className={ghostButton} disabled={(snapshot.data?.receipts.length??0)<100} onClick={()=>setCursor(snapshot.data?.nextCursor??cursor)}>Next receipts</button></div></details>
       </>}
       <GuardedAction {...common} title="Request evaluation" role="Enrolled beneficiary" description="Request collection review without choosing a verdict, opening a dispute or moving funds." eligible={()=>g.isMember&&g.outcome===0?{ok:true}:{ok:false,reason:'Only an enrolled beneficiary with an unresolved guarantee can request evaluation.'}} label="Request evaluation only" workingLabel="Requesting..." successText="Evaluation requested. No dispute or funds movement." receiptLabel="Request evaluation" send={write=>write({address:contract,abi:microCoverAbi,functionName:'requestEvaluation',args:[id],chainId:TARGET_CHAIN_ID})}/>
       {isOperator({account,operator})&&<div className="mc-mt-4"><button className={ghostButton} disabled={preparing||g.outcome!==0} onClick={()=>void prepare()}>{preparing?'Preparing...':'Prepare fresh evidence verdict'}</button><details className="mc-mt-4"><summary>CRE simulation comparison</summary><p className="mc-p">Uses the last captured local CLI outcome and root, with fresh onchain nonce/expiry. Both feeds are ours. No CRE network delivery or automatic settlement is claimed.</p><button className={ghostButton} disabled={preparing||g.outcome!==0} onClick={()=>void prepare(true)}>Prepare matching simulated result</button>{creNote&&<p className="mc-p">{creNote}</p>}</details>{error&&<p className="mc-bad" role="alert">{error}</p>}{report&&<p className="mc-p">Prepared {report.outcome===1?'FAILURE':'SUCCESS review'}; expires {fmtTime(report.validUntil)}. Anchor first, then prepare again for a fresh submission.</p>}</div>}

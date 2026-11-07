@@ -5,12 +5,12 @@ import { PRESET_TERMS_HASH } from './terms'
 import type { GuaranteeView } from './useGuarantee'
 
 export const EVIDENCE_DISCLOSURE = 'Both demo feeds are controlled by the same team; not independent sources.'
-const base = ((import.meta.env as Record<string,string|undefined>|undefined)?.VITE_EVIDENCE_API_URL?.trim() || 'http://127.0.0.1:8787').replace(/\/$/,'')
+export const evidenceBase = ((import.meta.env as Record<string,string|undefined>|undefined)?.VITE_EVIDENCE_API_URL?.trim() || 'http://127.0.0.1:8787').replace(/\/$/,'')
 const hex = (v:unknown):v is Hex => typeof v==='string' && /^0x[0-9a-f]{64}$/.test(v)
 const record = (v:unknown):Record<string,unknown> => { if(!v||typeof v!=='object'||Array.isArray(v))throw Error('Invalid evidence response');return v as Record<string,unknown> }
 const integer = (v:unknown):bigint => { if(typeof v!=='string'||! /^(0|[1-9]\d*)$/.test(v))throw Error('Invalid evidence integer');return BigInt(v) }
 export async function evidenceGet(path:string,signal?:AbortSignal):Promise<unknown> {
-  const response=await fetch(base+'/api/evidence/v1/'+path,{signal,credentials:'omit',cache:'no-store'})
+  const response=await fetch(evidenceBase+'/api/evidence/v1/'+path,{signal,credentials:'omit',cache:'no-store'})
   if(!response.ok)throw Error('Evidence service is unavailable or this guarantee is not supported. No onchain dispute was opened.')
   return response.json()
 }
