@@ -46,3 +46,12 @@ export function bookingStatus(g:{isMember:boolean;outcome:number;status:number;r
   if(g.status===5 || g.status===3)return 'Checking the concert outcome'
   return 'You’re booked — waiting for the concert outcome'
 }
+
+/** A missing read is never evidence that committed context mismatches. */
+export function concertVerificationState(metadata:'loading'|'unavailable'|'missing'|'invalid'|'ready',read:'idle'|'loading'|'unknown'|'unavailable'|'ready',current:boolean,matches:boolean) {
+  if(metadata==='loading'||read==='loading'||read==='idle')return 'loading'
+  if(metadata==='unavailable'||read==='unavailable'||read==='ready'&&!current)return 'outage'
+  if(metadata==='missing'||read==='unknown')return 'missing'
+  if(metadata==='invalid'||!matches)return 'mismatch'
+  return 'ready'
+}

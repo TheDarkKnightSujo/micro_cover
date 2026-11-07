@@ -4,7 +4,7 @@ import { join } from 'node:path'
 import { testTempRoot, removeTestDirectory } from './test-support'
 import { EvidenceStore } from './store'
 import { savePresentation, verifyPresentation } from './presentation'
-import { presentationCommitment, validatePresentation, bookingStatus, roleStorageKey, type Presentation } from '../../src/microcover/presentation'
+import { presentationCommitment, concertVerificationState, validatePresentation, bookingStatus, roleStorageKey, type Presentation } from '../../src/microcover/presentation'
 import { PRESET_TERMS_HASH } from '../../src/microcover/terms'
 const consumer='0x1111111111111111111111111111111111111111'
 const provider='0x2222222222222222222222222222222222222222'
@@ -49,4 +49,16 @@ test('customer status never confuses potential with received; account/role scope
   expect(bookingStatus({...g,outcome:0,status:5},customer)).toContain('Checking')
   expect(roleStorageKey(5042002,customer)).not.toBe(roleStorageKey(1,customer))
   expect(roleStorageKey(5042002,customer)).not.toBe(roleStorageKey(5042002,provider))
+})
+
+test('concert verification distinguishes retryable read outages from proven mismatch and recovers',()=>{
+  expect(concertVerificationState('ready','ready',true,true)).toBe('ready')
+  expect(concertVerificationState('ready','unavailable',false,false)).toBe('outage')
+  expect(concertVerificationState('unavailable','ready',true,true)).toBe('outage')
+  expect(concertVerificationState('ready','ready',false,false)).toBe('outage')
+  expect(concertVerificationState('ready','ready',true,false)).toBe('mismatch')
+  expect(concertVerificationState('invalid','ready',true,true)).toBe('mismatch')
+  expect(concertVerificationState('missing','ready',true,false)).toBe('missing')
+  expect(concertVerificationState('ready','loading',false,false)).toBe('loading')
+  expect(concertVerificationState('ready','ready',true,true)).toBe('ready')
 })

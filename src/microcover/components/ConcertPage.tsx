@@ -10,7 +10,7 @@ import { useChainTime, useFreshChainTime } from '../useChainTime'
 import { useGuarantee } from '../useGuarantee'
 import { ReceiptLogProvider } from '../receipts'
 import { evidenceBase, evidenceGet } from '../evidenceClient'
-import { bookingStatus, matchesPresentation, presentationCommitment, roleStorageKey, validatePresentation, type PresentationRecord } from '../presentation'
+import { bookingStatus, concertVerificationState, matchesPresentation, presentationCommitment, roleStorageKey, validatePresentation, type PresentationRecord } from '../presentation'
 import { PRESET_CONDITION_TEXT } from '../terms'
 import { Card, Callout, Dl, Row, Badge } from './Card'
 import { CreateCard } from './CreateCard'
@@ -27,11 +27,21 @@ type Role='organiser'|'customer'
 const isRole=(v:unknown):v is Role=>v==='organiser'||v==='customer'
 function eventId(){const id=new URLSearchParams(window.location.search).get('concert');return id && /^[1-9]\d{0,17}$/.test(id)?id:undefined}
 function link(id:string){return `${window.location.origin}${window.location.pathname}?concert=${id}#concert`}
-async function getRecord(id:string){
-  const value=await evidenceGet(`presentations/${id}`) as PresentationRecord
-  if(value.guaranteeId!==id)throw Error('Wrong event')
-  return {...value,presentation:validatePresentation(value.presentation)}
+class ConcertMetadataError extends Error {
+  constructor(readonly kind:'unavailable'|'missing'|'invalid',readonly status?:number){super(`Concert metadata ${kind}${status?` (HTTP ${status})`:''}`)}
 }
+async function getRecord(id:string){
+  let response:Response
+  try{response=await fetch(evidenceBase+'/api/evidence/v1/presentations/'+id,{credentials:'omit',cache:'no-store',signal:AbortSignal.timeout(15000)})}
+  catch{throw new ConcertMetadataError('unavailable')}
+  if(!response.ok)throw new ConcertMetadataError(response.status===404?'missing':'unavailable',response.status)
+  try{
+    const value=await response.json() as PresentationRecord
+    if(value.guaranteeId!==id)throw Error('Wrong event')
+    return {...value,presentation:validatePresentation(value.presentation)}
+  }catch{throw new ConcertMetadataError('invalid',response.status)}
+}
+
 function Policy(){return <Callout tone="warn"><strong>Synthetic concert demonstration.</strong> Protection is included. The two team-controlled feeds must explicitly agree on fulfilled or cancelled status at the scheduled cutoff. This does not measure real concert delays; there is no delay threshold. A trusted operator submits the result, and settlement requires transactions. It is not independent verification or a live CRE deployment.<details><summary>Exact protected condition & money rules</summary><p>{PRESET_CONDITION_TEXT}</p><p>Failure: full ticket refund plus fixed compensation. Reviewed success: ticket payment goes to the organiser, no compensation. Unresolved: full ticket refund only after the separate, non-resetting 120-second uncertainty deadline. The organiser’s backing funds return only after refunds. Success has its own 120-second review. Missing evidence alone never opens an onchain dispute.</p><p>The name and venue are presentation context. The scheduled time is the onchain outcome cutoff, not a measured start-time promise.</p></details></Callout>}
 
 function Event({id,contract,cap,chain}: {id:string;contract:Address;cap:Extract<Capability,{state:'ready'}>;chain:ChainTime}){
@@ -43,8 +53,12 @@ function Event({id,contract,cap,chain}: {id:string;contract:Address;cap:Extract<
   const p=metadata.data?.presentation
   const verified=g && p && p.consumer===contract.toLowerCase() && matchesPresentation(p,g)
   const [copied,setCopied]=useState(false)
-  if(metadata.isPending || read.state==='loading')return <Card title="Opening your concert"><p>Checking the shared event details against Arc Testnet...</p></Card>
-  if(!verified)return <Card title="Concert details unavailable"><Callout>The shared details could not be verified against this ticket protection. No purchase is enabled. This may be a generic previous test run or a service outage; it does not establish a concert outcome.</Callout><button className="mc-btn mc-btn-ghost" onClick={()=>{void metadata.refetch();read.refetch()}}>Retry event check</button><a className="mc-text-link" href={`?guarantee=${id}#guarantee`}>Open generic guarantee details</a></Card>
+  const metadataState=metadata.isPending?'loading':metadata.isError?(metadata.error instanceof ConcertMetadataError?metadata.error.kind:'unavailable'):'ready'
+  const verification=concertVerificationState(metadataState,read.state,!!g,!!verified)
+  const retry=<button className="mc-btn mc-btn-ghost" onClick={()=>{void metadata.refetch();read.refetch()}}>Retry event check</button>
+  if(verification==='loading')return <Card title="Opening your concert"><p>Checking the shared event details against Arc Testnet...</p></Card>
+  if(verification==='outage')return <Card title="Concert check temporarily unavailable"><Callout tone="warn">We could not refresh the event details or required Arc Testnet reads. This is a retryable connection problem, not a metadata mismatch or a change to your booking or payout. All transaction actions stay disabled until fresh checks succeed.</Callout><p className="mc-hint">{read.failed.length?`Unavailable reads: ${read.failed.join(', ')}.`:''} {metadata.isError?metadata.error.message:''}</p>{retry}</Card>
+  if(verification!=='ready'||!g||!p)return <Card title={verification==='missing'?'Concert details not found':'Concert details do not match'}><Callout>The shared event record is missing or does not match the successfully read onchain commitment. No purchase is enabled. A previous generic guarantee cannot be renamed as a concert.</Callout>{retry}<a className="mc-text-link" href={`?guarantee=${id}#guarantee`}>Open generic guarantee details</a></Card>
   const provider=account?.toLowerCase()===g.provider.toLowerCase()
   const received=bookingStatus(g,account)
   return <>
