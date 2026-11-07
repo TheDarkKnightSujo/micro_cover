@@ -1,12 +1,13 @@
 import { readFileSync } from 'node:fs'
-import { createPublicClient, http, type Abi, type Address } from 'viem'
+import { createPublicClient, type Abi, type Address } from 'viem'
+import { arcTransport } from '../../src/arcTransport'
 import { arcTestnet } from 'viem/chains'
 import { hash, ZERO, type Activation, type Policy, type Hex } from './model'
 import { EvidenceStore } from './store'
 import { evaluate, prepareReport } from './evaluator'
 
 export class ChainObserver {
-  private client=createPublicClient({chain:arcTestnet,transport:http('https://rpc.testnet.arc.io')})
+  private client=createPublicClient({chain:arcTestnet,transport:arcTransport()})
   private abi:Abi
   constructor(readonly address:Address,private policy:Policy,private store:EvidenceStore){
     this.abi=(JSON.parse(readFileSync('contracts/out/MicroCover.sol/MicroCover.json','utf8')) as {abi:Abi}).abi

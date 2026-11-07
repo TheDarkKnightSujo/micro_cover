@@ -1,4 +1,4 @@
-import { useAccount } from 'wagmi'
+import { useAccount, usePublicClient } from 'wagmi'
 import { presentationCommitment, validatePresentation, type Presentation } from '../presentation'
 import { useEffect, useRef, useState } from 'react'
 import { bytesToHex, parseEventLogs } from 'viem'
@@ -17,6 +17,8 @@ import { ChainGate, primaryButton } from './ChainGate'
 import { Field } from './Field'
 import { TxStatus } from './TxStatus'
 import { EVIDENCE_DISCLOSURE, evidenceGet, useEvidencePolicy, validatePublicPolicy } from '../evidenceClient'
+import { checkedEvidenceGas } from '../evidenceSubmission'
+import { describeError } from '../errors'
 
 const MAX_MINUTES = 10_080n // one week
 
@@ -54,6 +56,8 @@ interface Props {
 
 export function CreateCard({ cap, chain, onCreated, concert }: Props) {
   const {address:account}=useAccount()
+  const client=usePublicClient({chainId:TARGET_CHAIN_ID})
+  const creationLock=useRef(false)
   const active=useRef(true)
   useEffect(()=>{active.current=true;return()=>{active.current=false}},[])
   const pendingPresentation=useRef<Presentation | undefined>(undefined)
@@ -105,7 +109,8 @@ export function CreateCard({ cap, chain, onCreated, concert }: Props) {
   const previewClaimEnd = previewOutcome !== undefined && reviewWindow !== undefined ? previewOutcome + reviewWindow : undefined
 
   const create = () => {
-    if (!valid || !live || comp === undefined || esc === undefined || size === undefined || join === undefined || delay === undefined) return
+    if (creationLock.current || !client || !account || !valid || !live || comp === undefined || esc === undefined || size === undefined || join === undefined || delay === undefined) return
+    creationLock.current=true
     setPrepareError(undefined)
     setPreparing(true)
     void (async () => {
@@ -120,16 +125,24 @@ export function CreateCard({ cap, chain, onCreated, concert }: Props) {
         const settlementTime = context ? joinDeadline : joinDeadline + delay * 60n
         pendingPresentation.current=context
         if(context)localStorage.setItem(`microcover:concert-draft:${context.consumer}:${context.provider}`,JSON.stringify(context))
-        tx.writeContract({
+        const request={
           address: contract,
           abi: microCoverAbi,
-          functionName: 'createGuaranteeWithPolicy',
-          args: [comp, esc, Number(size), joinDeadline, settlementTime, PRESET_TERMS_HASH, currentPolicy.policyHash, context ? presentationCommitment(context) : cohortId],
-          chainId: TARGET_CHAIN_ID,
-        })
-      } catch {
-        setPrepareError('Latest chain time or the displayed evidence policy is unavailable or changed. Nothing was sent; refresh and review before trying again.')
+          functionName: 'createGuaranteeWithPolicy' as const,
+          args: [comp, esc, Number(size), joinDeadline, settlementTime, PRESET_TERMS_HASH, currentPolicy.policyHash, context ? presentationCommitment(context) : cohortId] as const,
+          account,
+        }
+        const gas=await checkedEvidenceGas(
+          ()=>client.simulateContract(request),
+          ()=>client.estimateContractGas(request),
+          async()=>active.current && joinDeadline>(await freshNow())+(context?60n:0n)
+            ? {ok:true} : {ok:false,reason:'The schedule is too close or this form was closed. Review before retrying.'},
+        )
+        tx.writeContract({...request,gas,chainId:TARGET_CHAIN_ID})
+      } catch(error) {
+        setPrepareError(`Funding preparation stopped before a wallet request. ${describeError(error).text}`)
       } finally {
+        creationLock.current=false
         setPreparing(false)
       }
     })()
@@ -193,7 +206,7 @@ export function CreateCard({ cap, chain, onCreated, concert }: Props) {
             <div className="mc-actions">
               <ApprovalStep approval={approval} contract={contract} required={valid ? bond : undefined} valid={valid} />
               <button type="button" className={primaryButton} disabled={!valid || !approvalReady(approval) || tx.busy || preparing || tx.receiptUnknown || !!concert && tx.phase==='success'} onClick={create}>
-                {preparing || tx.phase === 'wallet' ? 'Confirm in your wallet...' : tx.phase === 'confirming' ? 'Creating...' : concert ? '2. Fund ticket protection' : '2. Create guarantee'}
+                {preparing ? 'Checking funding and estimating gas...' : tx.phase === 'wallet' ? 'Confirm in your wallet...' : tx.phase === 'confirming' ? 'Creating...' : concert ? '2. Fund ticket protection' : '2. Create guarantee'}
               </button>
               {prepareError && (
                 <p className="mc-bad" role="alert">
